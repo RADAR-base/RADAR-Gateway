@@ -6,10 +6,10 @@
 
   <servlet>
     <servlet-name>radarNewProxy</servlet-name>
-    <servlet-class>org.mitre.dsmiley.httpproxy.ProxyServlet</servlet-class>
+    <servlet-class>org.radarcns.security.proxy.ProxyServlet</servlet-class>
     <init-param>
       <param-name>targetUri</param-name>
-      <param-value>http://localhost:8082/</param-value>
+      <param-value>http://rest-proxy-1:8082/</param-value>
     </init-param>
     <init-param>
       <param-name>log</param-name>
