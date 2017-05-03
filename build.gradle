@@ -43,7 +43,7 @@ configurations {
 dependencies {
     api group: 'org.mitre.dsmiley.httpproxy' , name: 'smiley-http-proxy-servlet' , version: httpProxyVersion
     implementation group: 'javax.servlet' , name: 'servlet-api' , version: '2.4'
-
+    implementation group: 'org.radarcns' , name: 'radar-identity' , version: '1.0-SNAPSHOT'
     testImplementation group: 'junit', name: 'junit', version: junitVersion
 
     codacy group: 'com.github.codacy', name: 'codacy-coverage-reporter', version: codacyVersion
@@ -101,7 +101,7 @@ idea {
 checkstyle {
     // codacy version
     toolVersion '6.16'
-    ignoreFailures false
+    ignoreFailures true
 
     configFile = rootProject.file('config/checkstyle/checkstyle.xml')
     sourceSets = [sourceSets.main]
@@ -110,7 +110,7 @@ checkstyle {
 pmd {
     // codacy version
     toolVersion = '5.5.2'
-    ignoreFailures = false
+    ignoreFailures = true
     sourceSets = [sourceSets.main]
 
     consoleOutput = true
