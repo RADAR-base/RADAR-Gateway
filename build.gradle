@@ -1,8 +1,5 @@
 plugins {
     id 'java'
-    id 'java-library'
-//    id 'com.jfrog.bintray' version '1.7.3'
-//    id 'maven-publish'
     id 'idea'
     id 'checkstyle'
     id 'pmd'
@@ -41,8 +38,8 @@ configurations {
 
 
 dependencies {
-    api group: 'org.mitre.dsmiley.httpproxy' , name: 'smiley-http-proxy-servlet' , version: httpProxyVersion
-    implementation group: 'javax.servlet' , name: 'servlet-api' , version: '2.4'
+    compile group: 'org.mitre.dsmiley.httpproxy' , name: 'smiley-http-proxy-servlet' , version: httpProxyVersion
+    runtime group: 'javax.servlet' , name: 'servlet-api' , version: '2.4'
 
     testImplementation group: 'junit', name: 'junit', version: junitVersion
 
@@ -188,8 +185,9 @@ ext.sharedManifest = manifest {
     attributes("Implementation-Title": rootProject.name,
             "Implementation-Version": version)
 }
+
 war {
-    archiveName = rootProject.name+'.war'
+    archiveName = "${rootProject.name}.war"
     manifest.from sharedManifest
 }
 
