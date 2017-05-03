@@ -18,5 +18,3 @@ target/
 # Build
 /build/
 *.war
-
-src/main/java/

@@ -70,24 +70,13 @@ services:
     depends_on:
       - kafka-1
       - schema-registry-1
+    ports:
+      - "8082:8082"
     environment:
       KAFKA_REST_ZOOKEEPER_CONNECT: zookeeper-1:2181
       KAFKA_REST_LISTENERS: http://rest-proxy-1:8082
       KAFKA_REST_SCHEMA_REGISTRY_URL: http://schema-registry-1:8081
       KAFKA_REST_HOST_NAME: rest-proxy-1
-
-  #---------------------------------------------------------------------------#
-  # RADAR Gateway                                                            #
-  #---------------------------------------------------------------------------#
-  rest-gateway:
-    build: ./
-    image: radarcns/radar-gateway:latest
-    networks:
-      - kafka
-      - zookeeper
-      - identity
-    ports:
-      - "8080:8080"
 
   #---------------------------------------------------------------------------#
   # WSO2 Identity Server                                                      #

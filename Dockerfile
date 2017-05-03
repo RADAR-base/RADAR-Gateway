@@ -11,25 +11,15 @@
 # limitations under the License.
 
 
-FROM tomcat:8.0.37
+FROM tomcat:8-jre8-alpine
 
 MAINTAINER @nivemaham
 
 LABEL description="RADAR-CNS Gateway docker container"
 
-# Install Rest API
-RUN echo && echo "==> Installing Components" \
-    # Create deployment directory
-    && echo "==> Creating RADAR-CNS/RADAR-Gatewat deployment directory" \
-    && cd /usr/local && mkdir RADAR-Gateway && cd /usr/local/RADAR-Gateway \
-    # Deploy the war
-    && echo "==> Deploying the WAR"
-
 COPY ./build/libs/radar-gateway.war /usr/local/tomcat/webapps/radar-gateway.war
-    # Remove repository
-RUN echo  && echo "==> Cleaning up" \
-    && cd /usr/local && rm -R /usr/local/RADAR-Gateway \
-    && echo
+COPY ./wso2is/wso2carbon.crt /wso2carbon.crt
+RUN keytool -noprompt -importcert -file /wso2carbon.crt -alias randomaliasname -keystore /usr/lib/jvm/default-jvm/jre/lib/security/cacerts -storepass changeit && rm /wso2carbon.crt
 
 EXPOSE 8080
 

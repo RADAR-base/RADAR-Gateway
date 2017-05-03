@@ -613,8 +613,8 @@
 
 	<!--ExternalAPIManager>
 
-		<APIGatewayURL>http://localhost:8281</APIGatewayURL>
-		<APIPublisherURL>http://localhost:8281/publisher</APIPublisherURL>
+		<APIGatewayURL>http://wso2-api-gateway:8281</APIGatewayURL>
+		<APIPublisherURL>http://wso2-api-gateway:8281/publisher</APIPublisherURL>
 
 	</ExternalAPIManager-->
 
