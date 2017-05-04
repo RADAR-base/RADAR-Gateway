@@ -1,35 +1,39 @@
-package org.radarcns.security.filter;
+package org.radarcns.gateway.filter;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Writer;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
-import org.radarcns.security.model.RadarUserToken;
+import org.radarcns.gateway.model.RadarUserToken;
+import org.radarcns.gateway.util.ServletInputStreamWrapper;
 
 public class AvroContentFilter implements Filter {
-    private final JsonFactory factory;
+    private JsonFactory factory;
     private ServletContext context;
-
-    public AvroContentFilter() {
-        factory = new JsonFactory();
-    }
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         this.context = filterConfig.getServletContext();
         this.context.log("AvroContentFilter initialized");
+
+        this.factory = new JsonFactory();
     }
 
     @Override
@@ -45,6 +49,13 @@ public class AvroContentFilter implements Filter {
 
         HttpServletResponse res = (HttpServletResponse) response;
 
+        if (!req.getContentType().startsWith("application/vnd.kafka.avro.v1+json")
+                && !req.getContentType().startsWith("application/vnd.kafka.avro.v2+json")) {
+            this.context.log("Got incompatible media type");
+            jsonErrorResponse(res, HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, "unsupported_media_type", "Only Avro JSON messages are supported");
+            return;
+        }
+
         RadarUserToken token = (RadarUserToken)request.getAttribute("token");
         if (token == null || token.getUser() == null) {
             this.context.log("Request was not authenticated by a previous filter: "
@@ -53,29 +64,38 @@ public class AvroContentFilter implements Filter {
             return;
         }
 
-        try (BufferedReader requestReader = request.getReader()) {
-            parseRequest(requestReader, token);
+        try (ServletInputStream stream = request.getInputStream()) {
+            final byte[] data = ServletInputStreamWrapper.readFully(stream);
+            parseRequest(data, token);
+
+            chain.doFilter(new HttpServletRequestWrapper(req) {
+                @Override
+                public ServletInputStream getInputStream() throws IOException {
+                    return new ServletInputStreamWrapper(new ByteArrayInputStream(data));
+                }
+                public BufferedReader getReader() throws IOException {
+                    return new BufferedReader(new InputStreamReader(new ByteArrayInputStream(data)));
+                }
+            }, response);
         } catch (JsonParseException ex) {
             jsonErrorResponse(res, HttpServletResponse.SC_BAD_REQUEST, "malformed_content", ex.getMessage());
-            return;
         } catch (IOException ex) {
+            context.log("IOException", ex);
             jsonErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "server_exception", "Failed to process message: " + ex.getMessage());
-            return;
         } catch (IllegalArgumentException ex) {
-            jsonErrorResponse(res, HttpServletResponse.SC_BAD_REQUEST, "invalid_content", ex.getMessage());
-            return;
+            jsonErrorResponse(res, 422, "invalid_content", ex.getMessage());
         }
-
-        chain.doFilter(request, response);
     }
 
     @Override
     public void destroy() {
+        this.context = null;
+        this.factory = null;
     }
 
     /** Parse Kafka REST proxy payload. */
-    private void parseRequest(BufferedReader reader, RadarUserToken token) throws IOException {
-        JsonParser parser = factory.createParser(reader);
+    private void parseRequest(byte[] data, RadarUserToken token) throws IOException {
+        JsonParser parser = factory.createParser(data);
 
         boolean hasKeySchema = false;
         boolean hasValueSchema = false;
@@ -110,13 +130,9 @@ public class AvroContentFilter implements Filter {
 
     private void parseRecords(JsonParser parser, RadarUserToken token) throws IOException {
         if (parser.nextToken() != JsonToken.START_ARRAY) {
-            throw new JsonParseException(parser, "Expecting JSON array for records field");
+            throw semanticException(parser, "Expecting JSON array for records field");
         }
         while (parser.nextToken() != JsonToken.END_ARRAY) {
-            if (parser.nextToken() != JsonToken.START_OBJECT) {
-                throw new JsonParseException(parser, "Expecting JSON object for record");
-            }
-
             boolean foundKey = false;
             boolean foundValue = false;
 
@@ -134,10 +150,10 @@ public class AvroContentFilter implements Filter {
             }
 
             if (!foundKey) {
-                throw new JsonParseException(parser, "Missing key field in record");
+                throw semanticException(parser, "Missing key field in record");
             }
             if (!foundValue) {
-                throw new JsonParseException(parser, "Missing value field in record");
+                throw semanticException(parser, "Missing value field in record");
             }
         }
     }
@@ -145,18 +161,17 @@ public class AvroContentFilter implements Filter {
     /** Parse single record key. */
     private void parseKey(JsonParser parser, RadarUserToken token) throws IOException {
         if (parser.nextToken() != JsonToken.START_OBJECT) {
-            throw new JsonParseException(parser, "Field key must be a JSON object");
+            throw semanticException(parser, "Field key must be a JSON object");
         }
+
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             if (parser.getCurrentName().equals("userId")) {
                 if (parser.nextToken() != JsonToken.VALUE_STRING) {
-                    throw new JsonParseException(parser, "userId field string");
+                    throw semanticException(parser, "userId field string");
                 }
                 String userId = parser.getValueAsString();
-                if (userId.equals(token.getUser())) {
-                    return;
-                } else {
-                    throw new IllegalArgumentException("Record userID " + userId + " does not match authenticated user ID " + token.getUser());
+                if (!userId.equals(token.getUser())) {
+                    throw semanticException(parser, "record userID '" + userId + "' does not match authenticated user ID '" + token.getUser() + '\'');
                 }
             } else {
                 skipToEndOfValue(parser);
@@ -183,11 +198,20 @@ public class AvroContentFilter implements Filter {
         response.setStatus(statusCode);
         response.setHeader("Content-Type", "application/json; charset=utf-8");
         try (Writer writer = response.getWriter()) {
-            writer.write("{\"error\":\"");
+            writer.write("{\"error_code\":");
+            writer.write(Integer.toString(statusCode));
+            writer.write(",\"message\":\"");
             writer.write(error);
-            writer.write("\",\"errorDescription\":\"");
-            writer.write(errorDescription);
+            writer.write(": ");
+            writer.write(errorDescription.replace("\n", "").replace("\"", "'"));
             writer.write("\"}");
         }
+    }
+
+    private IllegalArgumentException semanticException(JsonParser parser, String message) {
+        JsonLocation location = parser.getCurrentLocation();
+        return new IllegalArgumentException(message
+                + " at [line " + location.getLineNr()
+                + " column " + location.getColumnNr() + ']');
     }
 }

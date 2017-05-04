@@ -30,3 +30,7 @@ Now you can access the REST proxy via the gateway:
 ```shell
 curl -H 'Authorization: Bearer myAccessToken' http://localhost:8080/radar-gateway/topics
 ```
+
+The gateway does content validation for posted data. It requires to use the Avro format with JSON serialization, using the `application/vnd.kafka.avro.v1+json` or `application/vnd.kafka.avro.v2+json` media types, as described in the [REST Proxy documentation](http://docs.confluent.io/3.0.0/kafka-rest/docs/intro.html#produce-and-consume-avro-messages). It also requires messages to have both a key and a value, and if the key contains a user ID, it needs to match the user ID that is used in the for authentication.
+
+Data compressed with GZIP is decompressed if the `Content-Encoding: gzip` header is provided. With `curl`, use the `-H "Content-Encoding: gzip" --data-binary @data.json.gz` flags.

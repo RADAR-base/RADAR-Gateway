@@ -1,4 +1,4 @@
-package org.radarcns.security.oauth;
+package org.radarcns.gateway.oauth;
 
 import javax.servlet.ServletException;
 

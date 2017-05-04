@@ -1,4 +1,4 @@
-package org.radarcns.security.model;
+package org.radarcns.gateway.model;
 
 import org.radarcns.security.commons.model.RadarToken;
 

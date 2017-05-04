@@ -1,4 +1,4 @@
-package org.radarcns.security.filter;
+package org.radarcns.gateway.filter;
 
 import java.io.IOException;
 import javax.servlet.Filter;
@@ -11,10 +11,10 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.http.HttpHeaders;
+import org.radarcns.gateway.model.RadarUserToken;
+import org.radarcns.gateway.oauth.OAuth2AuthorizationException;
+import org.radarcns.gateway.oauth.OAuth2Handler;
 import org.radarcns.security.commons.config.ServerConfig;
-import org.radarcns.security.model.RadarUserToken;
-import org.radarcns.security.oauth.OAuth2AuthorizationException;
-import org.radarcns.security.oauth.OAuth2Handler;
 
 /**
  * Created by nivethika on 4-4-17.
@@ -80,6 +80,6 @@ public class AuthorizationFilter implements Filter {
 
     @Override
     public void destroy() {
-
+        this.context = null;
     }
 }

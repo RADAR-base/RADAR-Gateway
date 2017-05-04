@@ -1,4 +1,4 @@
-package org.radarcns.security.oauth;
+package org.radarcns.gateway.oauth;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -14,10 +14,10 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.Route;
+import org.radarcns.gateway.model.RadarUserToken;
 import org.radarcns.security.commons.config.ServerConfig;
 import org.radarcns.security.commons.model.RadarToken;
 import org.radarcns.security.commons.model.RadarUser;
-import org.radarcns.security.model.RadarUserToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
