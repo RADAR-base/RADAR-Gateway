@@ -40,7 +40,7 @@ configurations {
 dependencies {
     compile group: 'org.mitre.dsmiley.httpproxy' , name: 'smiley-http-proxy-servlet' , version: httpProxyVersion
     compile group: 'javax.servlet' , name: 'servlet-api' , version: '2.4'
-    compile group: 'org.radarcns' , name: 'radar-identity' , version: '1.0-SNAPSHOT'
+    compile group: 'org.radarcns' , name: 'radar-auth' , version: '1.0-SNAPSHOT'
 
     testImplementation group: 'junit', name: 'junit', version: junitVersion
 
