@@ -33,8 +33,7 @@ public class AuthenticationFilter implements Filter {
         try {
             request.setAttribute("jwt", validator.validateAccessToken(getToken(request, response)));
             chain.doFilter(request, response);
-        }
-        catch (TokenValidationException ex) {
+        } catch (TokenValidationException ex) {
             context.log(ex.getMessage(), ex);
         }
     }
@@ -50,7 +49,8 @@ public class AuthenticationFilter implements Filter {
         String authorizationHeader = req.getHeader(HttpHeaders.AUTHORIZATION);
 
         // Check if the HTTP Authorization header is present and formatted correctly
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+        if (authorizationHeader == null
+                || !authorizationHeader.toLowerCase().startsWith("bearer ")) {
             this.context.log("No authorization header provided in the request");
             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             res.setHeader("WWW-Authenticate", "Bearer");
