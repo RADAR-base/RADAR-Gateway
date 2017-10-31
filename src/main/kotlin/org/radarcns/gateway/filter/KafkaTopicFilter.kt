@@ -21,7 +21,7 @@ class KafkaTopicFilter : Filter {
     override fun init(filterConfig: FilterConfig) {
         this.context = filterConfig.servletContext
         this.context!!.log("KafkaTopicFilter initialized")
-        val restProxyUrl = this.context!!.getInitParameter("restProxyUrl")
+        val restProxyUrl = this.context!!.getInitParameter("targetUri")
         this.client = KafkaClient(restProxyUrl)
         updateTopics()
     }
