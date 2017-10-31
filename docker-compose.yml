@@ -6,8 +6,6 @@ networks:
     driver: bridge
   kafka:
     driver: bridge
-  identity:
-    driver: bridge
 
 services:
   #---------------------------------------------------------------------------#
@@ -77,21 +75,3 @@ services:
       KAFKA_REST_LISTENERS: http://rest-proxy-1:8082
       KAFKA_REST_SCHEMA_REGISTRY_URL: http://schema-registry-1:8081
       KAFKA_REST_HOST_NAME: rest-proxy-1
-
-  #---------------------------------------------------------------------------#
-  # WSO2 Identity Server                                                      #
-  #---------------------------------------------------------------------------#
-  is:
-    image: isim/wso2is:$IS_VERSION
-    networks:
-      - identity
-    hostname: localhost
-    ports:
-    - "9443:9443"
-    - "9763:9763"
-    volumes:
-    - ./wso2is/master-datasources.xml:/opt/wso2is-$IS_VERSION/repository/conf/datasources/master-datasources.xml
-    - ./wso2is/carbon.xml:/opt/wso2is-$IS_VERSION/repository/conf/carbon.xml
-    - ./wso2is/registry.xml:/opt/wso2is-$IS_VERSION/repository/conf/registry.xml
-    - ./wso2is/user-mgt.xml:/opt/wso2is-$IS_VERSION/repository/conf/user-mgt.xml
-    - ./wso2is/sso-idp-config.xml:/opt/wso2is-$IS_VERSION/repository/conf/security/sso-idp-config.xml

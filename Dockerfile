@@ -18,8 +18,6 @@ MAINTAINER @nivemaham
 LABEL description="RADAR-CNS Gateway docker container"
 
 COPY ./build/libs/radar-gateway.war /usr/local/tomcat/webapps/radar-gateway.war
-COPY ./wso2is/wso2carbon.crt /wso2carbon.crt
-RUN keytool -noprompt -importcert -file /wso2carbon.crt -alias randomaliasname -keystore /usr/lib/jvm/default-jvm/jre/lib/security/cacerts -storepass changeit && rm /wso2carbon.crt
 
 EXPOSE 8080
 

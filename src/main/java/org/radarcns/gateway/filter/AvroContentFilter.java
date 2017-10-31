@@ -1,15 +1,13 @@
 package org.radarcns.gateway.filter;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Writer;
+import org.radarcns.gateway.util.ServletInputStreamWrapper;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -21,8 +19,11 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
-import org.radarcns.gateway.model.RadarUserToken;
-import org.radarcns.gateway.util.ServletInputStreamWrapper;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Writer;
 
 public class AvroContentFilter implements Filter {
     private JsonFactory factory;
@@ -56,8 +57,8 @@ public class AvroContentFilter implements Filter {
             return;
         }
 
-        RadarUserToken token = (RadarUserToken)request.getAttribute("token");
-        if (token == null || token.getUser() == null) {
+        DecodedJWT token = (DecodedJWT) request.getAttribute("jwt");
+        if (token == null || token.getSubject() == null) {
             this.context.log("Request was not authenticated by a previous filter: "
                     + "no token attribute found or no user found");
             res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -94,7 +95,7 @@ public class AvroContentFilter implements Filter {
     }
 
     /** Parse Kafka REST proxy payload. */
-    private void parseRequest(byte[] data, RadarUserToken token) throws IOException {
+    private void parseRequest(byte[] data, DecodedJWT token) throws IOException {
         JsonParser parser = factory.createParser(data);
 
         boolean hasKeySchema = false;
@@ -128,7 +129,7 @@ public class AvroContentFilter implements Filter {
         }
     }
 
-    private void parseRecords(JsonParser parser, RadarUserToken token) throws IOException {
+    private void parseRecords(JsonParser parser, DecodedJWT token) throws IOException {
         if (parser.nextToken() != JsonToken.START_ARRAY) {
             throw semanticException(parser, "Expecting JSON array for records field");
         }
@@ -159,7 +160,7 @@ public class AvroContentFilter implements Filter {
     }
 
     /** Parse single record key. */
-    private void parseKey(JsonParser parser, RadarUserToken token) throws IOException {
+    private void parseKey(JsonParser parser, DecodedJWT token) throws IOException {
         if (parser.nextToken() != JsonToken.START_OBJECT) {
             throw semanticException(parser, "Field key must be a JSON object");
         }
@@ -170,8 +171,8 @@ public class AvroContentFilter implements Filter {
                     throw semanticException(parser, "userId field string");
                 }
                 String userId = parser.getValueAsString();
-                if (!userId.equals(token.getUser())) {
-                    throw semanticException(parser, "record userID '" + userId + "' does not match authenticated user ID '" + token.getUser() + '\'');
+                if (!userId.equals(token.getSubject())) {
+                    throw semanticException(parser, "record userID '" + userId + "' does not match authenticated user ID '" + token.getSubject() + '\'');
                 }
             } else {
                 skipToEndOfValue(parser);
