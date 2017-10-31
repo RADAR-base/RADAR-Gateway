@@ -32,7 +32,7 @@ ext.httpProxyVersion = '1.9'
 
 repositories {
     jcenter()
-    maven { url "${rootProject.projectDir}/libs" }
+    maven { url 'https://oss.jfrog.org/artifactory/libs-snapshot/' }
     maven { url 'http://packages.confluent.io/maven/' }
     maven { url 'https://jitpack.io' }
     maven { url 'http://dl.bintray.com/typesafe/maven-releases' }
@@ -45,7 +45,7 @@ configurations {
 dependencies {
     compile group: 'org.mitre.dsmiley.httpproxy' , name: 'smiley-http-proxy-servlet' , version: httpProxyVersion
     compile group: 'javax.servlet' , name: 'servlet-api' , version: '2.4'
-    compile group: 'org.radarcns' , name: 'radar-identity' , version: '1.0-SNAPSHOT'
+    compile group: 'org.radarcns', name: 'radar-auth', version: '0.1-SNAPSHOT', changing: true
 
     testImplementation group: 'junit', name: 'junit', version: junitVersion
 
@@ -56,11 +56,6 @@ dependencies {
 //---------------------------------------------------------------------------//
 // Dependencies                                                              //
 //---------------------------------------------------------------------------//
-repositories {
-    jcenter()
-    maven { url 'http://packages.confluent.io/maven/' }
-    maven { url 'http://dl.bintray.com/typesafe/maven-releases' }
-}
 
 ext.pomConfig = {
     licenses {
@@ -213,6 +208,6 @@ war {
 
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.1'
-    distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
+    gradleVersion '4.1'
+    distributionType 'all'
 }
