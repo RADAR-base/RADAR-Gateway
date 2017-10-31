@@ -89,8 +89,6 @@ public class AvroContentFilter implements Filter {
 
     @Override
     public void destroy() {
-        this.context = null;
-        this.factory = null;
     }
 
     /** Parse Kafka REST proxy payload. */

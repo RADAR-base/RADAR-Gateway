@@ -1,3 +1,7 @@
+buildscript {
+    ext.kotlinVersion = '1.1.4-3'
+}
+
 plugins {
     id 'java'
     id 'idea'
@@ -5,6 +9,7 @@ plugins {
     id 'pmd'
     id 'jacoco'
     id 'war'
+    id "org.jetbrains.kotlin.jvm" version '1.1.4-3'
     id 'org.akhikhl.gretty' version '1.4.2'
 }
 
@@ -45,6 +50,7 @@ dependencies {
     testImplementation group: 'junit', name: 'junit', version: junitVersion
 
     codacy group: 'com.github.codacy', name: 'codacy-coverage-reporter', version: codacyVersion
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlinVersion
 }
 
 //---------------------------------------------------------------------------//
@@ -83,6 +89,17 @@ ext.pomConfig = {
     scm {
         connection 'scm:git:' + githubUrl
         url githubUrl
+    }
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
     }
 }
 
@@ -196,6 +213,6 @@ war {
 
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.4.1'
+    gradleVersion = '4.1'
     distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }

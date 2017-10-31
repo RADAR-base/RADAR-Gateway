@@ -33,6 +33,16 @@
   </filter-mapping>
 
   <filter>
+    <filter-name>KafkaTopicFilter</filter-name>
+    <filter-class>org.radarcns.gateway.filter.KafkaTopicFilter</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>KafkaTopicFilter</filter-name>
+    <url-pattern>/topics/*</url-pattern>
+  </filter-mapping>
+
+  <filter>
     <filter-name>GzipUncompressFilter</filter-name>
     <filter-class>org.radarcns.gateway.filter.GzipUncompressFilter</filter-class>
   </filter>
