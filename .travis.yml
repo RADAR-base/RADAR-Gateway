@@ -20,12 +20,7 @@ deploy:
     api_key: ${GH_TOKEN}
     file_glob: true
     file:
-      - "build/libs/*.jar"
-    skip_cleanup: true
-    on:
-      tags: true
-  - provider: script
-    script: ./gradlew bintrayUpload
+      - "build/libs/*.war"
     skip_cleanup: true
     on:
       tags: true
