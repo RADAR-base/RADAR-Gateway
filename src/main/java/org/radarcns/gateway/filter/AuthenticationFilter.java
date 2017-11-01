@@ -1,5 +1,6 @@
 package org.radarcns.gateway.filter;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.http.HttpHeaders;
 import org.radarcns.auth.authentication.TokenValidator;
 import org.radarcns.auth.config.ServerConfig;

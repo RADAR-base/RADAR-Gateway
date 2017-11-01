@@ -26,9 +26,10 @@ ext.description = 'RADAR Gateway to handle secured data flow to backend.'
 sourceCompatibility = '1.7'
 targetCompatibility = '1.7'
 
-ext.junitVersion = '4.12'
+ext.junitVersion = '5.0.1'
 ext.codacyVersion = '1.0.10'
 ext.httpProxyVersion = '1.9'
+ext.okhttp3Version = '3.9.0'
 
 repositories {
     jcenter()
@@ -42,12 +43,20 @@ configurations {
     codacy
 }
 
+configurations.all {
+    // Check for updates every build
+    resolutionStrategy.cacheChangingModulesFor 0, 'SECONDS'
+}
+
 dependencies {
     compile group: 'org.mitre.dsmiley.httpproxy' , name: 'smiley-http-proxy-servlet' , version: httpProxyVersion
     compile group: 'javax.servlet' , name: 'servlet-api' , version: '2.4'
     compile group: 'org.radarcns', name: 'radar-auth', version: '0.1-SNAPSHOT', changing: true
+    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
 
-    testImplementation group: 'junit', name: 'junit', version: junitVersion
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.+'
+    testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: okhttp3Version
 
     codacy group: 'com.github.codacy', name: 'codacy-coverage-reporter', version: codacyVersion
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlinVersion

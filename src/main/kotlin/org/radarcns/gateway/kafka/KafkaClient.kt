@@ -17,7 +17,10 @@ class KafkaClient(private val restProxyBaseUrl: String) {
             if (!response.isSuccessful) {
                 throw IOException("Cannot query rest proxy url: " + response.code())
             }
-            stringArrayReader.readValue<Array<String>>(response.body().byteStream()).toSet()
+            val input = response.body()?.byteStream() ?: throw IOException(
+                    "Rest proxy did not return any data")
+
+            stringArrayReader.readValue<Array<String>>(input).toSet()
         }
     }
 }

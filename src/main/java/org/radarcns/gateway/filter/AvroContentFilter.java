@@ -1,5 +1,6 @@
 package org.radarcns.gateway.filter;
 
+import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonLocation;
@@ -24,6 +25,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.util.HashSet;
+import java.util.Set;
 
 public class AvroContentFilter implements Filter {
     private JsonFactory factory;
@@ -64,10 +67,22 @@ public class AvroContentFilter implements Filter {
             res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
         }
+        Claim sourceClaim = token.getClaim("sources");
+        if (sourceClaim == null) {
+            context.log("Request JWT did not include sources");
+            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        Set<String> sources = new HashSet<>(token.getClaim("sources").asList(String.class));
+        if (sources.isEmpty()) {
+            context.log("Request JWT did not contain source IDs");
+            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
 
         try (ServletInputStream stream = request.getInputStream()) {
             final byte[] data = ServletInputStreamWrapper.readFully(stream);
-            parseRequest(data, token);
+            parseRequest(data, token, sources);
 
             chain.doFilter(new HttpServletRequestWrapper(req) {
                 @Override
@@ -93,7 +108,7 @@ public class AvroContentFilter implements Filter {
     }
 
     /** Parse Kafka REST proxy payload. */
-    private void parseRequest(byte[] data, DecodedJWT token) throws IOException {
+    private void parseRequest(byte[] data, DecodedJWT token, Set<String> sources) throws IOException {
         JsonParser parser = factory.createParser(data);
 
         boolean hasKeySchema = false;
@@ -113,7 +128,7 @@ public class AvroContentFilter implements Filter {
                     parser.nextToken(); // value
                     break;
                 case "records":
-                    parseRecords(parser, token);
+                    parseRecords(parser, token, sources);
                     break;
                 default:
                     skipToEndOfValue(parser);
@@ -127,7 +142,7 @@ public class AvroContentFilter implements Filter {
         }
     }
 
-    private void parseRecords(JsonParser parser, DecodedJWT token) throws IOException {
+    private void parseRecords(JsonParser parser, DecodedJWT token, Set<String> sources) throws IOException {
         if (parser.nextToken() != JsonToken.START_ARRAY) {
             throw semanticException(parser, "Expecting JSON array for records field");
         }
@@ -139,7 +154,7 @@ public class AvroContentFilter implements Filter {
                 String fieldName = parser.getCurrentName();
                 if (fieldName.equals("key")) {
                     foundKey = true;
-                    parseKey(parser, token);
+                    parseKey(parser, token, sources);
                 } else {
                     if (fieldName.equals("value")) {
                         foundValue = true;
@@ -158,7 +173,7 @@ public class AvroContentFilter implements Filter {
     }
 
     /** Parse single record key. */
-    private void parseKey(JsonParser parser, DecodedJWT token) throws IOException {
+    private void parseKey(JsonParser parser, DecodedJWT token, Set<String> sources) throws IOException {
         if (parser.nextToken() != JsonToken.START_OBJECT) {
             throw semanticException(parser, "Field key must be a JSON object");
         }
@@ -170,7 +185,15 @@ public class AvroContentFilter implements Filter {
                 }
                 String userId = parser.getValueAsString();
                 if (!userId.equals(token.getSubject())) {
-                    throw semanticException(parser, "record userID '" + userId + "' does not match authenticated user ID '" + token.getSubject() + '\'');
+                    throw semanticException(parser, "record userId '" + userId + "' does not match authenticated user ID '" + token.getSubject() + '\'');
+                }
+            } else if (parser.getCurrentName().equals("sourceId")) {
+                if (parser.nextToken() != JsonToken.VALUE_STRING) {
+                    throw semanticException(parser, "sourceId field string");
+                }
+                String sourceId = parser.getValueAsString();
+                if (!sources.contains(sourceId)) {
+                    throw semanticException(parser, "record sourceId '" + sourceId + "' has not been added to JWT allowed IDs " + sources + ".");
                 }
             } else {
                 skipToEndOfValue(parser);
