@@ -1,5 +1,8 @@
 buildscript {
     ext.kotlinVersion = '1.1.4-3'
+    dependencies {
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.1'
+    }
 }
 
 plugins {
@@ -13,6 +16,8 @@ plugins {
     id 'org.akhikhl.gretty' version '1.4.2'
 }
 
+apply plugin: 'org.junit.platform.gradle.plugin'
+
 group 'org.radarcns'
 version '1.0-SNAPSHOT'
 
@@ -22,9 +27,8 @@ ext.issueUrl = 'https://github.com/' + githubRepoName + '/issues'
 ext.website = 'http://radar-cns.org'
 ext.description = 'RADAR Gateway to handle secured data flow to backend.'
 
-
-sourceCompatibility = '1.7'
-targetCompatibility = '1.7'
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
 
 ext.junitVersion = '5.0.1'
 ext.codacyVersion = '1.0.10'
@@ -57,6 +61,7 @@ dependencies {
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.+'
     testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: okhttp3Version
+    testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
 
     codacy group: 'com.github.codacy', name: 'codacy-coverage-reporter', version: codacyVersion
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlinVersion
