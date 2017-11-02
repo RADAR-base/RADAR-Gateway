@@ -12,9 +12,6 @@ cache:
     - $HOME/.gradle/native
     - $HOME/.gradle/wrapper
 
-after_script:
-  - ./gradlew sendCoverageToCodacy
-
 deploy:
   - provider: releases
     api_key: ${GH_TOKEN}

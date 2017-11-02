@@ -10,7 +10,6 @@ plugins {
     id 'idea'
     id 'checkstyle'
     id 'pmd'
-    id 'jacoco'
     id 'war'
     id "org.jetbrains.kotlin.jvm" version '1.1.4-3'
     id 'org.akhikhl.gretty' version '1.4.2'
@@ -31,20 +30,12 @@ sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
 ext.junitVersion = '5.0.1'
-ext.codacyVersion = '1.0.10'
 ext.httpProxyVersion = '1.9'
 ext.okhttp3Version = '3.9.0'
 
 repositories {
     jcenter()
     maven { url 'https://oss.jfrog.org/artifactory/libs-snapshot/' }
-    maven { url 'http://packages.confluent.io/maven/' }
-    maven { url 'https://jitpack.io' }
-    maven { url 'http://dl.bintray.com/typesafe/maven-releases' }
-}
-
-configurations {
-    codacy
 }
 
 configurations.all {
@@ -63,7 +54,6 @@ dependencies {
     testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: okhttp3Version
     testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
 
-    codacy group: 'com.github.codacy', name: 'codacy-coverage-reporter', version: codacyVersion
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlinVersion
 }
 
@@ -143,14 +133,6 @@ pmd {
     ruleSetFiles = files(rootProject.file("config/pmd/ruleset.xml"))
 }
 
-jacocoTestReport {
-    reports {
-        xml.enabled true
-        csv.enabled false
-        html.enabled false
-    }
-}
-
 //---------------------------------------------------------------------------//
 // Testing                                                                   //
 //---------------------------------------------------------------------------//
@@ -194,32 +176,8 @@ tasks.matching { it instanceof Test }.all {
 project.afterEvaluate {
     task downloadDependencies(type: Exec) {
         configurations.testRuntime.files
-        configurations.codacy.files
-        configurations.jacocoAnt.files
         commandLine 'echo', 'Downloaded all dependencies'
     }
-
-    def junitPlatformTestTask = project.tasks.getByName('junitPlatformTest')
-
-    // configure jacoco to analyze the junitPlatformTest task
-    jacoco {
-        // this tool version is compatible with
-        toolVersion = "0.7.6.201602180812"
-        applyTo junitPlatformTestTask
-    }
-
-    // create junit platform jacoco task
-    project.task(type: JacocoReport, "junitPlatformJacocoReport", {
-        sourceDirectories = files("./src/main")
-        classDirectories = files("$buildDir/classes/main")
-        executionData junitPlatformTestTask
-    })
-}
-
-task sendCoverageToCodacy(type: JavaExec, dependsOn: jacocoTestReport) {
-    main = 'com.codacy.CodacyCoverageReporter'
-    classpath = configurations.codacy
-    args = ['-l', 'Java', '-r', "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"]
 }
 
 //---------------------------------------------------------------------------//
