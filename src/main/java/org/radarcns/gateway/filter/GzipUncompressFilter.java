@@ -63,6 +63,6 @@ public class GzipUncompressFilter implements Filter {
 
     @Override
     public void destroy() {
-        context = null;
+        // nothing to destroy
     }
 }

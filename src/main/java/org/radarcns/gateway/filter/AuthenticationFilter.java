@@ -6,7 +6,6 @@ import org.radarcns.auth.config.ServerConfig;
 import org.radarcns.auth.config.YamlServerConfig;
 import org.radarcns.auth.exception.TokenValidationException;
 
-import javax.naming.Context;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -17,11 +16,10 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.interfaces.RSAPublicKey;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.Locale;
 
 /**
  * Created by dverbeec on 27/09/2017.
@@ -29,7 +27,7 @@ import java.util.function.Supplier;
 public class AuthenticationFilter implements Filter {
     private ServletContext context;
 
-    private static TokenValidator validator;
+    private static SoftReference<TokenValidator> validator = new SoftReference<>(null);
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -38,7 +36,8 @@ public class AuthenticationFilter implements Filter {
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
         String token = getToken(request);
         HttpServletResponse res = (HttpServletResponse) response;
         if (token == null) {
@@ -57,8 +56,9 @@ public class AuthenticationFilter implements Filter {
         }
     }
 
-    private synchronized static TokenValidator getValidator(ServletContext context) {
-        if (validator == null) {
+    private static synchronized TokenValidator getValidator(ServletContext context) {
+        TokenValidator localValidator = validator.get();
+        if (localValidator == null) {
             ServerConfig config = null;
             String mpUrlString = context.getInitParameter("managementPortalUrl");
             if (mpUrlString != null) {
@@ -71,14 +71,15 @@ public class AuthenticationFilter implements Filter {
                 }
             }
 
-            validator = config == null ? new TokenValidator() : new TokenValidator(config);
+            localValidator = config == null ? new TokenValidator() : new TokenValidator(config);
+            validator = new SoftReference<>(localValidator);
         }
-        return validator;
+        return localValidator;
     }
 
     @Override
     public void destroy() {
-        this.context = null;
+        // nothing to destroy
     }
 
     private String getToken(ServletRequest request) {
@@ -87,7 +88,7 @@ public class AuthenticationFilter implements Filter {
 
         // Check if the HTTP Authorization header is present and formatted correctly
         if (authorizationHeader == null
-                || !authorizationHeader.toLowerCase().startsWith("bearer ")) {
+                || !authorizationHeader.toLowerCase(Locale.US).startsWith("bearer ")) {
             this.context.log("No authorization header provided in the request");
             return null;
         }
