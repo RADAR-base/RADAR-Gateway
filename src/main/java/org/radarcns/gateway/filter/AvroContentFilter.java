@@ -21,7 +21,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import static org.radarcns.gateway.util.JsonUtil.jsonErrorResponse;
+import static org.radarcns.gateway.kafka.AvroValidator.Util;
 
 public class AvroContentFilter implements Filter {
     private ServletContext context;
@@ -51,7 +51,7 @@ public class AvroContentFilter implements Filter {
         if (!req.getContentType().startsWith("application/vnd.kafka.avro.v1+json")
                 && !req.getContentType().startsWith("application/vnd.kafka.avro.v2+json")) {
             this.context.log("Got incompatible media type");
-            jsonErrorResponse(res, HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+            Util.jsonErrorResponse(res, HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     "unsupported_media_type", "Only Avro JSON messages are supported");
             return;
         }
@@ -60,6 +60,8 @@ public class AvroContentFilter implements Filter {
         if (token == null) {
             this.context.log("Request was not authenticated by a previous filter: "
                     + "no token attribute found or no user found");
+            Util.jsonErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "server_error", "configuration error");
             res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
         }
@@ -82,15 +84,15 @@ public class AvroContentFilter implements Filter {
                 }
             }, response);
         } catch (JsonParseException ex) {
-            jsonErrorResponse(res, HttpServletResponse.SC_BAD_REQUEST, "malformed_content",
+            Util.jsonErrorResponse(res, HttpServletResponse.SC_BAD_REQUEST, "malformed_content",
                     ex.getMessage());
         } catch (IOException ex) {
             context.log("IOException", ex);
-            jsonErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            Util.jsonErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "server_exception",
                     "Failed to process message: " + ex.getMessage());
         } catch (IllegalArgumentException ex) {
-            jsonErrorResponse(res, 422, "invalid_content", ex.getMessage());
+            Util.jsonErrorResponse(res, 422, "invalid_content", ex.getMessage());
         }
     }
 

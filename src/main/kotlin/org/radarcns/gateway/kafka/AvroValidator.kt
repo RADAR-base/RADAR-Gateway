@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import java.io.IOException
+import javax.servlet.http.HttpServletResponse
 
 class AvroValidator {
     private val factory = JsonFactory()
@@ -134,6 +135,27 @@ class AvroValidator {
         // skip nested contents
         if (nextToken == JsonToken.START_ARRAY || nextToken == JsonToken.START_OBJECT) {
             parser.skipChildren()
+        }
+    }
+
+    companion object Util {
+        /** Return a JSON error string.  */
+        @Throws(IOException::class)
+        fun jsonErrorResponse(response: HttpServletResponse, statusCode: Int, error: String,
+                              errorDescription: String) {
+            response.setStatus(statusCode)
+            response.setHeader("Content-Type", "application/json; charset=utf-8")
+            response.writer.use { writer ->
+                writer.write("{\"error_code\":")
+                writer.write(Integer.toString(statusCode))
+                writer.write(",\"message\":\"")
+                writer.write(error)
+                writer.write(": ")
+                writer.write(errorDescription
+                        .replace("\n", "")
+                        .replace("\"", "'"))
+                writer.write("\"}")
+            }
         }
     }
 }
