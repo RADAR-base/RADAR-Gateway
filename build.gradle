@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlinVersion = '1.1.4-3'
+    ext.kotlinVersion = '1.1.51'
     dependencies {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.1'
     }
@@ -12,7 +12,7 @@ plugins {
     id 'pmd'
     id 'jacoco'
     id 'war'
-    id "org.jetbrains.kotlin.jvm" version '1.1.4-3'
+    id "org.jetbrains.kotlin.jvm" version '1.1.51'
     id 'org.akhikhl.gretty' version '1.4.2'
 }
 

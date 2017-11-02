@@ -9,7 +9,7 @@
     <servlet-class>org.mitre.dsmiley.httpproxy.ProxyServlet</servlet-class>
     <init-param>
       <param-name>targetUri</param-name>
-      <param-value>http://localhost:8082</param-value>
+      <param-value>http://rest-proxy-1:8082</param-value>
     </init-param>
     <init-param>
       <param-name>log</param-name>
@@ -37,7 +37,7 @@
     <filter-class>org.radarcns.gateway.filter.KafkaTopicFilter</filter-class>
     <init-param>
       <param-name>targetUri</param-name>
-      <param-value>http://localhost:8082</param-value>
+      <param-value>http://rest-proxy-1:8082</param-value>
     </init-param>
   </filter>
 
