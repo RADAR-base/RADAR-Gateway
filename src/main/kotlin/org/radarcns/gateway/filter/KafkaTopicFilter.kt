@@ -12,18 +12,20 @@ private val SUCCESS_TIMEOUT = Duration.ofHours(1)
 private val FAILURE_TIMEOUT = Duration.ofMinutes(1)
 
 class KafkaTopicFilter : Filter {
-    private var context: ServletContext? = null
-    private var client: KafkaClient? = null
+    private lateinit var context: ServletContext
+    private lateinit var client: KafkaClient
     private var previousTopics: Set<String> = HashSet()
     private var fetchTime: Instant = Instant.EPOCH
 
     @Throws(ServletException::class)
     override fun init(filterConfig: FilterConfig) {
         this.context = filterConfig.servletContext
-        this.context!!.log("KafkaTopicFilter initialized")
-        val restProxyUrl = this.context!!.getInitParameter("targetUri")
+
+        val restProxyUrl = filterConfig.getInitParameter("targetUri")
         this.client = KafkaClient(restProxyUrl)
         updateTopics()
+
+        this.context.log("KafkaTopicFilter initialized")
     }
 
     @Throws(IOException::class, ServletException::class)
@@ -54,11 +56,11 @@ class KafkaTopicFilter : Filter {
 
     private fun updateTopics(): Boolean {
         return try {
-            previousTopics = client!!.getSubjects()
+            previousTopics = client.getSubjects()
             fetchTime = Instant.now()
             true
         } catch (ex: IOException) {
-            this.context!!.log("Failed to retrieve subjects", ex)
+            this.context.log("Failed to retrieve subjects", ex)
             false
         }
     }
