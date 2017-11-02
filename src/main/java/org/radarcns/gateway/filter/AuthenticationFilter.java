@@ -27,7 +27,7 @@ import java.util.Locale;
 public class AuthenticationFilter implements Filter {
     private ServletContext context;
 
-    private static SoftReference<TokenValidator> validator;
+    private static SoftReference<TokenValidator> validator = new SoftReference<>(null);
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -56,7 +56,7 @@ public class AuthenticationFilter implements Filter {
         }
     }
 
-    private synchronized static TokenValidator getValidator(ServletContext context) {
+    private static synchronized TokenValidator getValidator(ServletContext context) {
         TokenValidator localValidator = validator.get();
         if (localValidator == null) {
             ServerConfig config = null;

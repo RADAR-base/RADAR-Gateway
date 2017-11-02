@@ -43,7 +43,6 @@ class AuthenticationFilterTest {
         val context = mock(ServletContext::class.java)
         `when`(config.servletContext).thenReturn(context)
         `when`(context.log(ArgumentMatchers.anyString())).then { System.out.println(it) }
-//        `when`(context.getAttribute(eq("managementPortalUrl"))).thenReturn(server.url("/oauth/token_key"))
         filter.init(config)
         request = mock(HttpServletRequest::class.java)
         response = mock(HttpServletResponse::class.java)
@@ -87,7 +86,8 @@ class AuthenticationFilterTest {
         `when`(request.getHeader(eq("Authorization"))).thenReturn("Bearer " + token)
         `when`(request.setAttribute(eq("jwt"), any())).then { invocation ->
             val jwt = invocation.getArgument<DecodedJWT>(1)!!
-            assertEquals(listOf("a", "b"), jwt.getClaim("sources").asList(String::class.java))
+            assertEquals(listOf("a", "b"),
+                    jwt.getClaim("sources").asList(String::class.java))
             assertEquals("user1", jwt.subject)
         }
 

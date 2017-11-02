@@ -50,12 +50,13 @@ public class ServletInputStreamWrapper extends ServletInputStream {
         stream.close();
     }
 
+    /** read all bytes from a stream. Will not return on infinite streams. */
     public static byte[] readFully(InputStream stream) throws IOException {
         try (ByteArrayOutputStream dataStream = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[4096];
-            int nRead;
-            while ((nRead = stream.read(buffer, 0, buffer.length)) != -1) {
-                dataStream.write(buffer, 0, nRead);
+            int numRead;
+            while ((numRead = stream.read(buffer, 0, buffer.length)) != -1) {
+                dataStream.write(buffer, 0, numRead);
             }
             return dataStream.toByteArray();
         }

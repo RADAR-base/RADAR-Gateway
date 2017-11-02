@@ -8,7 +8,8 @@ import java.io.IOException
 
 class KafkaClient(private val restProxyBaseUrl: String) {
     private val client: OkHttpClient = OkHttpClient.Builder().build()
-    private val stringArrayReader: ObjectReader = ObjectMapper().readerFor(Array<String>::class.java)
+    private val stringArrayReader: ObjectReader = ObjectMapper().readerFor(
+            Array<String>::class.java)
 
     @Throws(IOException::class)
     fun getSubjects(): Set<String> {
