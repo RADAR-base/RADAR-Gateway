@@ -12,7 +12,7 @@ services:
   # Zookeeper Cluster                                                         #
   #---------------------------------------------------------------------------#
   zookeeper-1:
-    image: confluentinc/cp-zookeeper:3.1.2-1
+    image: confluentinc/cp-zookeeper:3.3.0
     networks:
       - zookeeper
     environment:
@@ -27,7 +27,7 @@ services:
   # Kafka Cluster                                                             #
   #---------------------------------------------------------------------------#
   kafka-1:
-    image: confluentinc/cp-kafka:3.1.2-1
+    image: confluentinc/cp-kafka:3.3.0
     networks:
       - kafka
       - zookeeper
@@ -39,11 +39,37 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
+  kafka-2:
+    image: confluentinc/cp-kafka:3.3.0
+    networks:
+      - kafka
+      - zookeeper
+    depends_on:
+      - zookeeper-1
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  kafka-3:
+    image: confluentinc/cp-kafka:3.3.0
+    networks:
+      - kafka
+      - zookeeper
+    depends_on:
+      - zookeeper-1
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
   #---------------------------------------------------------------------------#
   # Schema Registry                                                           #
   #---------------------------------------------------------------------------#
   schema-registry-1:
-    image: confluentinc/cp-schema-registry:3.1.2-1
+    image: confluentinc/cp-schema-registry:3.3.0
     networks:
       - kafka
       - zookeeper
@@ -61,17 +87,20 @@ services:
   # REST proxy                                                                #
   #---------------------------------------------------------------------------#
   rest-proxy-1:
-    image: confluentinc/cp-kafka-rest:3.1.2-1
+    image: confluentinc/cp-kafka-rest:3.3.0
     networks:
       - kafka
       - zookeeper
     depends_on:
       - kafka-1
+      - kafka-2
+      - kafka-3
       - schema-registry-1
     ports:
       - "8082:8082"
     environment:
       KAFKA_REST_ZOOKEEPER_CONNECT: zookeeper-1:2181
+      KAFKA_REST_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092,PLAINTEXT://kafka-2:9092,PLAINTEXT://kafka-3:9092
       KAFKA_REST_LISTENERS: http://rest-proxy-1:8082
       KAFKA_REST_SCHEMA_REGISTRY_URL: http://schema-registry-1:8081
       KAFKA_REST_HOST_NAME: rest-proxy-1
