@@ -1,17 +1,24 @@
+buildscript {
+    ext.kotlinVersion = '1.1.51'
+    dependencies {
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.1'
+    }
+}
+
 plugins {
     id 'java'
-    id 'java-library'
-//    id 'com.jfrog.bintray' version '1.7.3'
-//    id 'maven-publish'
     id 'idea'
     id 'checkstyle'
     id 'pmd'
-    id 'jacoco'
     id 'war'
+    id "org.jetbrains.kotlin.jvm" version '1.1.51'
+    id 'org.akhikhl.gretty' version '1.4.2'
 }
 
+apply plugin: 'org.junit.platform.gradle.plugin'
+
 group 'org.radarcns'
-version '1.0-SNAPSHOT'
+version '0.1'
 
 ext.githubRepoName = 'RADAR-CNS/RADAR-Gateway'
 ext.githubUrl = 'https://github.com/' + githubRepoName + '.git'
@@ -19,44 +26,40 @@ ext.issueUrl = 'https://github.com/' + githubRepoName + '/issues'
 ext.website = 'http://radar-cns.org'
 ext.description = 'RADAR Gateway to handle secured data flow to backend.'
 
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
 
-sourceCompatibility = '1.7'
-targetCompatibility = '1.7'
-
-ext.junitVersion = '4.12'
-ext.codacyVersion = '1.0.10'
+ext.junitVersion = '5.0.1'
 ext.httpProxyVersion = '1.9'
+ext.okhttp3Version = '3.9.0'
 
 repositories {
     jcenter()
-    maven { url "${rootProject.projectDir}/libs" }
-    maven { url 'http://packages.confluent.io/maven/' }
-    maven { url 'https://jitpack.io' }
-    maven { url 'http://dl.bintray.com/typesafe/maven-releases' }
+    maven { url 'https://oss.jfrog.org/artifactory/libs-snapshot/' }
 }
 
-configurations {
-    codacy
+configurations.all {
+    // Check for updates every build
+    resolutionStrategy.cacheChangingModulesFor 0, 'SECONDS'
 }
-
 
 dependencies {
-    api group: 'org.mitre.dsmiley.httpproxy' , name: 'smiley-http-proxy-servlet' , version: httpProxyVersion
-    implementation group: 'javax.servlet' , name: 'servlet-api' , version: '2.4'
+    compile group: 'org.mitre.dsmiley.httpproxy' , name: 'smiley-http-proxy-servlet' , version: httpProxyVersion
+    compile group: 'javax.servlet' , name: 'servlet-api' , version: '2.4'
+    compile group: 'org.radarcns', name: 'radar-auth', version: '0.1-SNAPSHOT', changing: true
+    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
 
-    testImplementation group: 'junit', name: 'junit', version: junitVersion
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.+'
+    testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: okhttp3Version
+    testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
 
-    codacy group: 'com.github.codacy', name: 'codacy-coverage-reporter', version: codacyVersion
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlinVersion
 }
 
 //---------------------------------------------------------------------------//
 // Dependencies                                                              //
 //---------------------------------------------------------------------------//
-repositories {
-    jcenter()
-    maven { url 'http://packages.confluent.io/maven/' }
-    maven { url 'http://dl.bintray.com/typesafe/maven-releases' }
-}
 
 ext.pomConfig = {
     licenses {
@@ -67,6 +70,18 @@ ext.pomConfig = {
         }
     }
     developers {
+        developer {
+            id 'blootsvoets'
+            name 'Joris Borgdorff'
+            email 'joris@thehyve.nl'
+            organization 'The Hyve'
+        }
+        developer {
+            id 'dennyverbeeck'
+            name 'Denny Verbeeck'
+            email 'dverbeec@its.jnj.com'
+            organization 'Johnson & Johnson'
+        }
         developer {
             id 'nivemaham'
             name 'Nivethika Mahasivam'
@@ -88,6 +103,17 @@ ext.pomConfig = {
     }
 }
 
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
 idea {
     module {
         downloadSources = true
@@ -101,7 +127,7 @@ idea {
 checkstyle {
     // codacy version
     toolVersion '6.16'
-    ignoreFailures false
+    ignoreFailures true
 
     configFile = rootProject.file('config/checkstyle/checkstyle.xml')
     sourceSets = [sourceSets.main]
@@ -110,21 +136,13 @@ checkstyle {
 pmd {
     // codacy version
     toolVersion = '5.5.2'
-    ignoreFailures = false
+    ignoreFailures = true
     sourceSets = [sourceSets.main]
 
     consoleOutput = true
 
     ruleSets = []
     ruleSetFiles = files(rootProject.file("config/pmd/ruleset.xml"))
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled true
-        csv.enabled false
-        html.enabled false
-    }
 }
 
 //---------------------------------------------------------------------------//
@@ -167,17 +185,11 @@ tasks.matching { it instanceof Test }.all {
     }
 }
 
-task downloadDependencies(type: Exec) {
-    configurations.testRuntime.files
-    configurations.codacy.files
-    configurations.jacocoAnt.files
-    commandLine 'echo', 'Downloaded all dependencies'
-}
-
-task sendCoverageToCodacy(type: JavaExec, dependsOn: jacocoTestReport) {
-    main = 'com.codacy.CodacyCoverageReporter'
-    classpath = configurations.codacy
-    args = ['-l', 'Java', '-r', "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"]
+project.afterEvaluate {
+    task downloadDependencies(type: Exec) {
+        configurations.testRuntime.files
+        commandLine 'echo', 'Downloaded all dependencies'
+    }
 }
 
 //---------------------------------------------------------------------------//
@@ -188,13 +200,14 @@ ext.sharedManifest = manifest {
     attributes("Implementation-Title": rootProject.name,
             "Implementation-Version": version)
 }
+
 war {
-    archiveName = rootProject.name+'.war'
+    archiveName = "${rootProject.name}.war"
     manifest.from sharedManifest
 }
 
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.4.1'
-    distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
+    gradleVersion '4.1'
+    distributionType 'all'
 }
