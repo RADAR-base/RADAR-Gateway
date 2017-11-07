@@ -10,19 +10,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:8-alpine
+FROM openjdk:8-alpine as builder
 
 RUN mkdir /code
 WORKDIR /code
 COPY ./gradle/ /code/gradle
 COPY ./build.gradle ./gradlew ./settings.gradle /code/
 
-RUN ./gradlew downloadDependencies
+RUN ./gradlew --no-daemon downloadDependencies
 
 COPY ./src/ /code/src
 COPY ./src/main/docker/web.xml /code/src/main/webapp/WEB-INF/web.xml
 
-RUN ./gradlew war
+RUN ./gradlew --no-daemon -Pkotlin.incremental=false war
 
 FROM tomcat:8-jre8-alpine
 
@@ -32,7 +32,7 @@ MAINTAINER @blootsvoets
 
 LABEL description="RADAR-CNS Gateway docker container"
 
-COPY --from=0 /code/build/libs/radar-gateway.war /usr/local/tomcat/webapps/radar-gateway.war
+COPY --from=builder /code/build/libs/radar-gateway.war /usr/local/tomcat/webapps/radar-gateway.war
 
 EXPOSE 8080
 
