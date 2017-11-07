@@ -18,7 +18,7 @@ plugins {
 apply plugin: 'org.junit.platform.gradle.plugin'
 
 group 'org.radarcns'
-version '0.1.1-SNAPSHOT'
+version '0.1.1'
 
 ext.githubRepoName = 'RADAR-CNS/RADAR-Gateway'
 ext.githubUrl = 'https://github.com/' + githubRepoName + '.git'
