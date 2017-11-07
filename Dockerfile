@@ -22,7 +22,7 @@ RUN ./gradlew --no-daemon downloadDependencies
 COPY ./src/ /code/src
 COPY ./src/main/docker/web.xml /code/src/main/webapp/WEB-INF/web.xml
 
-RUN ./gradlew --no-daemon -Pkotlin.incremental=false war
+RUN ./gradlew --no-daemon -Dorg.gradle.parallel=false -Pkotlin.incremental=false war
 
 FROM tomcat:8-jre8-alpine
 
