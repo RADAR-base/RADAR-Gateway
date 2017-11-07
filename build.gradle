@@ -18,7 +18,7 @@ plugins {
 apply plugin: 'org.junit.platform.gradle.plugin'
 
 group 'org.radarcns'
-version '0.1'
+version '0.1.1'
 
 ext.githubRepoName = 'RADAR-CNS/RADAR-Gateway'
 ext.githubUrl = 'https://github.com/' + githubRepoName + '.git'
@@ -205,7 +205,6 @@ war {
     archiveName = "${rootProject.name}.war"
     manifest.from sharedManifest
 }
-
 
 task wrapper(type: Wrapper) {
     gradleVersion '4.1'

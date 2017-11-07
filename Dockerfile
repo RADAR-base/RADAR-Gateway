@@ -20,7 +20,7 @@ COPY ./build.gradle ./gradlew ./settings.gradle /code/
 RUN ./gradlew downloadDependencies
 
 COPY ./src/ /code/src
-COPY ./src/main/docker/web.xml /code/src/webapp/WEB-INF/web.xml
+COPY ./src/main/docker/web.xml /code/src/main/webapp/WEB-INF/web.xml
 
 RUN ./gradlew war
 
