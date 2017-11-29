@@ -2,6 +2,7 @@ package org.radarcns.gateway.filter;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.core.JsonParseException;
+import org.apache.http.auth.AuthenticationException;
 import org.radarcns.gateway.kafka.AvroValidator;
 import org.radarcns.gateway.util.ServletInputStreamWrapper;
 
@@ -86,6 +87,9 @@ public class AvroContentFilter implements Filter {
         } catch (JsonParseException ex) {
             Util.jsonErrorResponse(res, HttpServletResponse.SC_BAD_REQUEST, "malformed_content",
                     ex.getMessage());
+        } catch (AuthenticationException ex) {
+            Util.jsonErrorResponse(res, HttpServletResponse.SC_FORBIDDEN,
+                    "authentication_mismatch", ex.getMessage());
         } catch (IOException ex) {
             context.log("IOException", ex);
             Util.jsonErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
