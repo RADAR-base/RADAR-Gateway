@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
+import org.apache.http.auth.AuthenticationException
 import java.io.IOException
 import javax.servlet.http.HttpServletResponse
 
@@ -14,7 +15,7 @@ class AvroValidator {
     private lateinit var userId: String
     private lateinit var sources: Set<String>
 
-    @Throws(JsonParseException::class, IOException::class)
+    @Throws(JsonParseException::class, IOException::class, AuthenticationException::class)
     fun validate(data: ByteArray, token: DecodedJWT) {
         this.parser = factory.createParser(data)
         this.userId = token.subject
@@ -53,7 +54,7 @@ class AvroValidator {
         }
     }
 
-    @Throws(IOException::class)
+    @Throws(IOException::class, AuthenticationException::class)
     private fun parseRecords() {
         if (parser.nextToken() != JsonToken.START_ARRAY) {
             throw semanticException("Expecting JSON array for records field")
@@ -85,7 +86,7 @@ class AvroValidator {
     }
 
     /** Parse single record key.  */
-    @Throws(IOException::class)
+    @Throws(IOException::class, AuthenticationException::class)
     private fun parseKey() {
         if (parser.nextToken() != JsonToken.START_OBJECT) {
             throw semanticException("Field key must be a JSON object")
@@ -98,7 +99,7 @@ class AvroValidator {
                 }
                 val userId = parser.valueAsString
                 if (userId != this.userId) {
-                    throw semanticException("record userId '" + userId
+                    throw AuthenticationException("record userId '" + userId
                             + "' does not match authenticated user ID '" + this.userId
                             + '\'')
                 }
@@ -108,7 +109,7 @@ class AvroValidator {
                 }
                 val sourceId = parser.valueAsString
                 if (!sources.contains(sourceId)) {
-                    throw semanticException("record sourceId '" + sourceId
+                    throw AuthenticationException("record sourceId '" + sourceId
                             + "' has not been added to JWT allowed IDs " + sources + ".")
                 }
             } else {
