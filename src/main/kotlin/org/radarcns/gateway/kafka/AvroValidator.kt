@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.text.ParseException
+import java.util.stream.Collectors
 import javax.servlet.http.HttpServletResponse
 
 class AvroValidator {
@@ -19,7 +20,7 @@ class AvroValidator {
     private lateinit var stream: ByteArrayOutputStream
     private lateinit var userId: String
     private lateinit var sourceIds: Set<String>
-    private lateinit var projectId: String
+    private lateinit var projectIds: List<String>
 
     @Throws(ParseException::class, IOException::class, AuthenticationException::class)
     fun validate(data: InputStream, token: DecodedJWT): ByteArray {
@@ -38,15 +39,11 @@ class AvroValidator {
         if (rolesClaim == null || rolesClaim.isNull) {
             throw AuthenticationException("User ${token.subject} is not a participant in any projectId")
         }
-        val optProject = token.getClaim(ROLES_CLAIM).asList(String::class.java).stream()
+
+        projectIds = token.getClaim(ROLES_CLAIM).asList(String::class.java).stream()
                 .filter { it.endsWith(":ROLE_PARTICIPANT") }
                 .map { it.substring(0, it.lastIndexOf(':')) }
-                .findAny()
-
-        if (!optProject.isPresent) {
-            throw AuthenticationException("User ${token.subject} is not a participant in any projectId")
-        }
-        this.projectId = optProject.get()
+                .collect(Collectors.toList())
 
         stream = ByteArrayOutputStream()
 
@@ -97,11 +94,33 @@ class AvroValidator {
         }
 
         val project = key["projectId"]
-        if (project != null && project.isNull) {
-            val newProject = mapper.createObjectNode()
-            newProject.put("string", this.projectId)
-            (key as ObjectNode).set("projectId", newProject)
+        if (project != null) {
+            if (projectIds.isEmpty()) {
+                // if no validated project IDs were provided, project IDs may not be sent
+                if (!project.isNull) {
+                    throw AuthenticationException("projectId '" + project
+                            + "' sent but not registered")
+                }
+            } else if (project.isNull) {
+                // no project ID was provided, fill it in for the sender
+                val newProject = mapper.createObjectNode()
+                newProject.put("string", projectIds[0])
+                (key as ObjectNode).set("projectId", newProject)
+            } else if (!project.isObject || isNullField(project["string"])) {
+                // verify that projectId takes the form
+                // ... "projectId": {"string": "my-id"} ...
+                throw IllegalArgumentException("Project ID should be wrapped in string union type")
+            } else {
+                // project ID was provided, it should match one of the validated project IDs.
+                val projectId = project["string"].asText()
+                if (!projectIds.contains(projectId)) {
+                    throw AuthenticationException("record projectId '" + projectId
+                            + "' does not match authenticated user ID '" + this.userId
+                            + '\'')
+                }
+            }
         }
+
         val user = key["userId"]
         if (user != null) {
             if (!user.isTextual) {

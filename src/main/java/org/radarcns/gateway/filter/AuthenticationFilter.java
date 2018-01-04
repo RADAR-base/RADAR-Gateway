@@ -1,9 +1,14 @@
 package org.radarcns.gateway.filter;
 
+import static org.radarcns.auth.authorization.Permission.Entity.MEASUREMENT;
+import static org.radarcns.auth.authorization.Permission.Operation.CREATE;
+import static org.radarcns.auth.authorization.RadarAuthorization.SCOPE_CLAIM;
+
 import com.auth0.jwt.interfaces.DecodedJWT;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Locale;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -16,8 +21,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.http.HttpHeaders;
 import org.radarcns.auth.authentication.TokenValidator;
+import org.radarcns.auth.authorization.Permission;
+import org.radarcns.auth.authorization.RadarAuthorization;
 import org.radarcns.auth.config.ServerConfig;
 import org.radarcns.auth.config.YamlServerConfig;
+import org.radarcns.auth.exception.NotAuthorizedException;
 import org.radarcns.auth.exception.TokenValidationException;
 
 /**
@@ -47,9 +55,10 @@ public class AuthenticationFilter implements Filter {
 
         try {
             DecodedJWT jwt = getValidator(context).validateAccessToken(token);
+            RadarAuthorization.checkPermission(jwt, Permission.MEASUREMENT_CREATE);
             request.setAttribute("jwt", jwt);
             chain.doFilter(request, response);
-        } catch (TokenValidationException ex) {
+        } catch (TokenValidationException | NotAuthorizedException ex) {
             context.log(ex.getMessage(), ex);
             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             res.setHeader("WWW-Authenticate", "Bearer");
