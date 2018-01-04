@@ -1,14 +1,9 @@
 package org.radarcns.gateway.filter;
 
-import static org.radarcns.auth.authorization.Permission.Entity.MEASUREMENT;
-import static org.radarcns.auth.authorization.Permission.Operation.CREATE;
-import static org.radarcns.auth.authorization.RadarAuthorization.SCOPE_CLAIM;
-
 import com.auth0.jwt.interfaces.DecodedJWT;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.Locale;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
