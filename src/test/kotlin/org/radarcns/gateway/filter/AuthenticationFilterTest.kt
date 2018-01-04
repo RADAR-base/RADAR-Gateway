@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.*
+import org.radarcns.auth.authorization.RadarAuthorization.*
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.interfaces.RSAPrivateKey
@@ -79,8 +80,12 @@ class AuthenticationFilterTest {
                 .withIssuedAt(Date())
                 .withAudience("res_ManagementPortal")
                 .withSubject("user1")
-                .withArrayClaim("sources", arrayOf("a", "b"))
+                .withArrayClaim(SOURCES_CLAIM, arrayOf("a", "b"))
                 .withExpiresAt(Date.from(Instant.now().plus(Duration.ofSeconds(60))))
+                .withArrayClaim(SCOPE_CLAIM, arrayOf("MEASUREMENT.CREATE"))
+                .withArrayClaim(ROLES_CLAIM, arrayOf("test:ROLE_ADMIN", "p:ROLE_PARTICIPANT"))
+                .withArrayClaim(AUTHORITIES_CLAIM, arrayOf("res_pRMT"))
+                .withClaim(GRANT_TYPE_CLAIM, "code")
                 .sign(algorithm)
 
         `when`(request.getHeader(eq("Authorization"))).thenReturn("Bearer " + token)
