@@ -86,19 +86,21 @@ class ManagementPortalAuthenticationFilter : Filter {
 
         @Synchronized private fun getValidator(context: ServletContext): TokenValidator {
             if (validator == null) {
-                var config: ServerConfig? = null
                 val mpUrlString = context.getInitParameter("managementPortalUrl")
-                if (mpUrlString != null) {
+                val publicKey = if (mpUrlString != null) {
                     try {
-                        val cfg = YamlServerConfig()
-                        cfg.publicKeyEndpoint = URI("$mpUrlString/oauth/token_key")
-                        config = cfg
+                        URI("$mpUrlString/oauth/token_key")
                     } catch (e: URISyntaxException) {
                         context.log("Failed to load Management Portal URL $mpUrlString", e)
+                        null
                     }
-                }
+                } else null
 
-                validator = if (config == null) TokenValidator() else TokenValidator(config)
+                validator = if (publicKey == null) TokenValidator() else {
+                    val cfg = YamlServerConfig()
+                    cfg.publicKeyEndpoint = publicKey
+                    TokenValidator(cfg)
+                }
             }
             return validator!!
         }

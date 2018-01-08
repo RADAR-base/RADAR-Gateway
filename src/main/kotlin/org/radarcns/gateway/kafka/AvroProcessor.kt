@@ -125,8 +125,8 @@ class AvroProcessor {
     }
 
     private class Auth(jwt: DecodedJWT) {
-        val userId: String = jwt.subject
         val projectIds: List<String>
+        val userId: String = jwt.subject
         val sourceIds: Collection<String>
         init {
             // get roles as a list, empty if not set
