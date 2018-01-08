@@ -23,12 +23,12 @@
   </servlet-mapping>
 
   <filter>
-    <filter-name>AuthenticationFilter</filter-name>
-    <filter-class>org.radarcns.gateway.filter.AuthenticationFilter</filter-class>
+    <filter-name>ManagementPortalAuthenticationFilter</filter-name>
+    <filter-class>org.radarcns.gateway.filter.ManagementPortalAuthenticationFilter</filter-class>
   </filter>
 
   <filter-mapping>
-    <filter-name>AuthenticationFilter</filter-name>
+    <filter-name>ManagementPortalAuthenticationFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
 
@@ -47,12 +47,12 @@
   </filter-mapping>
 
   <filter>
-    <filter-name>GzipUncompressFilter</filter-name>
-    <filter-class>org.radarcns.gateway.filter.GzipUncompressFilter</filter-class>
+    <filter-name>GzipDecompressFilter</filter-name>
+    <filter-class>org.radarcns.gateway.filter.GzipDecompressFilter</filter-class>
   </filter>
 
   <filter-mapping>
-    <filter-name>GzipUncompressFilter</filter-name>
+    <filter-name>GzipDecompressFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
 

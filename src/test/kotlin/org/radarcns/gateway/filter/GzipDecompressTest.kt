@@ -16,15 +16,15 @@ import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-class GzipUncompressTest {
-    lateinit var filter: GzipUncompressFilter
+class GzipDecompressTest {
+    lateinit var filter: GzipDecompressFilter
     lateinit var request: HttpServletRequest
     lateinit var response: HttpServletResponse
     lateinit var filterChain: FilterChain
 
     @BeforeEach
     fun setUp() {
-        filter = GzipUncompressFilter()
+        filter = GzipDecompressFilter()
         val config = mock(FilterConfig::class.java)
         val context = mock(ServletContext::class.java)
         `when`(config.servletContext).thenReturn(context)

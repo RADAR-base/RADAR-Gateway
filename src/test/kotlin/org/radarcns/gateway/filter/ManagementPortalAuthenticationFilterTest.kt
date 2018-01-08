@@ -27,9 +27,9 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 
-class AuthenticationFilterTest {
+class ManagementPortalAuthenticationFilterTest {
     lateinit var server: MockWebServer
-    lateinit var filter: AuthenticationFilter
+    lateinit var filter: ManagementPortalAuthenticationFilter
     lateinit var request: HttpServletRequest
     lateinit var response: HttpServletResponse
     lateinit var filterChain: FilterChain
@@ -39,7 +39,7 @@ class AuthenticationFilterTest {
         server = MockWebServer()
         server.start(34101)
 
-        filter = AuthenticationFilter()
+        filter = ManagementPortalAuthenticationFilter()
         val config = mock(FilterConfig::class.java)
         val context = mock(ServletContext::class.java)
         `when`(config.servletContext).thenReturn(context)
