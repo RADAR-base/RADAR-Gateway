@@ -11,19 +11,32 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.text.ParseException
+import java.util.*
 import java.util.stream.Collectors
 import javax.servlet.http.HttpServletResponse
 
-class AvroValidator {
+class AvroProcessor {
     private val factory = JsonFactory()
-    private lateinit var mapper: ObjectMapper
-    private lateinit var stream: ByteArrayOutputStream
+    private val mapper = ObjectMapper(factory)
     private lateinit var userId: String
     private lateinit var sourceIds: Set<String>
     private lateinit var projectIds: List<String>
 
+    /**
+     * Validates given data with given access token and returns a modified output array.
+     * The Avro content validation consists of testing whether both keys and values are being sent,
+     * both with Avro schema. The authentication validation checks that all records contain a key
+     * with a project ID, user ID and source ID that is also listed in the access token. If no
+     * project ID is given in the key, it will be set to the first project ID where the user has
+     * role {@code ROLE_PARTICIPANT}.
+     *
+     * @throws ParseException if the data does not contain valid JSON
+     * @throws IllegalArgumentException if the data does not contain semantically correct Kafka Avro data.
+     * @throws AuthenticationException if the data does not correspond to the access token.
+     * @throws IOException if the data cannot be read
+     */
     @Throws(ParseException::class, IOException::class, AuthenticationException::class)
-    fun validate(data: InputStream, token: DecodedJWT): ByteArray {
+    fun process(data: InputStream, token: DecodedJWT): ByteArray {
         this.userId = token.subject
 
         val sourceClaim = token.getClaim("sourceIds")
@@ -35,19 +48,18 @@ class AvroValidator {
             throw AuthenticationException("Request JWT did not contain source IDs")
         }
 
-        val rolesClaim = token.getClaim(ROLES_CLAIM)
-        if (rolesClaim == null || rolesClaim.isNull) {
+        // get roles as a list, empty if not set
+        val rolesClaim = token.getClaim(ROLES_CLAIM)?.asList(String::class.java) ?: Collections.emptyList()
+
+        projectIds = rolesClaim.stream()
+                .filter { it.endsWith(PARTICIPANT_SUFFIX) }
+                .map { it.substring(0, it.length - PARTICIPANT_SUFFIX.length) }
+                .collect(Collectors.toList())
+
+        if (projectIds.isEmpty()) {
             throw AuthenticationException("User ${token.subject} is not a participant in any projectId")
         }
 
-        projectIds = token.getClaim(ROLES_CLAIM).asList(String::class.java).stream()
-                .filter { it.endsWith(":ROLE_PARTICIPANT") }
-                .map { it.substring(0, it.lastIndexOf(':')) }
-                .collect(Collectors.toList())
-
-        stream = ByteArrayOutputStream()
-
-        mapper = ObjectMapper(factory)
         val tree = mapper.readTree(data) ?: throw ParseException("Expecting JSON object in payload", 0)
         if (!tree.isObject) {
             throw ParseException("Expecting JSON object in payload, not an array", 0)
@@ -60,6 +72,12 @@ class AvroValidator {
         }
 
         parseRecords(tree["records"])
+
+        return generateRequest(tree)
+    }
+
+    private fun generateRequest(tree: JsonNode): ByteArray {
+        val stream = ByteArrayOutputStream()
 
         factory.createGenerator(stream).use {
             it.writeTree(tree)
@@ -95,24 +113,14 @@ class AvroValidator {
 
         val project = key["projectId"]
         if (project != null) {
-            if (projectIds.isEmpty()) {
-                // if no validated project IDs were provided, project IDs may not be sent
-                if (!project.isNull) {
-                    throw AuthenticationException("projectId '" + project
-                            + "' sent but not registered")
-                }
-            } else if (project.isNull) {
+            if (project.isNull) {
                 // no project ID was provided, fill it in for the sender
                 val newProject = mapper.createObjectNode()
                 newProject.put("string", projectIds[0])
                 (key as ObjectNode).set("projectId", newProject)
-            } else if (!project.isObject || isNullField(project["string"])) {
-                // verify that projectId takes the form
-                // ... "projectId": {"string": "my-id"} ...
-                throw IllegalArgumentException("Project ID should be wrapped in string union type")
             } else {
                 // project ID was provided, it should match one of the validated project IDs.
-                val projectId = project["string"].asText()
+                val projectId = project["string"]?.asText() ?: throw IllegalArgumentException("Project ID should be wrapped in string union type")
                 if (!projectIds.contains(projectId)) {
                     throw AuthenticationException("record projectId '" + projectId
                             + "' does not match authenticated user ID '" + this.userId
@@ -147,6 +155,8 @@ class AvroValidator {
     }
 
     companion object Util {
+        private val PARTICIPANT_SUFFIX = ":ROLE_PARTICIPANT"
+
         fun isNullField(field: JsonNode?): Boolean {
             return field == null || field.isNull
         }

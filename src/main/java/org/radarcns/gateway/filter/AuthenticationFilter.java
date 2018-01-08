@@ -54,7 +54,7 @@ public class AuthenticationFilter implements Filter {
             request.setAttribute("jwt", jwt);
             chain.doFilter(request, response);
         } catch (TokenValidationException | NotAuthorizedException ex) {
-            context.log("Failed to validate token", ex);
+            context.log("Failed to process token", ex);
             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             res.setHeader("WWW-Authenticate", "Bearer");
         }

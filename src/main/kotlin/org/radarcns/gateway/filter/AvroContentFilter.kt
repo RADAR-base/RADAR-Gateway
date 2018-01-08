@@ -2,8 +2,8 @@ package org.radarcns.gateway.filter
 
 import com.auth0.jwt.interfaces.DecodedJWT
 import org.apache.http.auth.AuthenticationException
-import org.radarcns.gateway.kafka.AvroValidator
-import org.radarcns.gateway.kafka.AvroValidator.Util
+import org.radarcns.gateway.kafka.AvroProcessor
+import org.radarcns.gateway.kafka.AvroProcessor.Util
 import org.radarcns.gateway.util.ServletInputStreamWrapper
 import java.io.BufferedReader
 import java.io.ByteArrayInputStream
@@ -17,14 +17,14 @@ import javax.servlet.http.HttpServletResponse
 
 class AvroContentFilter : Filter {
     private lateinit var context: ServletContext
-    private lateinit var validator: AvroValidator
+    private lateinit var processor: AvroProcessor
 
     @Throws(ServletException::class)
     override fun init(filterConfig: FilterConfig) {
         this.context = filterConfig.servletContext!!
         this.context.log("AvroContentFilter initialized")
 
-        this.validator = AvroValidator()
+        this.processor = AvroProcessor()
     }
 
     @Throws(IOException::class, ServletException::class)
@@ -60,7 +60,7 @@ class AvroContentFilter : Filter {
 
         try {
             request.getInputStream().use { stream ->
-                val data = validator.validate(stream, token)
+                val data = processor.process(stream, token)
 
                 chain.doFilter(object : HttpServletRequestWrapper(req) {
                     @Throws(IOException::class)
