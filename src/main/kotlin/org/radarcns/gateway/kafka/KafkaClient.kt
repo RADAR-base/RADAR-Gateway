@@ -6,6 +6,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 
+/** Client to the Kafka REST proxy */
 class KafkaClient(private val restProxyBaseUrl: String) {
     private val client: OkHttpClient = OkHttpClient.Builder().build()
     private val stringArrayReader: ObjectReader = ObjectMapper().readerFor(

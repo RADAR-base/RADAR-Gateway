@@ -1,0 +1,13 @@
+apply plugin: 'idea'
+
+idea {
+    module {
+        downloadSources = true
+    }
+}
+
+task downloadDependencies(type: Exec) {
+    configurations.providedClasspath.files
+    configurations.testRuntimeClasspath.files
+    commandLine 'echo', 'Downloaded all dependencies'
+}

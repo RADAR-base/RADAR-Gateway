@@ -1,6 +1,6 @@
 package org.radarcns.gateway.filter
 
-import org.radarcns.gateway.kafka.AvroProcessor.Util.jsonErrorResponse
+import org.radarcns.gateway.util.Json.jsonErrorResponse
 import org.radarcns.gateway.util.ServletInputStreamWrapper
 import java.io.BufferedReader
 import java.io.IOException
@@ -38,8 +38,10 @@ class GzipDecompressFilter : Filter {
                 chain.doFilter(object : HttpServletRequestWrapper(req) {
                     @Throws(IOException::class)
                     override fun getInputStream(): ServletInputStream {
-                        val gzipStream = GZIPInputStream(super.getInputStream())
-                        return ServletInputStreamWrapper(gzipStream)
+                        val superStream = super.getInputStream()
+                        val gzipStream = GZIPInputStream(superStream)
+
+                        return ServletInputStreamWrapper(gzipStream, superStream);
                     }
 
                     @Throws(IOException::class)

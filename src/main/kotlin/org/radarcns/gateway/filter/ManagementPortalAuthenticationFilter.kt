@@ -1,6 +1,5 @@
 package org.radarcns.gateway.filter
 
-import org.apache.http.HttpHeaders
 import org.radarcns.auth.authentication.TokenValidator
 import org.radarcns.auth.authorization.Permission
 import org.radarcns.auth.authorization.RadarAuthorization
@@ -60,7 +59,7 @@ class ManagementPortalAuthenticationFilter : Filter {
 
     private fun getToken(request: ServletRequest): String? {
         val req = request as HttpServletRequest
-        val authorizationHeader = req.getHeader(HttpHeaders.AUTHORIZATION)
+        val authorizationHeader = req.getHeader("Authorization")
 
         // Check if the HTTP Authorization header is present and formatted correctly
         if (authorizationHeader == null || !authorizationHeader.toLowerCase(Locale.US).startsWith("bearer ")) {

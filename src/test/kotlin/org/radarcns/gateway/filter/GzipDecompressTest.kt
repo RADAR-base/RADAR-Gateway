@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
+import org.radarcns.gateway.util.ServletByteArrayWrapper
 import org.radarcns.gateway.util.ServletInputStreamWrapper
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -44,7 +45,7 @@ class GzipDecompressTest {
         val byteOut = ByteArrayOutputStream()
         GZIPOutputStream(byteOut).use { gzOut -> gzOut.write(bytes) }
         val gzipIn = ByteArrayInputStream(byteOut.toByteArray())
-        `when`(request.inputStream).thenReturn(ServletInputStreamWrapper(gzipIn))
+        `when`(request.inputStream).thenReturn(ServletByteArrayWrapper(gzipIn))
         `when`(filterChain.doFilter(any(), any())).then { invocation ->
             val numRead = invocation.getArgument<HttpServletRequest>(0).inputStream.read(actual)
             assertEquals(100, numRead)
@@ -61,7 +62,7 @@ class GzipDecompressTest {
         val actual = ByteArray(120)
         ThreadLocalRandom.current().nextBytes(bytes)
         val bytesIn = ByteArrayInputStream(bytes)
-        `when`(request.inputStream).thenReturn(ServletInputStreamWrapper(bytesIn))
+        `when`(request.inputStream).thenReturn(ServletByteArrayWrapper(bytesIn))
         `when`(filterChain.doFilter(any(), any())).then { invocation ->
             val req : HttpServletRequest = invocation.getArgument(0)
             val numRead = req.inputStream.read(actual)

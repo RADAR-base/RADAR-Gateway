@@ -14,6 +14,7 @@ FROM openjdk:8-alpine as builder
 
 RUN mkdir /code
 WORKDIR /code
+
 COPY ./gradle/ /code/gradle
 COPY ./build.gradle ./gradle.properties ./gradlew ./settings.gradle /code/
 
@@ -24,7 +25,7 @@ COPY ./src/main/docker/web.xml /code/src/main/webapp/WEB-INF/web.xml
 
 RUN ./gradlew --no-daemon -Dkotlin.compiler.execution.strategy="in-process" -Dorg.gradle.parallel=false -Pkotlin.incremental=false war
 
-FROM tomcat:8-jre8-alpine
+FROM tomcat:8.5-jre8-alpine
 
 ENV JAVA_OPTS=-Djava.security.egd=file:/dev/urandom
 

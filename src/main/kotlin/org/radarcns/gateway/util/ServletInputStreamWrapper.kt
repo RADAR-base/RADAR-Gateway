@@ -2,14 +2,14 @@ package org.radarcns.gateway.util
 
 import java.io.IOException
 import java.io.InputStream
+import javax.servlet.ReadListener
 import javax.servlet.ServletInputStream
 
 /**
  * ServletInputStream wrapper for an InputStream.
  */
 class ServletInputStreamWrapper @Throws(IOException::class)
-constructor(private val stream: InputStream) : ServletInputStream() {
-
+constructor(private val stream: InputStream, private val baseStream: ServletInputStream) : ServletInputStream() {
     @Throws(IOException::class)
     override fun read() = stream.read()
 
@@ -28,4 +28,13 @@ constructor(private val stream: InputStream) : ServletInputStream() {
 
     @Throws(IOException::class)
     override fun close() = stream.close()
+
+    @Throws(IOException::class)
+    override fun available() = stream.available()
+
+    override fun isReady() = baseStream.isReady
+
+    override fun isFinished() = baseStream.isFinished
+
+    override fun setReadListener(readListener: ReadListener?) = baseStream.setReadListener(readListener)
 }

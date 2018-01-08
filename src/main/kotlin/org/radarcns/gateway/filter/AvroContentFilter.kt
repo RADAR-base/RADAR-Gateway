@@ -1,10 +1,10 @@
 package org.radarcns.gateway.filter
 
 import com.auth0.jwt.interfaces.DecodedJWT
-import org.apache.http.auth.AuthenticationException
+import org.radarcns.auth.exception.NotAuthorizedException
 import org.radarcns.gateway.kafka.AvroProcessor
-import org.radarcns.gateway.kafka.AvroProcessor.Util.jsonErrorResponse
-import org.radarcns.gateway.util.ServletInputStreamWrapper
+import org.radarcns.gateway.util.Json.jsonErrorResponse
+import org.radarcns.gateway.util.ServletByteArrayWrapper
 import java.io.BufferedReader
 import java.io.ByteArrayInputStream
 import java.io.IOException
@@ -51,50 +51,40 @@ class AvroContentFilter : Filter {
             return
         }
 
-        val tokenObj = request.getAttribute("jwt")
-        if (tokenObj == null) {
+        val token = request.getAttribute("jwt") as? DecodedJWT
+        if (token == null) {
             this.context.log("Request was not authenticated by a previous filter: "
                     + "no token attribute found or no user found")
             jsonErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "server_error", "configuration error")
-            res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
             return
         }
-        val token = tokenObj as DecodedJWT
 
         try {
             request.getInputStream().use { stream ->
-                val data = processor.process(stream, token)
+                val data = ByteArrayInputStream(processor.process(stream, token))
 
                 chain.doFilter(object : HttpServletRequestWrapper(req) {
                     @Throws(IOException::class)
-                    override fun getInputStream(): ServletInputStream {
-                        return ServletInputStreamWrapper(
-                                ByteArrayInputStream(data))
-                    }
+                    override fun getInputStream(): ServletInputStream = ServletByteArrayWrapper(data)
 
                     @Throws(IOException::class)
-                    override fun getReader(): BufferedReader {
-                        return BufferedReader(InputStreamReader(
-                                ByteArrayInputStream(data)))
-                    }
+                    override fun getReader(): BufferedReader = BufferedReader(InputStreamReader(data))
                 }, response)
             }
         } catch (ex: ParseException) {
-            jsonErrorResponse(res, HttpServletResponse.SC_BAD_REQUEST, "malformed_content",
-                    ex.message)
-        } catch (ex: AuthenticationException) {
+            jsonErrorResponse(res, HttpServletResponse.SC_BAD_REQUEST,
+                    "malformed_content", ex.message)
+        } catch (ex: NotAuthorizedException) {
             jsonErrorResponse(res, HttpServletResponse.SC_FORBIDDEN,
                     "authentication_mismatch", ex.message)
         } catch (ex: IOException) {
             context.log("IOException", ex)
             jsonErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "server_exception",
-                    "Failed to process message: " + ex.message)
+                    "server_error", "Failed to process message: ${ex.message}")
         } catch (ex: IllegalArgumentException) {
             jsonErrorResponse(res, 422, "invalid_content", ex.message)
         }
-
     }
 
     override fun destroy() {

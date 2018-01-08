@@ -1,19 +1,17 @@
 package org.radarcns.gateway.kafka
 
 import com.auth0.jwt.interfaces.DecodedJWT
-import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
-import org.apache.http.auth.AuthenticationException
 import org.radarcns.auth.authorization.RadarAuthorization.ROLES_CLAIM
+import org.radarcns.auth.exception.NotAuthorizedException
+import org.radarcns.gateway.util.Json
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.text.ParseException
 import java.util.*
 import java.util.stream.Collectors
-import javax.servlet.http.HttpServletResponse
 
 class AvroProcessor {
     /**
@@ -26,10 +24,10 @@ class AvroProcessor {
      *
      * @throws ParseException if the data does not contain valid JSON
      * @throws IllegalArgumentException if the data does not contain semantically correct Kafka Avro data.
-     * @throws AuthenticationException if the data does not correspond to the access token.
+     * @throws NotAuthorizedException if the data does not correspond to the access token.
      * @throws IOException if the data cannot be read
      */
-    @Throws(ParseException::class, IOException::class, AuthenticationException::class)
+    @Throws(ParseException::class, IOException::class, NotAuthorizedException::class)
     fun process(data: InputStream, token: DecodedJWT): ByteArray {
         val auth = Auth(token)
         val tree = processTree(data, auth)
@@ -38,7 +36,7 @@ class AvroProcessor {
 
     @Throws(ParseException::class, IOException::class)
     private fun processTree(data: InputStream, auth: Auth): JsonNode {
-        val tree = factory.createParser(data).use {
+        val tree = Json.factory.createParser(data).use {
             it.readValueAsTree<JsonNode>()
         } ?: throw ParseException("Expecting JSON object in payload", 0)
         if (!tree.isObject) {
@@ -59,14 +57,14 @@ class AvroProcessor {
 
     private fun generateRequest(tree: JsonNode): ByteArray {
         ByteArrayOutputStream().use { stream ->
-            factory.createGenerator(stream).use {
+            Json.factory.createGenerator(stream).use {
                 it.writeTree(tree)
             }
             return stream.toByteArray()
         }
     }
 
-    @Throws(IOException::class, AuthenticationException::class)
+    @Throws(IOException::class, NotAuthorizedException::class)
     private fun processRecords(records: JsonNode, auth: Auth) {
         if (!records.isArray) {
             throw IllegalArgumentException("Records should be an array")
@@ -84,7 +82,7 @@ class AvroProcessor {
     }
 
     /** Parse single record key.  */
-    @Throws(IOException::class, AuthenticationException::class)
+    @Throws(IOException::class, NotAuthorizedException::class)
     private fun processKey(key: JsonNode, auth: Auth) {
         if (!key.isObject) {
             throw IllegalArgumentException("Field key must be a JSON object")
@@ -94,7 +92,7 @@ class AvroProcessor {
         if (project != null) {
             if (project.isNull) {
                 // no project ID was provided, fill it in for the sender
-                val newProject = mapper.createObjectNode()
+                val newProject = Json.mapper.createObjectNode()
                 newProject.put("string", auth.projectIds[0])
                 (key as ObjectNode).set("projectId", newProject)
             } else {
@@ -104,7 +102,7 @@ class AvroProcessor {
                                 "Project ID should be wrapped in string union type")
 
                 if (!auth.projectIds.contains(projectId)) {
-                    throw AuthenticationException("record projectId '$projectId' does not match"
+                    throw NotAuthorizedException("record projectId '$projectId' does not match"
                            + " authenticated user ID '${auth.userId}'")
                 }
             }
@@ -112,13 +110,13 @@ class AvroProcessor {
 
         val user = key["userId"]
         if (user != null && user.asText() != auth.userId) {
-            throw AuthenticationException(
+            throw NotAuthorizedException(
                     "record userId '${user.asText()}' does not match authenticated user ID "
                             + "'${auth.userId}'")
         }
         val source = key["sourceId"]
         if (source != null && !auth.sourceIds.contains(source.asText())) {
-            throw AuthenticationException(
+            throw NotAuthorizedException(
                     "record sourceId '${source.asText()}' has not been added to JWT allowed "
                             + "IDs ${auth.sourceIds}.")
         }
@@ -139,14 +137,14 @@ class AvroProcessor {
                     .collect(Collectors.toList())
 
             if (projectIds.isEmpty()) {
-                throw AuthenticationException(
+                throw NotAuthorizedException(
                         "User $userId is not a participant in any project")
             }
 
             val sourcesClaim = jwt.getClaim("sourceIds")?.asList(String::class.java)
                     ?: Collections.emptyList()
             if (sourcesClaim.isEmpty()) {
-                throw AuthenticationException(
+                throw NotAuthorizedException(
                         "Request JWT of user $userId did not contain source IDs")
             }
             this.sourceIds = HashSet(sourcesClaim)
@@ -154,30 +152,10 @@ class AvroProcessor {
     }
 
     companion object Util {
-        private val factory = JsonFactory()
-        private val mapper = ObjectMapper(factory)
-
         private val PARTICIPANT_SUFFIX = ":ROLE_PARTICIPANT"
 
         fun isNullField(field: JsonNode?): Boolean {
             return field == null || field.isNull
-        }
-
-        /** Return a JSON error string.  */
-        @Throws(IOException::class)
-        fun jsonErrorResponse(response: HttpServletResponse, statusCode: Int, error: String,
-                              errorDescription: String?) {
-            response.setStatus(statusCode)
-            response.setHeader("Content-Type", "application/json; charset=utf-8")
-            response.outputStream.use { stream ->
-                factory.createGenerator(stream).use {
-                    it.writeStartObject()
-                    it.writeNumberField("error_code", statusCode)
-                    it.writeStringField("error", error)
-                    it.writeStringField("message", "$error: $errorDescription")
-                    it.writeEndObject()
-                }
-            }
         }
     }
 }
