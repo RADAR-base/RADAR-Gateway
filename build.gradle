@@ -44,7 +44,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlinVersion
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlinVersion
 
     compile (group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion) {
         exclude group: 'ch.qos.logback', module: 'logback-classic'

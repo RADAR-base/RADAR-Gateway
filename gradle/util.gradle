@@ -7,7 +7,7 @@ idea {
 }
 
 task downloadDependencies(type: Exec) {
-    configurations.providedClasspath.files
+    configurations.compileClasspath.files
     configurations.testRuntimeClasspath.files
     commandLine 'echo', 'Downloaded all dependencies'
 }
