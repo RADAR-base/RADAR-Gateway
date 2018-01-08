@@ -1,6 +1,5 @@
 package org.radarcns.gateway.filter
 
-import org.radarcns.gateway.kafka.AvroProcessor
 import org.radarcns.gateway.kafka.AvroProcessor.Util.jsonErrorResponse
 import org.radarcns.gateway.util.ServletInputStreamWrapper
 import java.io.BufferedReader

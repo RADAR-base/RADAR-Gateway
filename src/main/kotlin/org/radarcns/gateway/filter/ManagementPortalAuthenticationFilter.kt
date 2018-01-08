@@ -1,27 +1,19 @@
 package org.radarcns.gateway.filter
 
-import com.auth0.jwt.interfaces.DecodedJWT
-import java.io.IOException
-import java.net.URI
-import java.net.URISyntaxException
-import java.util.Locale
-import javax.servlet.Filter
-import javax.servlet.FilterChain
-import javax.servlet.FilterConfig
-import javax.servlet.ServletContext
-import javax.servlet.ServletException
-import javax.servlet.ServletRequest
-import javax.servlet.ServletResponse
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 import org.apache.http.HttpHeaders
 import org.radarcns.auth.authentication.TokenValidator
 import org.radarcns.auth.authorization.Permission
 import org.radarcns.auth.authorization.RadarAuthorization
-import org.radarcns.auth.config.ServerConfig
 import org.radarcns.auth.config.YamlServerConfig
 import org.radarcns.auth.exception.NotAuthorizedException
 import org.radarcns.auth.exception.TokenValidationException
+import java.io.IOException
+import java.net.URI
+import java.net.URISyntaxException
+import java.util.*
+import javax.servlet.*
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 /**
  * Authenticates user by a JWT in the bearer signed by the Management Portal.
