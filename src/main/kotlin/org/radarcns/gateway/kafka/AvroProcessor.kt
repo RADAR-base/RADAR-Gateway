@@ -1,17 +1,16 @@
 package org.radarcns.gateway.kafka
 
-import com.auth0.jwt.interfaces.DecodedJWT
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import org.radarcns.auth.authorization.RadarAuthorization.ROLES_CLAIM
+import org.radarcns.auth.authorization.Permission
 import org.radarcns.auth.exception.NotAuthorizedException
+import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.util.Json
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.text.ParseException
 import java.util.*
-import java.util.stream.Collectors
 
 class AvroProcessor {
     /**
@@ -28,7 +27,7 @@ class AvroProcessor {
      * @throws IOException if the data cannot be read
      */
     @Throws(ParseException::class, IOException::class, NotAuthorizedException::class)
-    fun process(data: InputStream, token: DecodedJWT): ByteArray {
+    fun process(data: InputStream, token: RadarToken): ByteArray {
         val auth = Auth(token)
         val tree = processTree(data, auth)
         return generateRequest(tree)
@@ -93,7 +92,7 @@ class AvroProcessor {
             if (project.isNull) {
                 // no project ID was provided, fill it in for the sender
                 val newProject = Json.mapper.createObjectNode()
-                newProject.put("string", auth.projectIds[0])
+                newProject.put("string", auth.projectIds.first())
                 (key as ObjectNode).set("projectId", newProject)
             } else {
                 // project ID was provided, it should match one of the validated project IDs.
@@ -122,27 +121,24 @@ class AvroProcessor {
         }
     }
 
-    private class Auth(jwt: DecodedJWT) {
-        val projectIds: List<String>
+    private class Auth(jwt: RadarToken) {
+        val projectIds: Set<String>
         val userId: String = jwt.subject
         val sourceIds: Collection<String>
         init {
             // get roles as a list, empty if not set
-            val rolesClaim = jwt.getClaim(ROLES_CLAIM)?.asList(String::class.java)
-                    ?: Collections.emptyList()
+            val rolesClaim = jwt.roles ?: Collections.emptyMap()
 
-            projectIds = rolesClaim.stream()
-                    .filter { it.endsWith(PARTICIPANT_SUFFIX) }
-                    .map { it.substring(0, it.length - PARTICIPANT_SUFFIX.length) }
-                    .collect(Collectors.toList())
+            projectIds = rolesClaim.filterValues { it.contains(Util.PARTICIPANT_SUFFIX) }.toMap()
+                    .keys
+            jwt.hasPermissionOnProject(Permission.MEASUREMENT_CREATE , projectIds.first())
 
             if (projectIds.isEmpty()) {
                 throw NotAuthorizedException(
                         "User $userId is not a participant in any project")
             }
 
-            val sourcesClaim = jwt.getClaim("sourceIds")?.asList(String::class.java)
-                    ?: Collections.emptyList()
+            val sourcesClaim = jwt.sources ?: Collections.emptyList()
             if (sourcesClaim.isEmpty()) {
                 throw NotAuthorizedException(
                         "Request JWT of user $userId did not contain source IDs")
@@ -152,7 +148,7 @@ class AvroProcessor {
     }
 
     companion object Util {
-        private val PARTICIPANT_SUFFIX = ":ROLE_PARTICIPANT"
+        private val PARTICIPANT_SUFFIX = "ROLE_PARTICIPANT"
 
         fun isNullField(field: JsonNode?): Boolean {
             return field == null || field.isNull

@@ -2,7 +2,6 @@ package org.radarcns.gateway.filter
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.interfaces.DecodedJWT
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -12,7 +11,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.*
-import org.radarcns.auth.authorization.RadarAuthorization.*
+import org.radarcns.auth.token.JwtRadarToken.*
+import org.radarcns.auth.token.RadarToken
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.interfaces.RSAPrivateKey
@@ -76,6 +76,9 @@ class ManagementPortalAuthenticationFilterTest {
         server.enqueue(MockResponse().setResponseCode(500))
 
         val algorithm = Algorithm.RSA256(publicKey as RSAPublicKey?, privateKey as RSAPrivateKey?)
+        val roles = mutableMapOf<String, List<String>>()
+        roles["test"] = listOf("ROLE_ADMIN")
+        roles["p"] = listOf("ROLE_PARTICIPANT")
         val token: String = JWT.create()
                 .withIssuedAt(Date())
                 .withAudience("res_ManagementPortal")
@@ -90,9 +93,8 @@ class ManagementPortalAuthenticationFilterTest {
 
         `when`(request.getHeader(eq("Authorization"))).thenReturn("Bearer " + token)
         `when`(request.setAttribute(eq("jwt"), any())).then { invocation ->
-            val jwt = invocation.getArgument<DecodedJWT>(1)!!
-            assertEquals(listOf("a", "b"),
-                    jwt.getClaim("sources").asList(String::class.java))
+            val jwt = invocation.getArgument<RadarToken>(1)!!
+            assertEquals(listOf("a", "b"), jwt.sources)
             assertEquals("user1", jwt.subject)
         }
 

@@ -1,7 +1,7 @@
 package org.radarcns.gateway.filter
 
-import com.auth0.jwt.interfaces.DecodedJWT
 import org.radarcns.auth.exception.NotAuthorizedException
+import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.kafka.AvroProcessor
 import org.radarcns.gateway.util.Json.jsonErrorResponse
 import org.radarcns.gateway.util.ServletByteArrayWrapper
@@ -51,7 +51,7 @@ class AvroContentFilter : Filter {
             return
         }
 
-        val token = request.getAttribute("jwt") as? DecodedJWT
+        val token = request.getAttribute("jwt") as? RadarToken
         if (token == null) {
             this.context.log("Request was not authenticated by a previous filter: "
                     + "no token attribute found or no user found")
