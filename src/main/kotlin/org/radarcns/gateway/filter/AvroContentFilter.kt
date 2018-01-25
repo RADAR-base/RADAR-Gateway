@@ -51,7 +51,7 @@ class AvroContentFilter : Filter {
             return
         }
 
-        val token = request.getAttribute("jwt") as? RadarToken
+        val token = request.getAttribute("token") as? RadarToken
         if (token == null) {
             this.context.log("Request was not authenticated by a previous filter: "
                     + "no token attribute found or no user found")
@@ -61,8 +61,8 @@ class AvroContentFilter : Filter {
         }
 
         try {
-            request.getInputStream().use { stream ->
-                val data = ByteArrayInputStream(processor.process(stream, token))
+            request.getInputStream().use { inStream ->
+                val data = ByteArrayInputStream(processor.process(inStream, token))
 
                 chain.doFilter(object : HttpServletRequestWrapper(req) {
                     @Throws(IOException::class)
@@ -77,7 +77,7 @@ class AvroContentFilter : Filter {
                     "malformed_content", ex.message)
         } catch (ex: NotAuthorizedException) {
             jsonErrorResponse(res, HttpServletResponse.SC_FORBIDDEN,
-                    "authentication_mismatch", ex.message)
+                    "authentication_mismatch_content", ex.message)
         } catch (ex: IOException) {
             context.log("IOException", ex)
             jsonErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

@@ -6,6 +6,9 @@ import org.radarcns.auth.authorization.RadarAuthorization
 import org.radarcns.auth.config.YamlServerConfig
 import org.radarcns.auth.exception.NotAuthorizedException
 import org.radarcns.auth.exception.TokenValidationException
+import org.radarcns.auth.token.RadarToken
+import org.radarcns.gateway.util.Json
+import org.radarcns.gateway.util.Json.jsonErrorResponse
 import java.io.IOException
 import java.net.URI
 import java.net.URISyntaxException
@@ -30,27 +33,26 @@ class ManagementPortalAuthenticationFilter : Filter {
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         val token = getToken(request)
         val res = response as HttpServletResponse
-        if (token == null) {
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED)
-            res.setHeader("WWW-Authenticate", "Bearer")
-            return
-        }
 
-        try {
-            val jwt = getValidator(context).validateAccessToken(token)
-            RadarAuthorization.checkPermission(jwt, Permission.MEASUREMENT_CREATE)
-            request.setAttribute("jwt", jwt)
-            chain.doFilter(request, response)
+        val radarToken = if (token != null) try {
+            getValidator(context).validateAccessToken(token)
         } catch (ex: TokenValidationException) {
             context.log("Failed to process token", ex)
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED)
-            res.setHeader("WWW-Authenticate", "Bearer")
-        } catch (ex: NotAuthorizedException) {
-            context.log("Failed to process token", ex)
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED)
-            res.setHeader("WWW-Authenticate", "Bearer")
-        }
+            null
+        } else null
 
+        if (radarToken == null || radarToken.subject == null) {
+            res.status = HttpServletResponse.SC_UNAUTHORIZED
+            res.setHeader("WWW-Authenticate", "Bearer")
+        } else if (!radarToken.hasPermission(Permission.MEASUREMENT_CREATE)) {
+            res.status = HttpServletResponse.SC_FORBIDDEN
+            jsonErrorResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                    "forbidden_measurement_create",
+                    "Given authentication does not contain permission to create measurements.")
+        } else {
+            request.setAttribute("token", radarToken)
+            chain.doFilter(request, response)
+        }
     }
 
     override fun destroy() {
@@ -62,7 +64,8 @@ class ManagementPortalAuthenticationFilter : Filter {
         val authorizationHeader = req.getHeader("Authorization")
 
         // Check if the HTTP Authorization header is present and formatted correctly
-        if (authorizationHeader == null || !authorizationHeader.toLowerCase(Locale.US).startsWith("bearer ")) {
+        if (authorizationHeader == null
+                || !authorizationHeader.toLowerCase(Locale.US).startsWith("bearer ")) {
             this.context.log("No authorization header provided in the request")
             return null
         }

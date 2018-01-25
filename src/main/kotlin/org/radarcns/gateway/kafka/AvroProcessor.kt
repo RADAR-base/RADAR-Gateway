@@ -10,7 +10,6 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.text.ParseException
-import java.util.*
 
 class AvroProcessor {
     /**
@@ -70,13 +69,11 @@ class AvroProcessor {
         }
 
         records.forEach { record ->
-            if (isNullField(record["key"])) {
-                throw IllegalArgumentException("Missing key field in record")
-            }
             if (isNullField(record["value"])) {
                 throw IllegalArgumentException("Missing value field in record")
             }
-            processKey(record["key"], auth)
+            val key = record["key"] ?: throw IllegalArgumentException("Missing key field in record")
+            processKey(key, auth)
         }
     }
 
@@ -92,7 +89,7 @@ class AvroProcessor {
             if (project.isNull) {
                 // no project ID was provided, fill it in for the sender
                 val newProject = Json.mapper.createObjectNode()
-                newProject.put("string", auth.projectIds.first())
+                newProject.put("string", auth.defaultProject)
                 (key as ObjectNode).set("projectId", newProject)
             } else {
                 // project ID was provided, it should match one of the validated project IDs.
@@ -107,49 +104,41 @@ class AvroProcessor {
             }
         }
 
-        val user = key["userId"]
-        if (user != null && user.asText() != auth.userId) {
+        val user = key["userId"]?.asText()
+        if (user != auth.userId) {
             throw NotAuthorizedException(
-                    "record userId '${user.asText()}' does not match authenticated user ID "
-                            + "'${auth.userId}'")
+                    "record userId '$user' does not match authenticated user ID '${auth.userId}'")
         }
-        val source = key["sourceId"]
-        if (source != null && !auth.sourceIds.contains(source.asText())) {
+        val source = key["sourceId"]?.asText()
+        if (!auth.sourceIds.contains(source)) {
             throw NotAuthorizedException(
-                    "record sourceId '${source.asText()}' has not been added to JWT allowed "
+                    "record sourceId '$source' has not been added to JWT allowed "
                             + "IDs ${auth.sourceIds}.")
         }
     }
 
     private class Auth(jwt: RadarToken) {
-        val projectIds: Set<String>
-        val userId: String = jwt.subject
-        val sourceIds: Collection<String>
+        val projectIds = jwt.roles?.keys
+                ?.filter { jwt.hasPermissionOnProject(Permission.MEASUREMENT_CREATE, it) }
+                ?.toSet() ?: emptySet()
+        val defaultProject = projectIds.firstOrNull()
+        val userId = jwt.subject!!
+        val sourceIds = jwt.sources?.toSet() ?: emptySet()
+
         init {
-            // get roles as a list, empty if not set
-            val rolesClaim = jwt.roles ?: Collections.emptyMap()
-
-            projectIds = rolesClaim.filterValues { it.contains(Util.PARTICIPANT_SUFFIX) }.toMap()
-                    .keys
-            jwt.hasPermissionOnProject(Permission.MEASUREMENT_CREATE , projectIds.first())
-
             if (projectIds.isEmpty()) {
                 throw NotAuthorizedException(
-                        "User $userId is not a participant in any project")
+                        "User $userId cannot create measurements in any project")
             }
 
-            val sourcesClaim = jwt.sources ?: Collections.emptyList()
-            if (sourcesClaim.isEmpty()) {
+            if (sourceIds.isEmpty()) {
                 throw NotAuthorizedException(
                         "Request JWT of user $userId did not contain source IDs")
             }
-            this.sourceIds = HashSet(sourcesClaim)
         }
     }
 
     companion object Util {
-        private val PARTICIPANT_SUFFIX = "ROLE_PARTICIPANT"
-
         fun isNullField(field: JsonNode?): Boolean {
             return field == null || field.isNull
         }
