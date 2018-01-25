@@ -13,6 +13,7 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.*
 import org.radarcns.auth.token.JwtRadarToken.*
 import org.radarcns.auth.token.RadarToken
+import org.radarcns.gateway.kafka.AvroAuth
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.interfaces.RSAPrivateKey
@@ -76,9 +77,6 @@ class ManagementPortalAuthenticationFilterTest {
         server.enqueue(MockResponse().setResponseCode(500))
 
         val algorithm = Algorithm.RSA256(publicKey as RSAPublicKey?, privateKey as RSAPrivateKey?)
-        val roles = mutableMapOf<String, List<String>>()
-        roles["test"] = listOf("ROLE_ADMIN")
-        roles["p"] = listOf("ROLE_PARTICIPANT")
         val token: String = JWT.create()
                 .withIssuedAt(Date())
                 .withAudience("res_ManagementPortal")
@@ -92,15 +90,26 @@ class ManagementPortalAuthenticationFilterTest {
                 .sign(algorithm)
 
         `when`(request.getHeader(eq("Authorization"))).thenReturn("Bearer " + token)
-        `when`(request.setAttribute(eq("jwt"), any())).then { invocation ->
+        `when`(request.setAttribute(eq("token"), any())).then { invocation ->
             val jwt = invocation.getArgument<RadarToken>(1)!!
             assertEquals(listOf("a", "b"), jwt.sources)
             assertEquals("user1", jwt.subject)
+            val expectedRoles = mapOf(
+                    Pair("test", listOf("ROLE_ADMIN")),
+                    Pair("p", listOf("ROLE_PARTICIPANT")))
+            assertEquals(expectedRoles, jwt.roles)
+
+            val auth = AvroAuth(jwt)
+            assertEquals(setOf("p"), auth.projectIds)
+            assertEquals(setOf("a", "b"), auth.sourceIds)
+            assertEquals("user1", auth.userId)
+            assertEquals("p", auth.defaultProject)
         }
 
         filter.doFilter(request, response, filterChain)
+        @Suppress("UsePropertyAccessSyntax")
         verify(response, times(0)).setStatus(anyInt())
-        verify(request, times(1)).setAttribute(eq("jwt"), any())
+        verify(request, times(1)).setAttribute(eq("token"), any())
     }
 
 }

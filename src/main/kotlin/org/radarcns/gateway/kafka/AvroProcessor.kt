@@ -2,7 +2,6 @@ package org.radarcns.gateway.kafka
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import org.radarcns.auth.authorization.Permission
 import org.radarcns.auth.exception.NotAuthorizedException
 import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.util.Json
@@ -27,13 +26,13 @@ class AvroProcessor {
      */
     @Throws(ParseException::class, IOException::class, NotAuthorizedException::class)
     fun process(data: InputStream, token: RadarToken): ByteArray {
-        val auth = Auth(token)
+        val auth = AvroAuth(token)
         val tree = processTree(data, auth)
         return generateRequest(tree)
     }
 
     @Throws(ParseException::class, IOException::class)
-    private fun processTree(data: InputStream, auth: Auth): JsonNode {
+    private fun processTree(data: InputStream, auth: AvroAuth): JsonNode {
         val tree = Json.factory.createParser(data).use {
             it.readValueAsTree<JsonNode>()
         } ?: throw ParseException("Expecting JSON object in payload", 0)
@@ -63,7 +62,7 @@ class AvroProcessor {
     }
 
     @Throws(IOException::class, NotAuthorizedException::class)
-    private fun processRecords(records: JsonNode, auth: Auth) {
+    private fun processRecords(records: JsonNode, auth: AvroAuth) {
         if (!records.isArray) {
             throw IllegalArgumentException("Records should be an array")
         }
@@ -79,7 +78,7 @@ class AvroProcessor {
 
     /** Parse single record key.  */
     @Throws(IOException::class, NotAuthorizedException::class)
-    private fun processKey(key: JsonNode, auth: Auth) {
+    private fun processKey(key: JsonNode, auth: AvroAuth) {
         if (!key.isObject) {
             throw IllegalArgumentException("Field key must be a JSON object")
         }
@@ -114,27 +113,6 @@ class AvroProcessor {
             throw NotAuthorizedException(
                     "record sourceId '$source' has not been added to JWT allowed "
                             + "IDs ${auth.sourceIds}.")
-        }
-    }
-
-    private class Auth(jwt: RadarToken) {
-        val projectIds = jwt.roles?.keys
-                ?.filter { jwt.hasPermissionOnProject(Permission.MEASUREMENT_CREATE, it) }
-                ?.toSet() ?: emptySet()
-        val defaultProject = projectIds.firstOrNull()
-        val userId = jwt.subject!!
-        val sourceIds = jwt.sources?.toSet() ?: emptySet()
-
-        init {
-            if (projectIds.isEmpty()) {
-                throw NotAuthorizedException(
-                        "User $userId cannot create measurements in any project")
-            }
-
-            if (sourceIds.isEmpty()) {
-                throw NotAuthorizedException(
-                        "Request JWT of user $userId did not contain source IDs")
-            }
         }
     }
 
