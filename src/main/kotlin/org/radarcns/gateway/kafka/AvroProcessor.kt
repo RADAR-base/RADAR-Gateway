@@ -1,17 +1,14 @@
 package org.radarcns.gateway.kafka
 
-import com.auth0.jwt.interfaces.DecodedJWT
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import org.radarcns.auth.authorization.RadarAuthorization.ROLES_CLAIM
 import org.radarcns.auth.exception.NotAuthorizedException
+import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.util.Json
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.text.ParseException
-import java.util.*
-import java.util.stream.Collectors
 
 class AvroProcessor {
     /**
@@ -28,14 +25,14 @@ class AvroProcessor {
      * @throws IOException if the data cannot be read
      */
     @Throws(ParseException::class, IOException::class, NotAuthorizedException::class)
-    fun process(data: InputStream, token: DecodedJWT): ByteArray {
-        val auth = Auth(token)
+    fun process(data: InputStream, token: RadarToken): ByteArray {
+        val auth = AvroAuth(token)
         val tree = processTree(data, auth)
         return generateRequest(tree)
     }
 
     @Throws(ParseException::class, IOException::class)
-    private fun processTree(data: InputStream, auth: Auth): JsonNode {
+    private fun processTree(data: InputStream, auth: AvroAuth): JsonNode {
         val tree = Json.factory.createParser(data).use {
             it.readValueAsTree<JsonNode>()
         } ?: throw ParseException("Expecting JSON object in payload", 0)
@@ -65,25 +62,23 @@ class AvroProcessor {
     }
 
     @Throws(IOException::class, NotAuthorizedException::class)
-    private fun processRecords(records: JsonNode, auth: Auth) {
+    private fun processRecords(records: JsonNode, auth: AvroAuth) {
         if (!records.isArray) {
             throw IllegalArgumentException("Records should be an array")
         }
 
         records.forEach { record ->
-            if (isNullField(record["key"])) {
-                throw IllegalArgumentException("Missing key field in record")
-            }
             if (isNullField(record["value"])) {
                 throw IllegalArgumentException("Missing value field in record")
             }
-            processKey(record["key"], auth)
+            val key = record["key"] ?: throw IllegalArgumentException("Missing key field in record")
+            processKey(key, auth)
         }
     }
 
     /** Parse single record key.  */
     @Throws(IOException::class, NotAuthorizedException::class)
-    private fun processKey(key: JsonNode, auth: Auth) {
+    private fun processKey(key: JsonNode, auth: AvroAuth) {
         if (!key.isObject) {
             throw IllegalArgumentException("Field key must be a JSON object")
         }
@@ -93,7 +88,7 @@ class AvroProcessor {
             if (project.isNull) {
                 // no project ID was provided, fill it in for the sender
                 val newProject = Json.mapper.createObjectNode()
-                newProject.put("string", auth.projectIds[0])
+                newProject.put("string", auth.defaultProject)
                 (key as ObjectNode).set("projectId", newProject)
             } else {
                 // project ID was provided, it should match one of the validated project IDs.
@@ -108,52 +103,20 @@ class AvroProcessor {
             }
         }
 
-        val user = key["userId"]
-        if (user != null && user.asText() != auth.userId) {
+        val user = key["userId"]?.asText()
+        if (user != auth.userId) {
             throw NotAuthorizedException(
-                    "record userId '${user.asText()}' does not match authenticated user ID "
-                            + "'${auth.userId}'")
+                    "record userId '$user' does not match authenticated user ID '${auth.userId}'")
         }
-        val source = key["sourceId"]
-        if (source != null && !auth.sourceIds.contains(source.asText())) {
+        val source = key["sourceId"]?.asText()
+        if (!auth.sourceIds.contains(source)) {
             throw NotAuthorizedException(
-                    "record sourceId '${source.asText()}' has not been added to JWT allowed "
+                    "record sourceId '$source' has not been added to JWT allowed "
                             + "IDs ${auth.sourceIds}.")
         }
     }
 
-    private class Auth(jwt: DecodedJWT) {
-        val projectIds: List<String>
-        val userId: String = jwt.subject
-        val sourceIds: Collection<String>
-        init {
-            // get roles as a list, empty if not set
-            val rolesClaim = jwt.getClaim(ROLES_CLAIM)?.asList(String::class.java)
-                    ?: Collections.emptyList()
-
-            projectIds = rolesClaim.stream()
-                    .filter { it.endsWith(PARTICIPANT_SUFFIX) }
-                    .map { it.substring(0, it.length - PARTICIPANT_SUFFIX.length) }
-                    .collect(Collectors.toList())
-
-            if (projectIds.isEmpty()) {
-                throw NotAuthorizedException(
-                        "User $userId is not a participant in any project")
-            }
-
-            val sourcesClaim = jwt.getClaim("sourceIds")?.asList(String::class.java)
-                    ?: Collections.emptyList()
-            if (sourcesClaim.isEmpty()) {
-                throw NotAuthorizedException(
-                        "Request JWT of user $userId did not contain source IDs")
-            }
-            this.sourceIds = HashSet(sourcesClaim)
-        }
-    }
-
     companion object Util {
-        private val PARTICIPANT_SUFFIX = ":ROLE_PARTICIPANT"
-
         fun isNullField(field: JsonNode?): Boolean {
             return field == null || field.isNull
         }
