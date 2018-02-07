@@ -76,6 +76,7 @@ class AvroContentFilter : Filter {
             jsonErrorResponse(res, HttpServletResponse.SC_BAD_REQUEST,
                     "malformed_content", ex.message)
         } catch (ex: NotAuthorizedException) {
+            response.status = HttpServletResponse.SC_FORBIDDEN
             jsonErrorResponse(res, HttpServletResponse.SC_FORBIDDEN,
                     "authentication_mismatch", ex.message)
         } catch (ex: IOException) {

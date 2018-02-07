@@ -13,14 +13,13 @@ object Json {
     @Throws(IOException::class)
     fun jsonErrorResponse(response: HttpServletResponse, statusCode: Int, error: String,
                           errorDescription: String?) {
-        response.setStatus(statusCode)
+        response.status = statusCode
         response.setHeader("Content-Type", "application/json; charset=utf-8")
         response.outputStream.use { stream ->
             factory.createGenerator(stream).use {
                 it.writeStartObject()
-                it.writeNumberField("error_code", statusCode)
                 it.writeStringField("error", error)
-                it.writeStringField("message", "$error: $errorDescription")
+                it.writeStringField("error_description", "$error: $errorDescription")
                 it.writeEndObject()
             }
         }

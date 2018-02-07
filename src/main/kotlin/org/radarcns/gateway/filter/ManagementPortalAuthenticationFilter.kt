@@ -31,26 +31,31 @@ class ManagementPortalAuthenticationFilter : Filter {
         val token = getToken(request)
         val res = response as HttpServletResponse
         if (token == null) {
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED)
-            res.setHeader("WWW-Authenticate", "Bearer")
+            res.status = HttpServletResponse.SC_UNAUTHORIZED
+            res.setHeader("WWW-Authenticate", BEARER_REALM)
             return
         }
 
-        try {
-            val jwt = getValidator(context).validateAccessToken(token)
-            RadarAuthorization.checkPermission(jwt, Permission.MEASUREMENT_CREATE)
-            request.setAttribute("jwt", jwt)
-            chain.doFilter(request, response)
+        val jwt = try {
+            getValidator(context).validateAccessToken(token)
         } catch (ex: TokenValidationException) {
             context.log("Failed to process token", ex)
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED)
-            res.setHeader("WWW-Authenticate", "Bearer")
-        } catch (ex: NotAuthorizedException) {
-            context.log("Failed to process token", ex)
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED)
-            res.setHeader("WWW-Authenticate", "Bearer")
+            res.status = HttpServletResponse.SC_UNAUTHORIZED
+            res.setHeader("WWW-Authenticate",
+                    "$BEARER_REALM error=\"invalid_token\" error_description=\"${ex.message}\"")
+            null
+        } ?: return
+
+        if (!jwt.hasPermission(Permission.MEASUREMENT_CREATE)) {
+            context.log("Insufficient scope")
+            res.status = HttpServletResponse.SC_FORBIDDEN
+            res.setHeader("WWW-Authenticate", "$BEARER_REALM error=\"insufficient_scope\""
+                    + " error_description=\"MEASUREMENT.CREATE permission not given.\""
+                    + " scope=\"${Permission.MEASUREMENT_CREATE}\"")
+            return
         }
 
+        chain.doFilter(request, response)
     }
 
     override fun destroy() {
@@ -72,7 +77,7 @@ class ManagementPortalAuthenticationFilter : Filter {
     }
 
     companion object {
-
+        const val BEARER_REALM: String = "Bearer realm=\"Kafka REST Proxy\""
         private var validator: TokenValidator? = null
 
         @Synchronized private fun getValidator(context: ServletContext): TokenValidator {
