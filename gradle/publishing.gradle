@@ -1,0 +1,46 @@
+
+//---------------------------------------------------------------------------//
+// Dependencies                                                              //
+//---------------------------------------------------------------------------//
+
+ext.pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution 'repo'
+        }
+    }
+    developers {
+        developer {
+            id 'blootsvoets'
+            name 'Joris Borgdorff'
+            email 'joris@thehyve.nl'
+            organization 'The Hyve'
+        }
+        developer {
+            id 'dennyverbeeck'
+            name 'Denny Verbeeck'
+            email 'dverbeec@its.jnj.com'
+            organization 'Johnson & Johnson'
+        }
+        developer {
+            id 'nivemaham'
+            name 'Nivethika Mahasivam'
+            email 'nivethika@thehyve.nl'
+            organization 'The Hyve'
+        }
+    }
+    issueManagement {
+        system 'GitHub'
+        url githubUrl + '/issues'
+    }
+    organization {
+        name 'RADAR-CNS'
+        url website
+    }
+    scm {
+        connection 'scm:git:' + githubUrl
+        url githubUrl
+    }
+}

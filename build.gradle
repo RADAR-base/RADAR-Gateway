@@ -1,24 +1,17 @@
 buildscript {
-    ext.kotlinVersion = '1.1.51'
+    ext.kotlinVersion = '1.2.21'
     dependencies {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.1'
     }
 }
 
 plugins {
-    id 'java'
-    id 'idea'
-    id 'checkstyle'
-    id 'pmd'
     id 'war'
-    id "org.jetbrains.kotlin.jvm" version '1.1.51'
-    id 'org.akhikhl.gretty' version '1.4.2'
+    id "org.jetbrains.kotlin.jvm" version '1.2.21'
 }
 
-apply plugin: 'org.junit.platform.gradle.plugin'
-
 group 'org.radarcns'
-version '0.1.2'
+version '0.1.3'
 
 ext.githubRepoName = 'RADAR-CNS/RADAR-Gateway'
 ext.githubUrl = 'https://github.com/' + githubRepoName + '.git'
@@ -29,78 +22,41 @@ ext.description = 'RADAR Gateway to handle secured data flow to backend.'
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
-ext.junitVersion = '5.0.1'
-ext.httpProxyVersion = '1.9'
 ext.okhttp3Version = '3.9.0'
+ext.radarMpVersion = '0.3.3'
+ext.httpProxyVersion = '1.9'
+ext.apacheHttpVersion = '4.5.2'
+ext.javaxServletVersion = '3.1.0'
+ext.jacksonVersion = '2.9.3'
+ext.slf4jVersion = '1.7.25'
+ext.logbackVersion = '1.2.3'
+ext.tomcatVersion = '8.5.24'
+
+ext.junitVersion = '5.0.1'
+ext.mockitoVersion = '2.+'
 
 repositories {
     jcenter()
+    // Non-jcenter radar releases
+    maven { url 'https://dl.bintray.com/radar-cns/org.radarcns' }
+    // For working with dev-branches
     maven { url 'https://oss.jfrog.org/artifactory/libs-snapshot/' }
 }
 
-configurations.all {
-    // Check for updates every build
-    resolutionStrategy.cacheChangingModulesFor 0, 'SECONDS'
-}
-
 dependencies {
-    compile group: 'org.mitre.dsmiley.httpproxy' , name: 'smiley-http-proxy-servlet' , version: httpProxyVersion
-    compile group: 'javax.servlet' , name: 'servlet-api' , version: '2.4'
-    compile group: 'org.radarcns', name: 'radar-auth', version: '0.1-SNAPSHOT', changing: true
-    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
-
-    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
-    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.+'
-    testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: okhttp3Version
-    testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
-
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlinVersion
-}
 
-//---------------------------------------------------------------------------//
-// Dependencies                                                              //
-//---------------------------------------------------------------------------//
+    compile (group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion) {
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+    }
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
 
-ext.pomConfig = {
-    licenses {
-        license {
-            name "The Apache Software License, Version 2.0"
-            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
-            distribution 'repo'
-        }
-    }
-    developers {
-        developer {
-            id 'blootsvoets'
-            name 'Joris Borgdorff'
-            email 'joris@thehyve.nl'
-            organization 'The Hyve'
-        }
-        developer {
-            id 'dennyverbeeck'
-            name 'Denny Verbeeck'
-            email 'dverbeec@its.jnj.com'
-            organization 'Johnson & Johnson'
-        }
-        developer {
-            id 'nivemaham'
-            name 'Nivethika Mahasivam'
-            email 'nivethika@thehyve.nl'
-            organization 'The Hyve'
-        }
-    }
-    issueManagement {
-        system 'GitHub'
-        url githubUrl + '/issues'
-    }
-    organization {
-        name 'RADAR-CNS'
-        url website
-    }
-    scm {
-        connection 'scm:git:' + githubUrl
-        url githubUrl
-    }
+    runtimeOnly group: 'org.mitre.dsmiley.httpproxy' , name: 'smiley-http-proxy-servlet' , version: httpProxyVersion
+    runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
+
+    providedCompile group: 'org.apache.tomcat' , name: 'tomcat-catalina' , version: tomcatVersion
 }
 
 compileKotlin {
@@ -111,84 +67,6 @@ compileKotlin {
 compileTestKotlin {
     kotlinOptions {
         jvmTarget = '1.8'
-    }
-}
-
-idea {
-    module {
-        downloadSources = true
-    }
-}
-
-//---------------------------------------------------------------------------//
-// Style checking                                                            //
-//---------------------------------------------------------------------------//
-
-checkstyle {
-    // codacy version
-    toolVersion '6.16'
-    ignoreFailures true
-
-    configFile = rootProject.file('config/checkstyle/checkstyle.xml')
-    sourceSets = [sourceSets.main]
-}
-
-pmd {
-    // codacy version
-    toolVersion = '5.5.2'
-    ignoreFailures = true
-    sourceSets = [sourceSets.main]
-
-    consoleOutput = true
-
-    ruleSets = []
-    ruleSetFiles = files(rootProject.file("config/pmd/ruleset.xml"))
-}
-
-//---------------------------------------------------------------------------//
-// Testing                                                                   //
-//---------------------------------------------------------------------------//
-
-tasks.matching { it instanceof Test }.all {
-    def stdout = new LinkedList<String>()
-    beforeTest { TestDescriptor td ->
-        stdout.clear()
-    }
-
-    onOutput { TestDescriptor td, TestOutputEvent toe ->
-        stdout.addAll(toe.getMessage().split('(?m)$'))
-        while (stdout.size() > 100) {
-            stdout.remove()
-        }
-    }
-
-    afterTest { TestDescriptor td, TestResult tr ->
-        if (tr.resultType == TestResult.ResultType.FAILURE) {
-            println()
-            print("${td.className}.${td.name} FAILED")
-            if (stdout.empty) {
-                println(" without any output")
-            } else {
-                println(" with last 100 lines of output:")
-                println('=' * 100)
-                stdout.each { print(it) }
-                println('=' * 100)
-            }
-        }
-    }
-
-    testLogging {
-        showExceptions = true
-        showCauses = true
-        showStackTraces = true
-        exceptionFormat "full"
-    }
-}
-
-project.afterEvaluate {
-    task downloadDependencies(type: Exec) {
-        configurations.testRuntime.files
-        commandLine 'echo', 'Downloaded all dependencies'
     }
 }
 
@@ -207,6 +85,9 @@ war {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion '4.1'
-    distributionType 'all'
+    gradleVersion '4.4'
 }
+
+apply from: 'gradle/publishing.gradle'
+apply from: 'gradle/test.gradle'
+apply from: 'gradle/util.gradle'

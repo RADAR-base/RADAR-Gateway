@@ -8,9 +8,9 @@ import javax.servlet.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-private val SUCCESS_TIMEOUT = Duration.ofHours(1)
-private val FAILURE_TIMEOUT = Duration.ofMinutes(1)
-
+/**
+ * Asserts that data is only submitted to Kafka topics that already exist.
+ */
 class KafkaTopicFilter : Filter {
     private lateinit var context: ServletContext
     private lateinit var client: KafkaClient
@@ -37,12 +37,14 @@ class KafkaTopicFilter : Filter {
             return
         }
 
+        // invalidate removed topics
         if (Instant.now().isAfter(fetchTime.plus(SUCCESS_TIMEOUT))) {
             updateTopics()
         }
 
         val topic = req.requestURI.substringAfterLast('/')
 
+        // topic exists or exists after an update
         if (previousTopics.contains(topic) || (
                 Instant.now().isAfter(fetchTime.plus(FAILURE_TIMEOUT))
                 && updateTopics()
@@ -66,4 +68,9 @@ class KafkaTopicFilter : Filter {
     }
 
     override fun destroy() {}
+
+    companion object Constants {
+        private val SUCCESS_TIMEOUT = Duration.ofHours(1)
+        private val FAILURE_TIMEOUT = Duration.ofMinutes(1)
+    }
 }

@@ -2,7 +2,6 @@ package org.radarcns.gateway.filter
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.interfaces.DecodedJWT
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -12,6 +11,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.*
+import org.radarcns.auth.token.JwtRadarToken.*
+import org.radarcns.auth.token.RadarToken
+import org.radarcns.gateway.kafka.AvroAuth
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.interfaces.RSAPrivateKey
@@ -26,9 +28,9 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 
-class AuthenticationFilterTest {
+class ManagementPortalAuthenticationFilterTest {
     lateinit var server: MockWebServer
-    lateinit var filter: AuthenticationFilter
+    lateinit var filter: ManagementPortalAuthenticationFilter
     lateinit var request: HttpServletRequest
     lateinit var response: HttpServletResponse
     lateinit var filterChain: FilterChain
@@ -38,7 +40,7 @@ class AuthenticationFilterTest {
         server = MockWebServer()
         server.start(34101)
 
-        filter = AuthenticationFilter()
+        filter = ManagementPortalAuthenticationFilter()
         val config = mock(FilterConfig::class.java)
         val context = mock(ServletContext::class.java)
         `when`(config.servletContext).thenReturn(context)
@@ -79,21 +81,35 @@ class AuthenticationFilterTest {
                 .withIssuedAt(Date())
                 .withAudience("res_ManagementPortal")
                 .withSubject("user1")
-                .withArrayClaim("sources", arrayOf("a", "b"))
+                .withArrayClaim(SOURCES_CLAIM, arrayOf("a", "b"))
                 .withExpiresAt(Date.from(Instant.now().plus(Duration.ofSeconds(60))))
+                .withArrayClaim(SCOPE_CLAIM, arrayOf("MEASUREMENT.CREATE"))
+                .withArrayClaim(ROLES_CLAIM, arrayOf("test:ROLE_ADMIN", "p:ROLE_PARTICIPANT"))
+                .withArrayClaim(AUTHORITIES_CLAIM, arrayOf("res_pRMT"))
+                .withClaim(GRANT_TYPE_CLAIM, "code")
                 .sign(algorithm)
 
         `when`(request.getHeader(eq("Authorization"))).thenReturn("Bearer " + token)
-        `when`(request.setAttribute(eq("jwt"), any())).then { invocation ->
-            val jwt = invocation.getArgument<DecodedJWT>(1)!!
-            assertEquals(listOf("a", "b"),
-                    jwt.getClaim("sources").asList(String::class.java))
+        `when`(request.setAttribute(eq("token"), any())).then { invocation ->
+            val jwt = invocation.getArgument<RadarToken>(1)!!
+            assertEquals(listOf("a", "b"), jwt.sources)
             assertEquals("user1", jwt.subject)
+            val expectedRoles = mapOf(
+                    Pair("test", listOf("ROLE_ADMIN")),
+                    Pair("p", listOf("ROLE_PARTICIPANT")))
+            assertEquals(expectedRoles, jwt.roles)
+
+            val auth = AvroAuth(jwt)
+            assertEquals(setOf("p"), auth.projectIds)
+            assertEquals(setOf("a", "b"), auth.sourceIds)
+            assertEquals("user1", auth.userId)
+            assertEquals("p", auth.defaultProject)
         }
 
         filter.doFilter(request, response, filterChain)
+        @Suppress("UsePropertyAccessSyntax")
         verify(response, times(0)).setStatus(anyInt())
-        verify(request, times(1)).setAttribute(eq("jwt"), any())
+        verify(request, times(1)).setAttribute(eq("token"), any())
     }
 
 }
