@@ -2,14 +2,11 @@ package org.radarcns.gateway.filter
 
 import org.radarcns.auth.authentication.TokenValidator
 import org.radarcns.auth.authorization.Permission
-import org.radarcns.auth.authorization.RadarAuthorization
 import org.radarcns.auth.config.YamlServerConfig
-import org.radarcns.auth.exception.NotAuthorizedException
 import org.radarcns.auth.exception.TokenValidationException
 import java.io.IOException
 import java.net.URI
 import java.net.URISyntaxException
-import java.util.*
 import javax.servlet.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -30,6 +27,7 @@ class ManagementPortalAuthenticationFilter : Filter {
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         val token = getToken(request)
         val res = response as HttpServletResponse
+
         if (token == null) {
             res.status = HttpServletResponse.SC_UNAUTHORIZED
             res.setHeader("WWW-Authenticate", BEARER_REALM)
@@ -67,18 +65,20 @@ class ManagementPortalAuthenticationFilter : Filter {
         val authorizationHeader = req.getHeader("Authorization")
 
         // Check if the HTTP Authorization header is present and formatted correctly
-        if (authorizationHeader == null || !authorizationHeader.toLowerCase(Locale.US).startsWith("bearer ")) {
+        if (authorizationHeader == null
+                || !authorizationHeader.startsWith(BEARER, ignoreCase = true)) {
             this.context.log("No authorization header provided in the request")
             return null
         }
 
         // Extract the token from the HTTP Authorization header
-        return authorizationHeader.substring("Bearer".length).trim { it <= ' ' }
+        return authorizationHeader.substring(BEARER.length).trim { it <= ' ' }
     }
 
     companion object {
         const val BEARER_REALM: String = "Bearer realm=\"Kafka REST Proxy\""
         private var validator: TokenValidator? = null
+        const val BEARER = "Bearer "
 
         @Synchronized private fun getValidator(context: ServletContext): TokenValidator {
             if (validator == null) {

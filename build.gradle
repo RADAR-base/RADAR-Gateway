@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlinVersion = '1.2.10'
+    ext.kotlinVersion = '1.2.21'
     dependencies {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.1'
     }
@@ -7,7 +7,7 @@ buildscript {
 
 plugins {
     id 'war'
-    id "org.jetbrains.kotlin.jvm" version '1.2.10'
+    id "org.jetbrains.kotlin.jvm" version '1.2.21'
 }
 
 group 'org.radarcns'
@@ -23,7 +23,7 @@ sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
 ext.okhttp3Version = '3.9.0'
-ext.radarMpVersion = '0.3.1'
+ext.radarMpVersion = '0.3.3'
 ext.httpProxyVersion = '1.9'
 ext.apacheHttpVersion = '4.5.2'
 ext.javaxServletVersion = '3.1.0'
