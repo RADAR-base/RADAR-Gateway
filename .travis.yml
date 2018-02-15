@@ -23,11 +23,8 @@ before_install:
 
 script:
   - ./gradlew check
-  - cd src/integrationTest/docker
-  - sudo docker-compose -f $DOCKER_COMPOSE_FILE up -d && sleep 60
-  - ./gradlew integrationTest
+  - sudo docker-compose -f $DOCKER_COMPOSE_FILE up -d && sleep 60 && ./gradlew integrationTest
   - sudo docker-compose -f $DOCKER_COMPOSE_FILE down
-  - cd ../../..
 
 deploy:
   - provider: releasesq
