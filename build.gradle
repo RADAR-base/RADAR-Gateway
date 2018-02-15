@@ -1,14 +1,18 @@
 buildscript {
-    ext.kotlinVersion = '1.2.21'
+    ext.kotlin_version = '1.2.21'
     dependencies {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.1'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+    repositories {
+        mavenCentral()
     }
 }
 
 plugins {
-    id 'war'
-    id "org.jetbrains.kotlin.jvm" version '1.2.21'
+    id 'application'
 }
+apply plugin: 'kotlin'
 
 group 'org.radarcns'
 version '0.2-SNAPSHOT'
@@ -23,7 +27,9 @@ sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
 ext.okhttp3Version = '3.9.0'
-ext.radarMpVersion = '0.3.3'
+ext.radarMpVersion = '0.3.4'
+ext.radarCommonsVersion = '0.7'
+ext.radarSchemasVersion = '0.3.1'
 ext.httpProxyVersion = '1.9'
 ext.apacheHttpVersion = '4.5.2'
 ext.javaxServletVersion = '3.1.0'
@@ -31,6 +37,8 @@ ext.jacksonVersion = '2.9.3'
 ext.slf4jVersion = '1.7.25'
 ext.logbackVersion = '1.2.3'
 ext.tomcatVersion = '8.5.24'
+ext.grizzly = '2.4.3'
+ext.jersey = '2.26'
 
 ext.junitVersion = '5.0.1'
 ext.mockitoVersion = '2.+'
@@ -44,50 +52,33 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlinVersion
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlin_version
 
-    compile (group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion) {
-        exclude group: 'ch.qos.logback', module: 'logback-classic'
-    }
+    compile group: 'org.glassfish.grizzly', name: 'grizzly-http-server', version: grizzly
+
+    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jersey
+    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-servlet', version: jersey
+    compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jersey
+
+    compile group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion
+
     implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
     implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
 
-    runtimeOnly group: 'org.mitre.dsmiley.httpproxy' , name: 'smiley-http-proxy-servlet' , version: httpProxyVersion
     runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
-
-    providedCompile group: 'org.apache.tomcat' , name: 'tomcat-catalina' , version: tomcatVersion
 }
 
 compileKotlin {
     kotlinOptions {
-        jvmTarget = '1.8'
-    }
-}
-compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = "1.8"
     }
 }
 
-//---------------------------------------------------------------------------//
-// Build system metadata                                                     //
-//---------------------------------------------------------------------------//
+mainClassName = 'MainKt'
 
-ext.sharedManifest = manifest {
-    attributes("Implementation-Title": rootProject.name,
-            "Implementation-Version": version)
+if (!hasProperty('profile')) {
+    ext.profile = 'dev'
 }
 
-war {
-    archiveName = "${rootProject.name}.war"
-    manifest.from sharedManifest
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion '4.4'
-}
-
-apply from: 'gradle/publishing.gradle'
-apply from: 'gradle/test.gradle'
-apply from: 'gradle/util.gradle'
+apply from: "gradle/profile.${profile}.gradle"

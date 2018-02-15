@@ -1,0 +1,3 @@
+apply from: 'gradle/publishing.gradle'
+apply from: 'gradle/test.gradle'
+apply from: 'gradle/util.gradle'

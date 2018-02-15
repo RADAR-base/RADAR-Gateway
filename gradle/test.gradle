@@ -1,10 +1,43 @@
 apply plugin: 'org.junit.platform.gradle.plugin'
 
+sourceSets {
+    integrationTest {
+        kotlin {
+            compileClasspath += main.output
+            runtimeClasspath += main.output
+            srcDir 'src/integrationTest/kotlin'
+        }
+    }
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
 dependencies {
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
     testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
     testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: okhttp3Version
     testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
+
+    integrationTestImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
+    integrationTestImplementation group: 'org.radarcns', name: 'radar-commons-testing', version: radarCommonsVersion
+    integrationTestImplementation group: 'org.radarcns', name: 'oauth-client-util', version: radarMpVersion
+
+    integrationTestRuntimeOnly group: 'org.slf4j', name: 'slf4j-simple', version: slf4jVersion
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+compileIntegrationTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 //---------------------------------------------------------------------------//
