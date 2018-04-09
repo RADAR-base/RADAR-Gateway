@@ -27,7 +27,7 @@ script:
   - sudo docker-compose -f $DOCKER_COMPOSE_FILE down
 
 deploy:
-  - provider: releasesq
+  - provider: releases
     api_key: ${GH_TOKEN}
     file_glob: true
     file:
