@@ -129,7 +129,6 @@ services:
       - ./etc/:/mp-includes/
     ports:
       - "8090:8090"
-      - "8080:9000"
     healthcheck:
       test: ["CMD", "wget", "--spider", "localhost:8090/oauth/token_key"]
       interval: 1m30s

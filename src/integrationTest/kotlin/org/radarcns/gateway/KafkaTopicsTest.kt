@@ -5,8 +5,7 @@ import okhttp3.*
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.MatcherAssert.assertThat
-import org.junit.Test
-import org.radarcns.auth.authorization.Permission.MEASUREMENT_CREATE
+import org.junit.jupiter.api.Test
 import org.radarcns.config.ServerConfig
 import org.radarcns.gateway.filter.ManagementPortalAuthenticationFilter.Companion.BEARER
 import org.radarcns.gateway.util.Json
@@ -35,7 +34,7 @@ const val ADMIN_PASSWORD = "admin"
 class KafkaTopicList {
     @Test
     fun testListTopics() {
-        val baseUri = "http://localhost:8080/api"
+        val baseUri = "http://localhost:8080/radar-gateway"
         val config = Config()
         config.managementPortalUrl = "http://localhost:8090"
         config.restProxyUrl = "http://localhost:8082"
@@ -87,13 +86,13 @@ class KafkaTopicList {
         val key = ObservationKey(PROJECT, USER, SOURCE)
         val value = PhoneAcceleration(time, time, 0.1f, 0.1f, 0.1f)
 
-        val directSender = RestSender.Builder()
+        val sender = RestSender.Builder()
                 .server(ServerConfig(URL(config.restProxyUrl + "/")))
                 .schemaRetriever(retriever)
                 .connectionPool(ManagedConnectionPool.GLOBAL_POOL)
                 .build()
 
-        directSender.sender(topic).use {
+        sender.sender(topic).use {
             it.send(key, value)
         }
 
@@ -108,12 +107,12 @@ class KafkaTopicList {
         val server = GrizzlyServer(config)
         server.start()
 
-        directSender.headers = Headers.Builder()
+        sender.headers = Headers.Builder()
                 .add("Authorization", BEARER + accessToken)
                 .build()
-        directSender.setKafkaConfig(ServerConfig(config.baseUri.toURL()))
+        sender.setKafkaConfig(ServerConfig(config.baseUri.toURL()))
 
-        directSender.sender(topic).use {
+        sender.sender(topic).use {
             it.send(key, value)
         }
 

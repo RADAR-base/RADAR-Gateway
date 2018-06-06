@@ -1,5 +1,3 @@
-apply plugin: 'org.junit.platform.gradle.plugin'
-
 sourceSets {
     integrationTest {
         kotlin {
@@ -13,6 +11,7 @@ sourceSets {
 configurations {
     integrationTestCompile.extendsFrom testCompile
     integrationTestRuntime.extendsFrom testRuntime
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
 }
 
 dependencies {
@@ -40,6 +39,14 @@ compileIntegrationTestKotlin {
     }
 }
 
+task integrationTest(type: Test) {
+    description = "Run integration tests (located in src/integrationTest/...)."
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    testLogging.events "skipped", "failed", "passed"
+}
+
 //---------------------------------------------------------------------------//
 // Testing                                                                   //
 //---------------------------------------------------------------------------//
@@ -49,6 +56,8 @@ tasks.matching { it instanceof Test }.all {
     beforeTest { TestDescriptor td ->
         stdout.clear()
     }
+
+    useJUnitPlatform ()
 
     onOutput { TestDescriptor td, TestOutputEvent toe ->
         stdout.addAll(toe.getMessage().split('(?m)$'))

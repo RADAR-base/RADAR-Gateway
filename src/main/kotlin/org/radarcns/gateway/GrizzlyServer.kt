@@ -10,6 +10,7 @@ import org.radarcns.auth.authentication.TokenValidator
 import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.inject.RadarTokenFactory
 import org.radarcns.gateway.inject.TokenValidatorFactory
+import org.radarcns.gateway.reader.AvroJsonReader
 import org.radarcns.gateway.resource.KafkaTopics
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
@@ -21,7 +22,8 @@ class GrizzlyServer(private val config: Config) {
         val resources = ResourceConfig()
         resources.packages(
                 "org.radarcns.gateway.exception",
-                "org.radarcns.gateway.filter")
+                "org.radarcns.gateway.filter",
+                "org.radarcns.gateway.reader")
         resources.register(KafkaTopics::class.java)
         resources.register(object : AbstractBinder() {
             override fun configure() {

@@ -1,6 +1,5 @@
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import org.radarcns.auth.config.YamlServerConfig
 import org.radarcns.gateway.Config
 import org.radarcns.gateway.GrizzlyServer
 import java.io.File
@@ -28,7 +27,7 @@ fun main(args: Array<String>) {
 
         System.`in`.read()
     } catch (e: Exception) {
-        println("Error starting server: " + e)
+        println("Error starting server: $e")
     }
     server.shutdown()
 }
