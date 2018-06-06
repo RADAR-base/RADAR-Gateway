@@ -12,7 +12,7 @@ services:
   # Zookeeper Cluster                                                         #
   #---------------------------------------------------------------------------#
   zookeeper-1:
-    image: confluentinc/cp-zookeeper:3.3.1
+    image: confluentinc/cp-zookeeper:4.1.0
     networks:
       - zookeeper
     environment:
@@ -27,7 +27,7 @@ services:
   # Kafka Cluster                                                             #
   #---------------------------------------------------------------------------#
   kafka-1:
-    image: confluentinc/cp-kafka:3.3.1
+    image: confluentinc/cp-kafka:4.1.0
     networks:
       - kafka
       - zookeeper
@@ -38,9 +38,11 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_COMPRESSION_TYPE: lz4
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
 
   kafka-2:
-    image: confluentinc/cp-kafka:3.3.1
+    image: confluentinc/cp-kafka:4.1.0
     networks:
       - kafka
       - zookeeper
@@ -51,9 +53,11 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_COMPRESSION_TYPE: lz4
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
 
   kafka-3:
-    image: confluentinc/cp-kafka:3.3.1
+    image: confluentinc/cp-kafka:4.1.0
     networks:
       - kafka
       - zookeeper
@@ -64,12 +68,14 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:9092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_COMPRESSION_TYPE: lz4
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
 
   #---------------------------------------------------------------------------#
   # Schema Registry                                                           #
   #---------------------------------------------------------------------------#
   schema-registry-1:
-    image: confluentinc/cp-schema-registry:3.3.1
+    image: confluentinc/cp-schema-registry:4.1.0
     networks:
       - kafka
       - zookeeper
@@ -87,7 +93,7 @@ services:
   # REST proxy                                                                #
   #---------------------------------------------------------------------------#
   rest-proxy-1:
-    image: confluentinc/cp-kafka-rest:3.3.1
+    image: confluentinc/cp-kafka-rest:4.1.0
     networks:
       - kafka
       - zookeeper
@@ -109,7 +115,7 @@ services:
   # Management Portal                                                         #
   #---------------------------------------------------------------------------#
   managementportal-app:
-    image: radarcns/management-portal:0.3.3
+    image: radarbase/management-portal:0.3.6
     networks:
       - kafka
     environment:
