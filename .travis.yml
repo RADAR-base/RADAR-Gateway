@@ -1,7 +1,13 @@
 language: java
 jdk:
   - oraclejdk8
-sudo: false
+sudo: true
+
+services:
+  - docker
+
+env:
+  - DOCKER_COMPOSE_FILE=src/integrationTest/docker/docker-compose.yml
 
 cache:
   directories:
@@ -11,6 +17,14 @@ cache:
     - $HOME/.gradle/caches/modules-2/files-2.1/
     - $HOME/.gradle/native
     - $HOME/.gradle/wrapper
+
+before_install:
+  - docker-compose --version
+
+script:
+  - ./gradlew check
+  - sudo docker-compose -f $DOCKER_COMPOSE_FILE up -d && sleep 90 && ./gradlew integrationTest
+  - sudo docker-compose -f $DOCKER_COMPOSE_FILE down
 
 deploy:
   - provider: releases

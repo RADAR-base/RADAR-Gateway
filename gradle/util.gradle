@@ -11,3 +11,7 @@ task downloadDependencies(type: Exec) {
     configurations.testRuntimeClasspath.files
     commandLine 'echo', 'Downloaded all dependencies'
 }
+
+wrapper {
+    gradleVersion '4.8'
+}

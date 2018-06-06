@@ -15,26 +15,31 @@ FROM openjdk:8-alpine as builder
 RUN mkdir /code
 WORKDIR /code
 
-COPY ./gradle/ /code/gradle
+ENV GRADLE_OPTS -Dorg.gradle.daemon=false -Dorg.gradle.project.profile=prod
+
+COPY ./gradle/wrapper/ /code/gradle/wrapper
+COPY ./gradle/profile.prod.gradle /code/gradle/
 COPY ./build.gradle ./gradle.properties ./gradlew ./settings.gradle /code/
 
-RUN ./gradlew --no-daemon downloadDependencies
+RUN ./gradlew downloadDependencies
 
 COPY ./src/ /code/src
-COPY ./src/main/docker/web.xml /code/src/main/webapp/WEB-INF/web.xml
 
-RUN ./gradlew --no-daemon -Dkotlin.compiler.execution.strategy="in-process" -Dorg.gradle.parallel=false -Pkotlin.incremental=false war
+RUN ./gradlew -Dkotlin.compiler.execution.strategy="in-process" -Dorg.gradle.parallel=false -Pkotlin.incremental=false distTar \
+    && cd build/distributions \
+    && tar xf *.tar \
+    && rm *.tar radar-gateway-*/lib/radar-gateway-*.jar
 
-FROM tomcat:8.5-jre8-alpine
-
-ENV JAVA_OPTS=-Djava.security.egd=file:/dev/urandom
+FROM openjdk:8-jre-alpine
 
 MAINTAINER @blootsvoets
 
 LABEL description="RADAR-CNS Gateway docker container"
 
-COPY --from=builder /code/build/libs/radar-gateway.war /usr/local/tomcat/webapps/radar-gateway.war
+COPY --from=builder /code/build/distributions/radar-gateway-*/bin/* /usr/bin/
+COPY --from=builder /code/build/distributions/radar-gateway-*/lib/* /usr/lib/
+COPY --from=builder /code/build/libs/radar-gateway-*.jar /usr/lib/
 
 EXPOSE 8080
 
-CMD ["catalina.sh", "run"]
+CMD ["radar-gateway"]

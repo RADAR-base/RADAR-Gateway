@@ -1,10 +1,50 @@
-apply plugin: 'org.junit.platform.gradle.plugin'
+sourceSets {
+    integrationTest {
+        kotlin {
+            compileClasspath += main.output
+            runtimeClasspath += main.output
+            srcDir 'src/integrationTest/kotlin'
+        }
+    }
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
 
 dependencies {
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
     testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
     testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: okhttp3Version
     testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
+
+    integrationTestImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
+    integrationTestImplementation group: 'org.radarcns', name: 'radar-commons-testing', version: radarCommonsVersion
+    integrationTestImplementation group: 'org.radarcns', name: 'oauth-client-util', version: radarMpVersion
+
+    integrationTestRuntimeOnly group: 'org.slf4j', name: 'slf4j-simple', version: slf4jVersion
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+compileIntegrationTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+task integrationTest(type: Test) {
+    description = "Run integration tests (located in src/integrationTest/...)."
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    testLogging.events "skipped", "failed", "passed"
 }
 
 //---------------------------------------------------------------------------//
@@ -16,6 +56,8 @@ tasks.matching { it instanceof Test }.all {
     beforeTest { TestDescriptor td ->
         stdout.clear()
     }
+
+    useJUnitPlatform ()
 
     onOutput { TestDescriptor td, TestOutputEvent toe ->
         stdout.addAll(toe.getMessage().split('(?m)$'))
