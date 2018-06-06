@@ -2,11 +2,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.radarcns.gateway.Config
 import org.radarcns.gateway.GrizzlyServer
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
+
+val logger: Logger = LoggerFactory.getLogger("org.radarcns.gateway")
 
 fun loadConfig(args: Array<String>): Config {
     val configFileName = when {
@@ -16,13 +20,13 @@ fun loadConfig(args: Array<String>): Config {
     }
     return if (configFileName != null) {
         val configFile = File(configFileName)
-        println("Reading configuration from ${configFile.absolutePath}")
+        logger.info("Reading configuration from ${configFile.absolutePath}")
         try {
             val mapper = ObjectMapper(YAMLFactory())
             mapper.readValue(configFile, Config::class.java)
         } catch (ex: IOException) {
-            println("Usage: radar-gateway [config.yml]")
-            println("Failed to read config file $configFile: ${ex.message}")
+            logger.error("Usage: radar-gateway [config.yml]")
+            logger.error("Failed to read config file $configFile: ${ex.message}")
             exitProcess(1)
         }
     } else Config()
@@ -32,15 +36,20 @@ fun main(args: Array<String>) {
     val config = loadConfig(args)
 
     val server = GrizzlyServer(config)
+
+    // register shutdown hook
+    Runtime.getRuntime().addShutdownHook(Thread(Runnable {
+        logger.info("Stopping server..")
+        server.shutdown()
+    }, "shutdownHook"))
+
     try {
         server.start()
 
-        println(String.format("Jersey app started on %s.\nHit any key to stop it...",
+        logger.info(String.format("Jersey app started on %s.\nPress Ctrl+C to exit...",
                 config.baseUri))
-
-        System.`in`.read()
+        Thread.currentThread().join()
     } catch (e: Exception) {
-        println("Error starting server: $e")
+        logger.error("Error starting server: $e")
     }
-    server.shutdown()
 }
