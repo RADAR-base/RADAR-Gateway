@@ -23,7 +23,7 @@ before_install:
 
 script:
   - ./gradlew check
-  - sudo docker-compose -f $DOCKER_COMPOSE_FILE up -d && sleep 60 && ./gradlew integrationTest
+  - sudo docker-compose -f $DOCKER_COMPOSE_FILE up -d && sleep 90 && ./gradlew integrationTest
   - sudo docker-compose -f $DOCKER_COMPOSE_FILE down
 
 deploy:
