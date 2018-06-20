@@ -10,7 +10,6 @@ import org.radarcns.auth.authentication.TokenValidator
 import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.inject.RadarTokenFactory
 import org.radarcns.gateway.inject.TokenValidatorFactory
-import org.radarcns.gateway.reader.AvroJsonReader
 import org.radarcns.gateway.resource.KafkaTopics
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton

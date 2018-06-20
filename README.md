@@ -1,8 +1,8 @@
 # RADAR-Gateway
 
-[![Build Status](https://travis-ci.org/RADAR-CNS/RADAR-Gateway.svg?branch=master)](https://travis-ci.org/RADAR-CNS/RADAR-Gateway)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/79b2380112c5451181367ae16e112025)](https://www.codacy.com/app/RADAR-CNS/RADAR-Gateway?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=RADAR-CNS/RADAR-Gateway&amp;utm_campaign=Badge_Grade)
-[![Docker Build](https://img.shields.io/docker/build/radarcns/radar-gateway.svg)](https://hub.docker.com/r/radarcns/radar-gateway/)
+[![Build Status](https://travis-ci.org/RADAR-base/RADAR-Gateway.svg?branch=master)](https://travis-ci.org/RADAR-base/RADAR-Gateway)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/79b2380112c5451181367ae16e112025)](https://www.codacy.com/app/RADAR-base/RADAR-Gateway?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=RADAR-base/RADAR-Gateway&amp;utm_campaign=Badge_Grade)
+[![Docker Build](https://img.shields.io/docker/build/radarbase/radar-gateway.svg)](https://cloud.docker.com/swarm/radarbase/repository/docker/radarbase/radar-gateway/general)
 
 Gateway to the Confluent Kafka REST Proxy. It does the authentication and authorization, content 
 validation and decompression if needed.
@@ -36,5 +36,5 @@ Data compressed with GZIP is decompressed if the `Content-Encoding: gzip` header
 `curl`, use the `-H "Content-Encoding: gzip" --data-binary @data.json.gz` flags.
 
 [REST Proxy documentation]: http://docs.confluent.io/3.0.0/kafka-rest/docs/intro.html#produce-and-consume-avro-messages
-[RADAR-Auth]: https://github.com/RADAR-CNS/ManagementPortal/tree/dev/radar-auth
-[ManagementPortal]: https://github.com/RADAR-CNS/ManagementPortal
+[RADAR-Auth]: https://github.com/RADAR-base/ManagementPortal/tree/master/radar-auth
+[ManagementPortal]: https://github.com/RADAR-base/ManagementPortal
