@@ -1,7 +1,7 @@
 # RADAR-Gateway
 
 [![Build Status](https://travis-ci.org/RADAR-base/RADAR-Gateway.svg?branch=master)](https://travis-ci.org/RADAR-base/RADAR-Gateway)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/79b2380112c5451181367ae16e112025)](https://www.codacy.com/app/RADAR-CNS/RADAR-Gateway?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=RADAR-base/RADAR-Gateway&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/79b2380112c5451181367ae16e112025)](https://www.codacy.com/app/RADAR-base/RADAR-Gateway?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=RADAR-base/RADAR-Gateway&amp;utm_campaign=Badge_Grade)
 [![Docker Build](https://img.shields.io/docker/build/radarbase/radar-gateway.svg)](https://cloud.docker.com/swarm/radarbase/repository/docker/radarbase/radar-gateway/general)
 
 Gateway to the Confluent Kafka REST Proxy. It does the authentication and authorization, content 
