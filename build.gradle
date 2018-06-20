@@ -14,7 +14,7 @@ plugins {
 apply plugin: 'kotlin'
 
 group 'org.radarcns'
-version '0.2.1-SNAPSHOT'
+version '0.2.1'
 
 ext.githubRepoName = 'RADAR-CNS/RADAR-Gateway'
 ext.githubUrl = 'https://github.com/' + githubRepoName + '.git'
