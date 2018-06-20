@@ -35,12 +35,18 @@ fun main(args: Array<String>) {
     try {
         server.start()
 
-        println(String.format("Jersey app started on %s.\nHit any key to stop it...",
+        println(String.format("Jersey app started on %s.\nPress Ctrl + C to stop it...",
                 config.baseUri))
 
-        System.`in`.read()
+        Thread.currentThread().join()
     } catch (e: Exception) {
         println("Error starting server: $e")
     }
-    server.shutdown()
+
+    Runtime.getRuntime().addShutdownHook(object : Thread() {
+        override fun run() {
+            println("Stopping Jersey app...")
+            server.shutdown()
+        }
+    })
 }
