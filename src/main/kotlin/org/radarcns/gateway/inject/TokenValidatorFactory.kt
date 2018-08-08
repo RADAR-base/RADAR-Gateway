@@ -24,7 +24,7 @@ class TokenValidatorFactory: Supplier<TokenValidator> {
 
         return if (publicKey == null) TokenValidator() else {
             val cfg = YamlServerConfig()
-            cfg.publicKeyEndpoint = publicKey
+            cfg.publicKeyEndpoints = listOf(publicKey)
             cfg.resourceName = "res_gateway"
             TokenValidator(cfg)
         }
