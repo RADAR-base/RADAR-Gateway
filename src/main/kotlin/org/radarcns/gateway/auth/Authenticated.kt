@@ -1,4 +1,4 @@
-package org.radarcns.gateway.inject
+package org.radarcns.gateway.auth
 
 import javax.ws.rs.NameBinding
 
@@ -6,4 +6,4 @@ import javax.ws.rs.NameBinding
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION,
         AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class ProcessAvro
+annotation class Authenticated

@@ -31,7 +31,7 @@ const val SOURCE = "03d28e5c-e005-46d4-a9b3-279c27fbbc83"
 const val ADMIN_USER = "admin"
 const val ADMIN_PASSWORD = "admin"
 
-class KafkaTopicList {
+class KafkaTopicsTest {
     @Test
     fun testListTopics() {
         val baseUri = "http://localhost:8080/radar-gateway"
@@ -107,42 +107,67 @@ class KafkaTopicList {
         val server = GrizzlyServer(config)
         server.start()
 
-        sender.headers = Headers.Builder()
-                .add("Authorization", BEARER + accessToken)
-                .build()
-        sender.setKafkaConfig(ServerConfig(config.baseUri.toURL()))
+        try {
+            sender.headers = Headers.Builder()
+                    .add("Authorization", BEARER + accessToken)
+                    .build()
+            sender.setKafkaConfig(ServerConfig(config.baseUri.toURL()))
 
-        sender.sender(topic).use {
-            it.send(key, value)
-        }
+            sender.sender(topic).use {
+                it.send(key, value)
+            }
 
-        val gatewayTopicList = call(httpClient, Status.OK) {
-            it.url(config.restProxyUrl + "/topics")
-                    .addHeader("Authorization", BEARER + accessToken)
-        }
+            val gatewayTopicList = call(httpClient, Status.OK) {
+                it.url(config.restProxyUrl + "/topics")
+                        .addHeader("Authorization", BEARER + accessToken)
+            }
 
-        assertThat(gatewayTopicList, `is`(topicList))
+            assertThat(gatewayTopicList, `is`(topicList))
 
-        call(httpClient, Status.UNAUTHORIZED) {
-            it.url("$baseUri/topics")
-        }
+            call(httpClient, Status.OK) {
+                it.url(config.restProxyUrl + "/topics")
+                        .addHeader("Authorization", BEARER + accessToken)
+                        .head()
+            }
 
-        call(httpClient, Status.UNSUPPORTED_MEDIA_TYPE) {
-            it.url("$baseUri/topics/test")
-                    .post(RequestBody.create(MediaType.parse(APPLICATION_JSON), "{}"))
-                    .addHeader("Authorization", BEARER + accessToken)
-        }
+            call(httpClient, Status.UNAUTHORIZED) {
+                it.url("$baseUri/topics")
+            }
 
-        call(httpClient, 422) {
-            it.url("$baseUri/topics/test")
-                    .post(RequestBody.create(MediaType.parse("application/vnd.kafka.avro.v2+json"), "{}"))
-                    .addHeader("Authorization", BEARER + accessToken)
-        }
+            call(httpClient, Status.UNAUTHORIZED) {
+                it.url("$baseUri/topics").head()
+            }
 
-        call(httpClient, Status.BAD_REQUEST) {
-            it.url("$baseUri/topics/test")
-                    .post(RequestBody.create(MediaType.parse("application/vnd.kafka.avro.v2+json"), ""))
-                    .addHeader("Authorization", BEARER + accessToken)
+            call(httpClient, Status.UNSUPPORTED_MEDIA_TYPE) {
+                it.url("$baseUri/topics/test")
+                        .post(RequestBody.create(MediaType.parse(APPLICATION_JSON), "{}"))
+                        .addHeader("Authorization", BEARER + accessToken)
+            }
+
+            call(httpClient, 422) {
+                it.url("$baseUri/topics/test")
+                        .post(RequestBody.create(MediaType.parse("application/vnd.kafka.avro.v2+json"), "{}"))
+                        .addHeader("Authorization", BEARER + accessToken)
+            }
+
+            call(httpClient, Status.BAD_REQUEST) {
+                it.url("$baseUri/topics/test")
+                        .post(RequestBody.create(MediaType.parse("application/vnd.kafka.avro.v2+json"), ""))
+                        .addHeader("Authorization", BEARER + accessToken)
+            }
+
+            call(httpClient, Status.OK) {
+                it.url(config.restProxyUrl + "/topics/test")
+                        .addHeader("Authorization", BEARER + accessToken)
+            }
+
+            call(httpClient, Status.OK) {
+                it.url(config.restProxyUrl + "/topics/test")
+                        .addHeader("Authorization", BEARER + accessToken)
+                        .head()
+            }
+        } finally {
+            server.shutdown()
         }
     }
 
