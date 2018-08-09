@@ -29,7 +29,7 @@ ext {
     okhttp3Version = '3.10.0'
     radarMpVersion = '0.4.1'
     radarCommonsVersion = '0.9.0'
-    radarSchemasVersion = '0.3.4'
+    radarSchemasVersion = '0.3.6'
     jacksonVersion = '2.9.5'
     slf4jVersion = '1.7.25'
     logbackVersion = '1.2.3'
