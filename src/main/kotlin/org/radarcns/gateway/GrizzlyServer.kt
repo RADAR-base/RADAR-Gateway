@@ -22,8 +22,8 @@ class GrizzlyServer(private val config: Config) {
         resources.packages(
                 "org.radarcns.gateway.exception",
                 "org.radarcns.gateway.filter",
-                "org.radarcns.gateway.reader")
-        resources.register(KafkaTopics::class.java)
+                "org.radarcns.gateway.reader",
+                "org.radarcns.gateway.resource")
         resources.register(object : AbstractBinder() {
             override fun configure() {
                 bind(config)

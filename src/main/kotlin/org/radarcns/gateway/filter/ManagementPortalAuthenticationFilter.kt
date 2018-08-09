@@ -3,6 +3,7 @@ package org.radarcns.gateway.filter
 import org.radarcns.auth.authentication.TokenValidator
 import org.radarcns.auth.authorization.Permission
 import org.radarcns.auth.exception.TokenValidationException
+import org.radarcns.gateway.auth.Authenticated
 import org.radarcns.gateway.inject.RadarSecurityContext
 import org.slf4j.LoggerFactory
 import javax.annotation.Priority
@@ -17,6 +18,7 @@ import javax.ws.rs.ext.Provider
  * Authenticates user by a JWT in the bearer signed by the Management Portal.
  */
 @Provider
+@Authenticated
 @Priority(Priorities.AUTHENTICATION)
 class ManagementPortalAuthenticationFilter : ContainerRequestFilter {
 
