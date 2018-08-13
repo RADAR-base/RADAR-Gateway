@@ -4,6 +4,7 @@ import okhttp3.OkHttpClient
 import org.glassfish.grizzly.http.server.HttpServer
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory
 import org.glassfish.jersey.internal.inject.AbstractBinder
+import org.glassfish.jersey.internal.inject.PerThread
 import org.glassfish.jersey.process.internal.RequestScoped
 import org.glassfish.jersey.server.ResourceConfig
 import org.radarcns.auth.authentication.TokenValidator
@@ -48,7 +49,7 @@ class GrizzlyServer(private val config: Config) {
 
                 bind(ProxyClient::class.java)
                         .to(ProxyClient::class.java)
-                        .`in`(Singleton::class.java)
+                        .`in`(PerThread::class.java)
             }
         })
         return resources

@@ -5,6 +5,9 @@ import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.filter.ManagementPortalAuthenticationFilter
 import javax.ws.rs.NotAuthorizedException
 
+/**
+ * Parsed JWT for validating authorization of data contents.
+ */
 class AvroAuth(jwt: RadarToken) {
     val projectIds = jwt.roles?.keys
             ?.filter { jwt.hasPermissionOnProject(Permission.MEASUREMENT_CREATE, it) }

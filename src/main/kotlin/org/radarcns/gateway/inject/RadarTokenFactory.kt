@@ -5,6 +5,7 @@ import java.util.function.Supplier
 import javax.ws.rs.container.ContainerRequestContext
 import javax.ws.rs.core.Context
 
+/** Generates radar tokens from the security context. */
 class RadarTokenFactory : Supplier<RadarToken> {
     @Context
     private lateinit var context: ContainerRequestContext

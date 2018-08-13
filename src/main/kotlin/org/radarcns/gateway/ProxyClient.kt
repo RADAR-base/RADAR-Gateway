@@ -2,20 +2,21 @@ package org.radarcns.gateway
 
 import okhttp3.*
 import okio.BufferedSink
-import okio.BufferedSource
-import okio.Source
-import org.radarcns.gateway.util.ByteArrayPool
-import java.io.InputStream
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.StreamingOutput
 import javax.ws.rs.core.UriInfo
 
+/**
+ * Proxies requests to another server.
+ *
+ * @implNote this implementation is not thread-safe because it uses a object-level buffer.
+ */
 class ProxyClient constructor(@Context config: Config, @Context private val client: OkHttpClient) {
     private val baseUrl = HttpUrl.parse(config.restProxyUrl)
             ?: throw IllegalArgumentException("Base URL ${config.restProxyUrl} invalid")
 
-    private val bufferPool = ByteArrayPool()
+    private val buffer = ByteArray(64 * 1024)
 
     fun proxyRequest(method: String, uriInfo: UriInfo, headers: HttpHeaders, sinkWriter: ((BufferedSink) -> Unit)?): javax.ws.rs.core.Response {
         val request = createProxyRequest(method, uriInfo, headers, sinkWriter)
@@ -31,7 +32,6 @@ class ProxyClient constructor(@Context config: Config, @Context private val clie
         val inputResponse = response.body()?.byteStream()
         if (inputResponse != null) {
             builder.entity(StreamingOutput { outputResponse ->
-                val buffer = bufferPool.get()
                 do {
                     val nRead = inputResponse.read(buffer)
                     if (nRead == -1) break
@@ -40,7 +40,6 @@ class ProxyClient constructor(@Context config: Config, @Context private val clie
 
                 outputResponse?.flush()
                 response.close()
-                bufferPool.dispose(buffer)
             })
         } else {
             response.close()

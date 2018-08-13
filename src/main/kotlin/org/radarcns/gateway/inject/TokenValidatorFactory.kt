@@ -7,6 +7,7 @@ import java.net.URI
 import java.util.function.Supplier
 import javax.ws.rs.core.Context
 
+/** Creates a TokenValidator based on the current management portal configuration. */
 class TokenValidatorFactory: Supplier<TokenValidator> {
     @Context
     private lateinit var config: Config

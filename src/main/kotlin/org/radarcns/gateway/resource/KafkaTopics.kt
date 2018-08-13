@@ -16,6 +16,7 @@ import javax.ws.rs.core.Context
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.UriInfo
 
+/** Topics submission and listing. Requests need authentication. */
 @Path("/topics")
 @Singleton
 @Authenticated

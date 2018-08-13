@@ -9,6 +9,7 @@ import javax.ws.rs.core.Context
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.UriInfo
 
+/** Root path, just forward requests without authentication. */
 @Path("/")
 @Singleton
 class KafkaRoot {
