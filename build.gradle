@@ -58,6 +58,7 @@ dependencies {
     compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jersey
 
     compile group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion
+    compile group: 'org.radarcns', name: 'radar-commons', version: radarCommonsVersion
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion

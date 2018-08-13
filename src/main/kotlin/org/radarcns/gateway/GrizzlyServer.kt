@@ -10,8 +10,10 @@ import org.glassfish.jersey.server.ResourceConfig
 import org.radarcns.auth.authentication.TokenValidator
 import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.inject.RadarTokenFactory
+import org.radarcns.gateway.inject.SchemaRetrieverFactory
 import org.radarcns.gateway.inject.TokenValidatorFactory
 import org.radarcns.gateway.resource.KafkaTopics
+import org.radarcns.producer.rest.SchemaRetriever
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -23,7 +25,7 @@ class GrizzlyServer(private val config: Config) {
         resources.packages(
                 "org.radarcns.gateway.exception",
                 "org.radarcns.gateway.filter",
-                "org.radarcns.gateway.reader",
+                "org.radarcns.gateway.io",
                 "org.radarcns.gateway.resource")
         resources.register(object : AbstractBinder() {
             override fun configure() {
@@ -45,6 +47,10 @@ class GrizzlyServer(private val config: Config) {
 
                 bindFactory(TokenValidatorFactory::class.java)
                         .to(TokenValidator::class.java)
+                        .`in`(Singleton::class.java)
+
+                bindFactory(SchemaRetrieverFactory::class.java)
+                        .to(SchemaRetriever::class.java)
                         .`in`(Singleton::class.java)
 
                 bind(ProxyClient::class.java)

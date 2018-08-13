@@ -8,8 +8,10 @@ import org.radarcns.gateway.ProxyClient
 import org.radarcns.gateway.auth.Authenticated
 import org.radarcns.gateway.auth.NeedsPermission
 import org.radarcns.gateway.inject.ProcessAvro
+import org.radarcns.gateway.io.AvroGenerator
 import org.radarcns.gateway.util.AvroProcessor
 import org.radarcns.gateway.util.Json
+import java.io.InputStream
 import javax.inject.Singleton
 import javax.ws.rs.*
 import javax.ws.rs.core.Context
@@ -58,5 +60,16 @@ class KafkaTopics {
             generator.writeTree(modifiedTree)
             generator.flush()
         }
+    }
+
+    @Path("/{topic_name}")
+    @POST
+    @ProcessAvro
+    @Consumes("application/vnd.radarbase.avro.v1+binary")
+    @NeedsPermission(MEASUREMENT, CREATE)
+    fun postToTopicBinary(input: InputStream, @Context avroGenerator: AvroGenerator,
+            @PathParam("topic_name") topic: String) {
+        proxyClient.proxyRequest("POST", uriInfo, headers,
+                avroGenerator.process(topic, input))
     }
 }
