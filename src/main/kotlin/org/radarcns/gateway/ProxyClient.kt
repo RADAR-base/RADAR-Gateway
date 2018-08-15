@@ -18,7 +18,7 @@ class ProxyClient constructor(@Context config: Config, @Context private val clie
 
     private val buffer = ByteArray(64 * 1024)
 
-    fun proxyRequest(method: String, uriInfo: UriInfo, headers: HttpHeaders, sinkWriter: ((BufferedSink) -> Unit)?): javax.ws.rs.core.Response {
+    fun proxyRequest(method: String, uriInfo: UriInfo, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?): javax.ws.rs.core.Response {
         val request = createProxyRequest(method, uriInfo, headers, sinkWriter)
 
         val response = client.newCall(request).execute()
@@ -47,14 +47,13 @@ class ProxyClient constructor(@Context config: Config, @Context private val clie
         return builder.build()
     }
 
-    private fun createProxyRequest(method: String, uriInfo: UriInfo, headers: HttpHeaders, sinkWriter: ((BufferedSink) -> Unit)?) : Request {
+    fun proxyRequest(method: String, uriInfo: UriInfo, headers: HttpHeaders, sinkWriter: ((BufferedSink) -> Unit)?): javax.ws.rs.core.Response {
+        return proxyRequest(method, uriInfo, jerseyToOkHttpHeaders(headers).build(), sinkWriter)
+    }
+
+    private fun createProxyRequest(method: String, uriInfo: UriInfo, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?) : Request {
         val url = baseUrl.newBuilder(uriInfo.path)?.build()
                 ?: throw IllegalArgumentException("Path $baseUrl/${uriInfo.path} is invalid")
-
-        val proxyHeaders : Headers = headers.requestHeaders
-                .flatMap { entry -> entry.value.map { Pair(entry.key, it) } }
-                .fold(Headers.Builder()) { builder, pair -> builder.add(pair.first, pair.second) }
-                .build()
 
         val body = if (sinkWriter != null) object : RequestBody() {
             override fun writeTo(sink: BufferedSink?) {
@@ -62,13 +61,22 @@ class ProxyClient constructor(@Context config: Config, @Context private val clie
                 sink?.flush()
             }
 
-            override fun contentType(): MediaType? = MediaType.parse(headers.mediaType.toString())
+            override fun contentType(): MediaType? {
+                val type = headers.get("Content-Type")
+                return if (type != null) MediaType.parse(type) else null
+            }
         } else null
 
         return Request.Builder()
                 .url(url)
-                .headers(proxyHeaders)
+                .headers(headers)
                 .method(method, body)
                 .build()
+    }
+
+    companion object {
+        fun jerseyToOkHttpHeaders(headers: HttpHeaders): Headers.Builder = headers.requestHeaders
+                .flatMap { entry -> entry.value.map { Pair(entry.key, it) } }
+                .fold(Headers.Builder()) { builder, pair -> builder.add(pair.first, pair.second) }
     }
 }

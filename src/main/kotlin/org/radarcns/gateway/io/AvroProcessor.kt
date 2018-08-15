@@ -1,19 +1,28 @@
-package org.radarcns.gateway.util
+package org.radarcns.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.auth.AvroAuth
 import org.radarcns.gateway.exception.InvalidContentException
+import org.radarcns.gateway.util.Json
 import java.io.IOException
 import java.text.ParseException
+import javax.inject.Singleton
 import javax.ws.rs.NotAuthorizedException
+import javax.ws.rs.core.Context
+import javax.ws.rs.ext.Provider
 
 /**
  * Reads messages as semantically valid and authenticated Avro for the RADAR platform. Amends
  * unfilled security metadata as necessary.
  */
+@Provider
+@Singleton
 class AvroProcessor {
+    @Context
+    private lateinit var token: RadarToken
+
     /**
      * Validates given data with given access token and returns a modified output array.
      * The Avro content validation consists of testing whether both keys and values are being sent,
@@ -28,7 +37,7 @@ class AvroProcessor {
      * @throws IOException if the data cannot be read
      */
     @Throws(ParseException::class, IOException::class)
-    fun process(tree: JsonNode, token: RadarToken): JsonNode {
+    fun process(tree: JsonNode): JsonNode {
         println("auth $token with tree $tree")
         if (!tree.isObject) {
             throw ParseException("Expecting JSON object in payload", 0)
