@@ -1,24 +1,30 @@
-package org.radarcns.gateway
+package org.radarcns.gateway.io
 
 import okhttp3.*
 import okio.BufferedSink
+import okio.Okio
+import org.radarcns.gateway.Config
+import javax.inject.Singleton
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.StreamingOutput
 import javax.ws.rs.core.UriInfo
+import javax.ws.rs.ext.Provider
 
 /**
  * Proxies requests to another server.
  *
  * @implNote this implementation is not thread-safe because it uses a object-level buffer.
  */
-class ProxyClient constructor(@Context config: Config, @Context private val client: OkHttpClient) {
+@Provider
+@Singleton
+class ProxyClient(@Context config: Config, @Context private val client: OkHttpClient,
+        @Context private val uriInfo: UriInfo, @Context private val headers: HttpHeaders) {
+
     private val baseUrl = HttpUrl.parse(config.restProxyUrl)
-            ?: throw IllegalArgumentException("Base URL ${config.restProxyUrl} invalid")
+            ?: throw IllegalArgumentException("Base URL ${config.restProxyUrl} is invalid")
 
-    private val buffer = ByteArray(64 * 1024)
-
-    fun proxyRequest(method: String, uriInfo: UriInfo, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?): javax.ws.rs.core.Response {
+    fun proxyRequest(method: String, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?): javax.ws.rs.core.Response {
         val request = createProxyRequest(method, uriInfo, headers, sinkWriter)
 
         val response = client.newCall(request).execute()
@@ -29,15 +35,10 @@ class ProxyClient constructor(@Context config: Config, @Context private val clie
             values.forEach { value -> builder.header(name, value) }
         }
 
-        val inputResponse = response.body()?.byteStream()
+        val inputResponse = response.body()?.source()
         if (inputResponse != null) {
             builder.entity(StreamingOutput { outputResponse ->
-                do {
-                    val nRead = inputResponse.read(buffer)
-                    if (nRead == -1) break
-                    outputResponse?.write(buffer, 0, nRead)
-                } while (true)
-
+                inputResponse.readAll(Okio.sink(outputResponse))
                 outputResponse?.flush()
                 response.close()
             })
@@ -47,13 +48,14 @@ class ProxyClient constructor(@Context config: Config, @Context private val clie
         return builder.build()
     }
 
-    fun proxyRequest(method: String, uriInfo: UriInfo, headers: HttpHeaders, sinkWriter: ((BufferedSink) -> Unit)?): javax.ws.rs.core.Response {
-        return proxyRequest(method, uriInfo, jerseyToOkHttpHeaders(headers).build(), sinkWriter)
+    fun proxyRequest(method: String, sinkWriter: ((BufferedSink) -> Unit)? = null): javax.ws.rs.core.Response {
+        return proxyRequest(method, jerseyToOkHttpHeaders(headers).build(), sinkWriter)
     }
 
     private fun createProxyRequest(method: String, uriInfo: UriInfo, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?) : Request {
         val url = baseUrl.newBuilder(uriInfo.path)?.build()
-                ?: throw IllegalArgumentException("Path $baseUrl/${uriInfo.path} is invalid")
+                ?: throw IllegalArgumentException(
+                        "Path $baseUrl/${uriInfo.path} is invalid")
 
         val body = if (sinkWriter != null) object : RequestBody() {
             override fun writeTo(sink: BufferedSink?) {

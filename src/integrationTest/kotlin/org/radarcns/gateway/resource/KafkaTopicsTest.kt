@@ -1,4 +1,4 @@
-package org.radarcns.gateway
+package org.radarcns.gateway.resource
 
 import com.fasterxml.jackson.databind.JsonNode
 import okhttp3.*
@@ -7,6 +7,8 @@ import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.radarcns.config.ServerConfig
+import org.radarcns.gateway.Config
+import org.radarcns.gateway.GrizzlyServer
 import org.radarcns.gateway.filter.ManagementPortalAuthenticationFilter.Companion.BEARER
 import org.radarcns.gateway.util.Json
 import org.radarcns.kafka.ObservationKey
@@ -21,22 +23,13 @@ import javax.ws.rs.core.MediaType.APPLICATION_JSON
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.Response.Status
 
-const val MP_CLIENT = "ManagementPortalapp"
-const val MP_SECRET = "my-secret"
-const val REST_CLIENT = "pRMT"
-const val SECRET = "secret"
-const val USER = "sub-1"
-const val PROJECT = "radar"
-const val SOURCE = "03d28e5c-e005-46d4-a9b3-279c27fbbc83"
-const val ADMIN_USER = "admin"
-const val ADMIN_PASSWORD = "admin"
-
 class KafkaTopicsTest {
     @Test
     fun testListTopics() {
         val baseUri = "http://localhost:8080/radar-gateway"
         val config = Config()
         config.managementPortalUrl = "http://localhost:8090"
+        config.schemaRegistryUrl = "http://localhost:8081"
         config.restProxyUrl = "http://localhost:8082"
         config.baseUri = URI.create(baseUri)
 
@@ -172,6 +165,16 @@ class KafkaTopicsTest {
     }
 
     companion object {
+        const val MP_CLIENT = "ManagementPortalapp"
+        const val MP_SECRET = "my-secret"
+        const val REST_CLIENT = "pRMT"
+        const val SECRET = "secret"
+        const val USER = "sub-1"
+        const val PROJECT = "radar"
+        const val SOURCE = "03d28e5c-e005-46d4-a9b3-279c27fbbc83"
+        const val ADMIN_USER = "admin"
+        const val ADMIN_PASSWORD = "admin"
+
         fun call(httpClient: OkHttpClient, expectedStatus: Int, requestSupplier: (Request.Builder) -> Request.Builder): JsonNode? {
             val request = requestSupplier(Request.Builder()).build()
             println(request.url())

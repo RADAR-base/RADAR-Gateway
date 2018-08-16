@@ -1,4 +1,4 @@
-package org.radarcns.gateway.inject
+package org.radarcns.gateway.auth
 
 import org.radarcns.auth.token.RadarToken
 import java.security.Principal

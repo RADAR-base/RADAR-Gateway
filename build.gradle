@@ -73,7 +73,7 @@ compileKotlin {
     }
 }
 
-mainClassName = 'MainKt'
+mainClassName = 'org.radarcns.gateway.MainKt'
 
 if (!hasProperty('profile')) {
     ext.profile = 'dev'

@@ -1,28 +1,26 @@
 package org.radarcns.gateway.auth
 
-import org.radarcns.auth.authorization.Permission
+import org.radarcns.auth.authorization.Permission.MEASUREMENT_CREATE
 import org.radarcns.auth.token.RadarToken
-import org.radarcns.gateway.filter.ManagementPortalAuthenticationFilter
 import javax.ws.rs.NotAuthorizedException
 
 /**
  * Parsed JWT for validating authorization of data contents.
  */
-class AvroAuth(jwt: RadarToken) {
-    val projectIds = jwt.roles?.keys
-            ?.filter { jwt.hasPermissionOnProject(Permission.MEASUREMENT_CREATE, it) }
-            ?.toSet() ?: emptySet()
-    val defaultProject = projectIds.firstOrNull()
-            ?: throw NotAuthorizedException(ManagementPortalAuthenticationFilter.getInvalidScopeChallenge("No project given"))
-    val userId = jwt.subject
-            ?: throw NotAuthorizedException(ManagementPortalAuthenticationFilter.getInvalidScopeChallenge("No subject given"))
-    val sourceIds = jwt.sources?.toSet() ?: emptySet()
+class AvroAuth(private val token: RadarToken) {
+    val defaultProject = token.roles.keys
+            .firstOrNull { token.hasPermissionOnProject(MEASUREMENT_CREATE, it) }
+    val defaultUserId: String? = if (token.subject.isNotEmpty()) token.subject else null
+    private val sourceIds = token.sources.toSet()
 
-    init {
-        if (sourceIds.isEmpty()) {
+    fun checkPermission(projectId: String?, userId: String?, sourceId: String?) {
+        if (!token.hasPermissionOnSubject(MEASUREMENT_CREATE, projectId, userId)) {
             throw NotAuthorizedException(
-                    ManagementPortalAuthenticationFilter.getInvalidScopeChallenge(
-                            "Request JWT of user $userId did not contain source IDs"))
+                    "No permission to create measurement for project $projectId and user $userId")
+        }
+
+        if (sourceId != null && !sourceIds.contains(sourceId)) {
+            throw NotAuthorizedException("No permission to create measurement for source $sourceId")
         }
     }
 }

@@ -2,12 +2,15 @@ package org.radarcns.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
+import org.radarcns.auth.authorization.Permission
+import org.radarcns.auth.authorization.RadarAuthorization
 import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.auth.AvroAuth
 import org.radarcns.gateway.exception.InvalidContentException
 import org.radarcns.gateway.util.Json
 import java.io.IOException
 import java.text.ParseException
+import javax.inject.Inject
 import javax.inject.Singleton
 import javax.ws.rs.NotAuthorizedException
 import javax.ws.rs.core.Context
@@ -19,9 +22,7 @@ import javax.ws.rs.ext.Provider
  */
 @Provider
 @Singleton
-class AvroProcessor {
-    @Context
-    private lateinit var token: RadarToken
+class AvroProcessor(@Context private val token: RadarToken) {
 
     /**
      * Validates given data with given access token and returns a modified output array.
@@ -76,37 +77,28 @@ class AvroProcessor {
             throw InvalidContentException("Field key must be a JSON object")
         }
 
+        val projectId: String?
+
         val project = key["projectId"]
         if (project != null) {
             if (project.isNull) {
+                projectId = auth.defaultProject
                 // no project ID was provided, fill it in for the sender
                 val newProject = Json.mapper.createObjectNode()
-                newProject.put("string", auth.defaultProject)
+                newProject.put("string", projectId)
                 (key as ObjectNode).set("projectId", newProject)
             } else {
                 // project ID was provided, it should match one of the validated project IDs.
-                val projectId = project["string"]?.asText() ?:
-                throw InvalidContentException(
+                projectId = project["string"]?.asText() ?: throw InvalidContentException(
                         "Project ID should be wrapped in string union type")
-
-                if (!auth.projectIds.contains(projectId)) {
-                    throw NotAuthorizedException("record projectId '$projectId' does not match"
-                            + " authenticated user ID '${auth.userId}'")
-                }
             }
+        } else {
+            projectId = auth.defaultProject
         }
 
-        val user = key["userId"]?.asText()
-        if (user != auth.userId) {
-            throw NotAuthorizedException(
-                    "record userId '$user' does not match authenticated user ID '${auth.userId}'")
-        }
-        val source = key["sourceId"]?.asText()
-        if (!auth.sourceIds.contains(source)) {
-            throw NotAuthorizedException(
-                    "record sourceId '$source' has not been added to JWT allowed "
-                            + "IDs ${auth.sourceIds}.")
-        }
+        auth.checkPermission(projectId,
+                key["userId"]?.asText(),
+                key["sourceId"]?.asText())
     }
 
     companion object Util {

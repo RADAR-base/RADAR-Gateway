@@ -22,12 +22,9 @@ import javax.ws.rs.ext.Provider
 /** Converts binary input from a RecordSet to Kafka JSON. */
 @Provider
 @PerThread
-class BinaryToAvroConverter {
-    @Context
-    private lateinit var schemaRetriever : SchemaRetriever
-
-    @Context
-    private lateinit var token: RadarToken
+class BinaryToAvroConverter(
+        @Context private val schemaRetriever: SchemaRetriever,
+        @Context private val token: RadarToken) {
 
     private var binaryDecoder: BinaryDecoder? = null
     private val readContext = ReadContext()

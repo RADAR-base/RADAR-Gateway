@@ -1,6 +1,7 @@
 package org.radarcns.gateway.resource
 
-import org.radarcns.gateway.ProxyClient
+import org.radarcns.gateway.io.ProxyClient
+import javax.inject.Inject
 import javax.inject.Singleton
 import javax.ws.rs.GET
 import javax.ws.rs.HEAD
@@ -16,15 +17,9 @@ class KafkaRoot {
     @Context
     private lateinit var proxyClient: ProxyClient
 
-    @Context
-    private lateinit var uriInfo: UriInfo
-
-    @Context
-    private lateinit var headers: HttpHeaders
-
     @GET
-    fun root() = proxyClient.proxyRequest("GET", uriInfo, headers, null)
+    fun root() = proxyClient.proxyRequest("GET")
 
     @HEAD
-    fun rootHead() = proxyClient.proxyRequest("HEAD", uriInfo, headers, null)
+    fun rootHead() = proxyClient.proxyRequest("HEAD")
 }

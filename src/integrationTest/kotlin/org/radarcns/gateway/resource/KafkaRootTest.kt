@@ -1,8 +1,10 @@
-package org.radarcns.gateway
+package org.radarcns.gateway.resource
 
 import okhttp3.OkHttpClient
 import org.junit.jupiter.api.Test
-import org.radarcns.gateway.KafkaTopicsTest.Companion.call
+import org.radarcns.gateway.Config
+import org.radarcns.gateway.GrizzlyServer
+import org.radarcns.gateway.resource.KafkaTopicsTest.Companion.call
 import org.radarcns.producer.rest.ManagedConnectionPool
 import java.net.URI
 import javax.ws.rs.core.Response
@@ -13,6 +15,7 @@ class KafkaRootTest {
         val baseUri = "http://localhost:8080/radar-gateway"
         val config = Config()
         config.restProxyUrl = "http://localhost:8082"
+        config.schemaRegistryUrl = "http://localhost:8081"
         config.baseUri = URI.create(baseUri)
 
         val httpClient = OkHttpClient.Builder()

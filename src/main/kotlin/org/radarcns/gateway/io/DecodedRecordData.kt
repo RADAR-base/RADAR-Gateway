@@ -10,13 +10,14 @@ import org.radarcns.producer.rest.ParsedSchemaMetadata
 import org.radarcns.producer.rest.SchemaRetriever
 import org.radarcns.topic.AvroTopic
 import java.lang.UnsupportedOperationException
+import javax.ws.rs.BadRequestException
 import javax.ws.rs.NotAuthorizedException
 
 class DecodedRecordData(
         topicName: String,
         private val decoder: BinaryDecoder,
         schemaRetriever: SchemaRetriever,
-        private val auth: AvroAuth,
+        auth: AvroAuth,
         private val readContext: BinaryToAvroConverter.ReadContext) : RecordData<GenericRecord, GenericRecord> {
 
     private val key: GenericRecord
@@ -30,7 +31,11 @@ class DecodedRecordData(
     init {
         val keyVersion = decoder.readInt()
         val valueVersion = decoder.readInt()
+        val projectId = if (decoder.readIndex() == 0) auth.defaultProject else decoder.readString()
+        val userId = if (decoder.readIndex() == 0) auth.defaultUserId else decoder.readString()
         val sourceId = decoder.readString()
+
+        auth.checkPermission(projectId, userId, sourceId)
 
         size = decoder.readArrayStart().toInt()
         remaining = size
@@ -41,28 +46,16 @@ class DecodedRecordData(
         topic = AvroTopic(topicName, keySchemaMetadata.schema, valueSchemaMetadata.schema,
                 GenericRecord::class.java, GenericRecord::class.java)
 
-        key = createKey(keySchemaMetadata.schema, sourceId)
+        key = createKey(keySchemaMetadata.schema, projectId, userId, sourceId)
         readContext.init(valueSchemaMetadata.schema)
     }
 
-    private fun createKey(schema: Schema, sourceId: String): GenericRecord {
+    private fun createKey(schema: Schema, projectId: String?, userId: String?, sourceId: String):
+            GenericRecord {
         val keyBuilder = GenericRecordBuilder(schema)
-        if (schema.getField("projectId") != null) {
-            keyBuilder.set("projectId", auth.defaultProject)
-        }
-        if (schema.getField("userId") != null) {
-            keyBuilder.set("userId", auth.userId)
-        }
-        if (schema.getField("sourceId") != null) {
-            if (!auth.sourceIds.contains(sourceId)) {
-                throw NotAuthorizedException(
-                        "record sourceId '$sourceId' has not been added to JWT allowed "
-                                + "IDs ${auth.sourceIds}.")
-            }
-
-            keyBuilder.set("sourceId", sourceId)
-        }
-
+        setIfPresent(keyBuilder, schema, "projectId", projectId, "Missing project ID from request")
+        setIfPresent(keyBuilder, schema, "userId", userId, "Missing user ID from request")
+        setIfPresent(keyBuilder, schema, "sourceId", sourceId, "Missing source ID from request")
         return keyBuilder.build()
     }
 
@@ -93,4 +86,13 @@ class DecodedRecordData(
     override fun size() = size
 
     override fun getTopic() = topic
+
+    companion object {
+        fun setIfPresent(builder: GenericRecordBuilder, schema: Schema, fieldName: String,
+                value: String?, errorMessage: String) {
+            val field = schema.getField(fieldName) ?: return
+
+            builder.set(field, value ?: throw BadRequestException(errorMessage))
+        }
+    }
 }

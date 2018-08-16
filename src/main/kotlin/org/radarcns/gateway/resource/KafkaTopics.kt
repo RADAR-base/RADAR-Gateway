@@ -3,9 +3,8 @@ package org.radarcns.gateway.resource
 import com.fasterxml.jackson.databind.JsonNode
 import org.radarcns.auth.authorization.Permission.Entity.MEASUREMENT
 import org.radarcns.auth.authorization.Permission.Operation.CREATE
-import org.radarcns.auth.token.RadarToken
-import org.radarcns.gateway.ProxyClient
-import org.radarcns.gateway.ProxyClient.Companion.jerseyToOkHttpHeaders
+import org.radarcns.gateway.io.ProxyClient
+import org.radarcns.gateway.io.ProxyClient.Companion.jerseyToOkHttpHeaders
 import org.radarcns.gateway.auth.Authenticated
 import org.radarcns.gateway.auth.NeedsPermission
 import org.radarcns.gateway.inject.ProcessAvro
@@ -27,25 +26,19 @@ class KafkaTopics {
     @Context
     private lateinit var proxyClient: ProxyClient
 
-    @Context
-    private lateinit var uriInfo: UriInfo
-
-    @Context
-    private lateinit var headers: HttpHeaders
-
     @GET
-    fun topics() = proxyClient.proxyRequest("GET", uriInfo, headers, null)
+    fun topics() = proxyClient.proxyRequest("GET")
 
     @HEAD
-    fun topicsHead() = proxyClient.proxyRequest("HEAD", uriInfo, headers, null)
+    fun topicsHead() = proxyClient.proxyRequest("HEAD")
 
     @Path("/{topic_name}")
     @GET
-    fun topic() = proxyClient.proxyRequest("GET", uriInfo, headers, null)
+    fun topic() = proxyClient.proxyRequest("GET")
 
     @Path("/{topic_name}")
     @HEAD
-    fun topicHead() = proxyClient.proxyRequest("HEAD", uriInfo, headers, null)
+    fun topicHead() = proxyClient.proxyRequest("HEAD")
 
     @Path("/{topic_name}")
     @POST
@@ -57,7 +50,7 @@ class KafkaTopics {
             @Context avroProcessor: AvroProcessor) {
 
         val modifiedTree = avroProcessor.process(tree)
-        proxyClient.proxyRequest("POST", uriInfo, headers) { sink ->
+        proxyClient.proxyRequest("POST") { sink ->
             val generator = Json.factory.createGenerator(sink.outputStream())
             generator.writeTree(modifiedTree)
             generator.flush()
@@ -71,6 +64,7 @@ class KafkaTopics {
     @NeedsPermission(MEASUREMENT, CREATE)
     fun postToTopicBinary(
             input: InputStream,
+            @Context headers: HttpHeaders,
             @Context binaryToAvroConverter: BinaryToAvroConverter,
             @PathParam("topic_name") topic: String) {
 
@@ -78,7 +72,7 @@ class KafkaTopics {
                 .set("Content-Type", "application/vnd.kafka.avro.v2+json")
                 .build()
 
-        proxyClient.proxyRequest("POST", uriInfo, proxyHeaders,
+        proxyClient.proxyRequest("POST", proxyHeaders,
                 binaryToAvroConverter.process(topic, input))
     }
 }
