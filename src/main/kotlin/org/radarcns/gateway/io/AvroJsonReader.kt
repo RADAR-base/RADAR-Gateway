@@ -1,4 +1,4 @@
-package org.radarcns.gateway.reader
+package org.radarcns.gateway.io
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonNode

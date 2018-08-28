@@ -1,4 +1,4 @@
-package org.radarcns.gateway.reader
+package org.radarcns.gateway.io
 
 import org.radarcns.gateway.inject.ProcessAvro
 import java.util.zip.GZIPInputStream
