@@ -16,14 +16,11 @@ The [RADAR-Auth] library is used for authentication and authorization of users. 
 Start the REST Proxy with
 
 ```shell
-docker-compose up -f src/integrationTest/docker/docker-compose.yml
-```
-
-```shell
+docker-compose -f src/integrationTest/docker/docker-compose.yml up -d
 ./gradlew run
 ```
 
-Now the gateway is accessible through <http://localhost:8080/radar-gateway/>.
+Now the gateway is accessible through <http://localhost:8080/radar-gateway/> and the [ManagementPortal] is available through <http://localhost:8090/managementportal/>
 
 Now you can access the REST proxy via the gateway:
 ```shell
