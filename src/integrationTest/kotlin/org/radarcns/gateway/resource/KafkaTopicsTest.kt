@@ -13,7 +13,7 @@ import org.radarcns.gateway.filter.ManagementPortalAuthenticationFilter.Companio
 import org.radarcns.gateway.util.Json
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
-import org.radarcns.producer.rest.ManagedConnectionPool
+import org.radarcns.producer.rest.RestClient
 import org.radarcns.producer.rest.RestSender
 import org.radarcns.producer.rest.SchemaRetriever
 import org.radarcns.topic.AvroTopic
@@ -33,9 +33,7 @@ class KafkaTopicsTest {
         config.restProxyUrl = "http://localhost:8082"
         config.baseUri = URI.create(baseUri)
 
-        val httpClient = OkHttpClient.Builder()
-                .connectionPool(ManagedConnectionPool.GLOBAL_POOL.acquire())
-                .build()
+        val httpClient = OkHttpClient()
 
         val clientToken = call(httpClient, Status.OK, "access_token") {
             it.url("${config.managementPortalUrl}/oauth/token")
@@ -79,10 +77,13 @@ class KafkaTopicsTest {
         val key = ObservationKey(PROJECT, USER, SOURCE)
         val value = PhoneAcceleration(time, time, 0.1f, 0.1f, 0.1f)
 
-        val sender = RestSender.Builder()
+        val restClient = RestClient.global()
                 .server(ServerConfig(URL(config.restProxyUrl + "/")))
+                .build()
+
+        val sender = RestSender.Builder()
+                .httpClient(restClient)
                 .schemaRetriever(retriever)
-                .connectionPool(ManagedConnectionPool.GLOBAL_POOL)
                 .build()
 
         sender.sender(topic).use {

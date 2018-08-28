@@ -11,7 +11,6 @@ import org.radarcns.producer.rest.SchemaRetriever
 import org.radarcns.topic.AvroTopic
 import java.lang.UnsupportedOperationException
 import javax.ws.rs.BadRequestException
-import javax.ws.rs.NotAuthorizedException
 
 class DecodedRecordData(
         topicName: String,

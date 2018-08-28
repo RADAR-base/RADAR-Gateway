@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test
 import org.radarcns.gateway.Config
 import org.radarcns.gateway.GrizzlyServer
 import org.radarcns.gateway.resource.KafkaTopicsTest.Companion.call
-import org.radarcns.producer.rest.ManagedConnectionPool
 import java.net.URI
 import javax.ws.rs.core.Response
 
@@ -18,9 +17,7 @@ class KafkaRootTest {
         config.schemaRegistryUrl = "http://localhost:8081"
         config.baseUri = URI.create(baseUri)
 
-        val httpClient = OkHttpClient.Builder()
-                .connectionPool(ManagedConnectionPool.GLOBAL_POOL.acquire())
-                .build()
+        val httpClient = OkHttpClient()
 
         val server = GrizzlyServer(config)
         server.start()

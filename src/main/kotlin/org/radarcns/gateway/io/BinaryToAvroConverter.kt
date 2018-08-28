@@ -38,11 +38,12 @@ class BinaryToAvroConverter(
         val recordData = DecodedRecordData(topic, decoder, schemaRetriever, auth, readContext)
 
         val recordRequest = JsonRecordRequest(recordData.topic)
-        recordRequest.setKeySchemaMetadata(recordData.keySchemaMetadata)
-        recordRequest.setValueSchemaMetadata(recordData.valueSchemaMetadata)
-        recordRequest.setRecords(recordData)
+        recordRequest.prepare(
+                recordData.keySchemaMetadata,
+                recordData.valueSchemaMetadata,
+                recordData)
 
-        return { sink -> recordRequest.writeToStream(sink.outputStream()) }
+        return recordRequest::writeToSink
     }
 
     class ReadContext {

@@ -2,15 +2,12 @@ package org.radarcns.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import org.radarcns.auth.authorization.Permission
-import org.radarcns.auth.authorization.RadarAuthorization
 import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.auth.AvroAuth
 import org.radarcns.gateway.exception.InvalidContentException
 import org.radarcns.gateway.util.Json
 import java.io.IOException
 import java.text.ParseException
-import javax.inject.Inject
 import javax.inject.Singleton
 import javax.ws.rs.NotAuthorizedException
 import javax.ws.rs.core.Context

@@ -3,20 +3,19 @@ package org.radarcns.gateway.resource
 import com.fasterxml.jackson.databind.JsonNode
 import org.radarcns.auth.authorization.Permission.Entity.MEASUREMENT
 import org.radarcns.auth.authorization.Permission.Operation.CREATE
-import org.radarcns.gateway.io.ProxyClient
-import org.radarcns.gateway.io.ProxyClient.Companion.jerseyToOkHttpHeaders
 import org.radarcns.gateway.auth.Authenticated
 import org.radarcns.gateway.auth.NeedsPermission
 import org.radarcns.gateway.inject.ProcessAvro
-import org.radarcns.gateway.io.BinaryToAvroConverter
 import org.radarcns.gateway.io.AvroProcessor
+import org.radarcns.gateway.io.BinaryToAvroConverter
+import org.radarcns.gateway.io.ProxyClient
+import org.radarcns.gateway.io.ProxyClient.Companion.jerseyToOkHttpHeaders
 import org.radarcns.gateway.util.Json
 import java.io.InputStream
 import javax.inject.Singleton
 import javax.ws.rs.*
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.HttpHeaders
-import javax.ws.rs.core.UriInfo
 
 /** Topics submission and listing. Requests need authentication. */
 @Path("/topics")
