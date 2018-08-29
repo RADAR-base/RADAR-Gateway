@@ -9,6 +9,7 @@ import org.radarcns.gateway.util.Json
 import java.io.IOException
 import java.text.ParseException
 import javax.inject.Singleton
+import javax.ws.rs.BadRequestException
 import javax.ws.rs.NotAuthorizedException
 import javax.ws.rs.core.Context
 import javax.ws.rs.ext.Provider
@@ -74,23 +75,21 @@ class AvroProcessor(@Context private val token: RadarToken) {
             throw InvalidContentException("Field key must be a JSON object")
         }
 
-        val projectId: String?
-
         val project = key["projectId"]
-        if (project != null) {
+        val projectId = if (project != null) {
             if (project.isNull) {
-                projectId = auth.defaultProject
                 // no project ID was provided, fill it in for the sender
                 val newProject = Json.mapper.createObjectNode()
-                newProject.put("string", projectId)
+                newProject.put("string", auth.defaultProject)
                 (key as ObjectNode).set("projectId", newProject)
+                auth.defaultProject
             } else {
                 // project ID was provided, it should match one of the validated project IDs.
-                projectId = project["string"]?.asText() ?: throw InvalidContentException(
+                project["string"]?.asText() ?: throw InvalidContentException(
                         "Project ID should be wrapped in string union type")
             }
         } else {
-            projectId = auth.defaultProject
+            auth.defaultProject
         }
 
         auth.checkPermission(projectId,

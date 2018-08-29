@@ -10,7 +10,6 @@ import org.radarcns.producer.rest.ParsedSchemaMetadata
 import org.radarcns.producer.rest.SchemaRetriever
 import org.radarcns.topic.AvroTopic
 import java.lang.UnsupportedOperationException
-import javax.ws.rs.BadRequestException
 
 class DecodedRecordData(
         topicName: String,
@@ -30,8 +29,8 @@ class DecodedRecordData(
     init {
         val keyVersion = decoder.readInt()
         val valueVersion = decoder.readInt()
-        val projectId = if (decoder.readIndex() == 0) auth.defaultProject else decoder.readString()
-        val userId = if (decoder.readIndex() == 0) auth.defaultUserId else decoder.readString()
+        val projectId = if (decoder.readIndex() == 1) decoder.readString() else auth.defaultProject
+        val userId = if (decoder.readIndex() == 1) decoder.readString() else auth.defaultUserId
         val sourceId = decoder.readString()
 
         auth.checkPermission(projectId, userId, sourceId)
@@ -45,16 +44,16 @@ class DecodedRecordData(
         topic = AvroTopic(topicName, keySchemaMetadata.schema, valueSchemaMetadata.schema,
                 GenericRecord::class.java, GenericRecord::class.java)
 
-        key = createKey(keySchemaMetadata.schema, projectId, userId, sourceId)
+        key = createKey(keySchemaMetadata.schema, projectId!!, userId!!, sourceId)
         readContext.init(valueSchemaMetadata.schema)
     }
 
-    private fun createKey(schema: Schema, projectId: String?, userId: String?, sourceId: String):
+    private fun createKey(schema: Schema, projectId: String, userId: String, sourceId: String):
             GenericRecord {
         val keyBuilder = GenericRecordBuilder(schema)
-        setIfPresent(keyBuilder, schema, "projectId", projectId, "Missing project ID from request")
-        setIfPresent(keyBuilder, schema, "userId", userId, "Missing user ID from request")
-        setIfPresent(keyBuilder, schema, "sourceId", sourceId, "Missing source ID from request")
+        setIfPresent(keyBuilder, schema, "projectId", projectId)
+        setIfPresent(keyBuilder, schema, "userId", userId)
+        setIfPresent(keyBuilder, schema, "sourceId", sourceId)
         return keyBuilder.build()
     }
 
@@ -88,10 +87,10 @@ class DecodedRecordData(
 
     companion object {
         fun setIfPresent(builder: GenericRecordBuilder, schema: Schema, fieldName: String,
-                value: String?, errorMessage: String) {
+                value: String) {
             val field = schema.getField(fieldName) ?: return
 
-            builder.set(field, value ?: throw BadRequestException(errorMessage))
+            builder.set(field, value)
         }
     }
 }

@@ -27,7 +27,7 @@ ext {
     description = 'RADAR Gateway to handle secured data flow to backend.'
 
     okhttp3Version = '3.11.0'
-    radarMpVersion = '0.4.1'
+    radarMpVersion = '0.5.0'
     radarCommonsVersion = '0.10.0'
     radarSchemasVersion = '0.3.6'
     jacksonVersion = '2.9.5'
