@@ -5,8 +5,8 @@ import org.glassfish.jersey.internal.inject.AbstractBinder
 import org.glassfish.jersey.internal.inject.PerThread
 import org.glassfish.jersey.process.internal.RequestScoped
 import org.radarcns.auth.authentication.TokenValidator
-import org.radarcns.auth.token.RadarToken
 import org.radarcns.gateway.Config
+import org.radarcns.gateway.auth.Auth
 import org.radarcns.gateway.io.AvroProcessor
 import org.radarcns.gateway.io.BinaryToAvroConverter
 import org.radarcns.gateway.io.ProxyClient
@@ -42,10 +42,10 @@ class GatewayBinder(private val config: Config) : AbstractBinder() {
                 .`in`(PerThread::class.java)
 
         // Bind factories.
-        bindFactory(RadarTokenFactory::class.java)
+        bindFactory(AuthFactory::class.java)
                 .proxy(true)
                 .proxyForSameScope(false)
-                .to(RadarToken::class.java)
+                .to(Auth::class.java)
                 .`in`(RequestScoped::class.java)
 
         bindFactory(TokenValidatorFactory::class.java)

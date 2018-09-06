@@ -2,14 +2,12 @@ package org.radarcns.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import org.radarcns.auth.token.RadarToken
-import org.radarcns.gateway.auth.AvroAuth
+import org.radarcns.gateway.auth.Auth
 import org.radarcns.gateway.exception.InvalidContentException
 import org.radarcns.gateway.util.Json
 import java.io.IOException
 import java.text.ParseException
 import javax.inject.Singleton
-import javax.ws.rs.BadRequestException
 import javax.ws.rs.NotAuthorizedException
 import javax.ws.rs.core.Context
 import javax.ws.rs.ext.Provider
@@ -20,7 +18,7 @@ import javax.ws.rs.ext.Provider
  */
 @Provider
 @Singleton
-class AvroProcessor(@Context private val token: RadarToken) {
+class AvroProcessor(@Context private val auth: Auth) {
 
     /**
      * Validates given data with given access token and returns a modified output array.
@@ -37,7 +35,7 @@ class AvroProcessor(@Context private val token: RadarToken) {
      */
     @Throws(ParseException::class, IOException::class)
     fun process(tree: JsonNode): JsonNode {
-        println("auth $token with tree $tree")
+        println("auth $auth with tree $tree")
         if (!tree.isObject) {
             throw ParseException("Expecting JSON object in payload", 0)
         }
@@ -49,12 +47,12 @@ class AvroProcessor(@Context private val token: RadarToken) {
         }
 
         val records = tree["records"] ?: throw InvalidContentException("Missing records")
-        processRecords(records, AvroAuth(token))
+        processRecords(records, auth)
         return tree
     }
 
     @Throws(IOException::class, NotAuthorizedException::class)
-    private fun processRecords(records: JsonNode, auth: AvroAuth) {
+    private fun processRecords(records: JsonNode, auth: Auth) {
         if (!records.isArray) {
             throw InvalidContentException("Records should be an array")
         }
@@ -70,7 +68,7 @@ class AvroProcessor(@Context private val token: RadarToken) {
 
     /** Parse single record key.  */
     @Throws(IOException::class, NotAuthorizedException::class)
-    private fun processKey(key: JsonNode, auth: AvroAuth) {
+    private fun processKey(key: JsonNode, auth: Auth) {
         if (!key.isObject) {
             throw InvalidContentException("Field key must be a JSON object")
         }

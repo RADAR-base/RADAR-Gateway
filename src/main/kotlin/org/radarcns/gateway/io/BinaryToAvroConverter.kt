@@ -9,8 +9,7 @@ import org.apache.avro.io.BinaryDecoder
 import org.apache.avro.io.Decoder
 import org.apache.avro.io.DecoderFactory
 import org.glassfish.jersey.internal.inject.PerThread
-import org.radarcns.auth.token.RadarToken
-import org.radarcns.gateway.auth.AvroAuth
+import org.radarcns.gateway.auth.Auth
 import org.radarcns.producer.rest.JsonRecordRequest
 import org.radarcns.producer.rest.SchemaRetriever
 import java.io.IOException
@@ -24,7 +23,7 @@ import javax.ws.rs.ext.Provider
 @PerThread
 class BinaryToAvroConverter(
         @Context private val schemaRetriever: SchemaRetriever,
-        @Context private val token: RadarToken) {
+        @Context private val auth: Auth) {
 
     private var binaryDecoder: BinaryDecoder? = null
     private val readContext = ReadContext()
@@ -34,7 +33,6 @@ class BinaryToAvroConverter(
 
         binaryDecoder = decoder
 
-        val auth = AvroAuth(token)
         val recordData = DecodedRecordData(topic, decoder, schemaRetriever, auth, readContext)
 
         val recordRequest = JsonRecordRequest(recordData.topic)
@@ -47,7 +45,7 @@ class BinaryToAvroConverter(
     }
 
     class ReadContext {
-        var buffer: ByteBuffer? = null
+        private var buffer: ByteBuffer? = null
         var record: GenericRecord? = null
         var valueDecoder : BinaryDecoder? = null
         var valueReader : GenericDatumReader<GenericRecord>? = null

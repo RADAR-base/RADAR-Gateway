@@ -4,6 +4,7 @@ import org.radarcns.auth.authentication.TokenValidator
 import org.radarcns.auth.authorization.Permission
 import org.radarcns.auth.exception.TokenValidationException
 import org.radarcns.gateway.auth.Authenticated
+import org.radarcns.gateway.auth.ManagementPortalAuth
 import org.radarcns.gateway.auth.RadarSecurityContext
 import org.slf4j.LoggerFactory
 import javax.annotation.Priority
@@ -62,7 +63,7 @@ class ManagementPortalAuthenticationFilter : ContainerRequestFilter {
             return
         }
 
-        requestContext.securityContext = RadarSecurityContext(radarToken)
+        requestContext.securityContext = RadarSecurityContext(ManagementPortalAuth(radarToken))
     }
 
     private fun getToken(request: ContainerRequestContext): String? {

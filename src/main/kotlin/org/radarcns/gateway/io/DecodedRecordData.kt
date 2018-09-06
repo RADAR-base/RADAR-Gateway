@@ -5,7 +5,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.io.BinaryDecoder
 import org.radarcns.data.RecordData
-import org.radarcns.gateway.auth.AvroAuth
+import org.radarcns.gateway.auth.Auth
 import org.radarcns.producer.rest.ParsedSchemaMetadata
 import org.radarcns.producer.rest.SchemaRetriever
 import org.radarcns.topic.AvroTopic
@@ -15,7 +15,7 @@ class DecodedRecordData(
         topicName: String,
         private val decoder: BinaryDecoder,
         schemaRetriever: SchemaRetriever,
-        auth: AvroAuth,
+        auth: Auth,
         private val readContext: BinaryToAvroConverter.ReadContext) : RecordData<GenericRecord, GenericRecord> {
 
     private val key: GenericRecord
@@ -30,7 +30,7 @@ class DecodedRecordData(
         val keyVersion = decoder.readInt()
         val valueVersion = decoder.readInt()
         val projectId = if (decoder.readIndex() == 1) decoder.readString() else auth.defaultProject
-        val userId = if (decoder.readIndex() == 1) decoder.readString() else auth.defaultUserId
+        val userId = if (decoder.readIndex() == 1) decoder.readString() else auth.userId
         val sourceId = decoder.readString()
 
         auth.checkPermission(projectId, userId, sourceId)

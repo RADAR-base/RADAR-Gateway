@@ -1,7 +1,7 @@
 package org.radarcns.gateway.filter
 
 import org.radarcns.auth.authorization.Permission
-import org.radarcns.auth.token.RadarToken
+import org.radarcns.gateway.auth.Auth
 import org.radarcns.gateway.auth.NeedsPermission
 import org.slf4j.LoggerFactory
 import javax.ws.rs.container.ContainerRequestContext
@@ -19,13 +19,13 @@ class PermissionFilter : ContainerRequestFilter {
     private lateinit var resourceInfo: ResourceInfo
 
     @Context
-    private lateinit var radarToken: RadarToken
+    private lateinit var auth: Auth
 
     override fun filter(requestContext: ContainerRequestContext) {
         val annotation = resourceInfo.resourceMethod.getAnnotation(NeedsPermission::class.java)
         val permission = Permission(annotation.entity, annotation.operation)
 
-        if (!radarToken.hasPermission(permission)) {
+        if (!auth.hasPermission(permission)) {
             abortWithForbidden(requestContext, permission)
         }
     }
