@@ -1,11 +1,8 @@
-package org.radarcns.gateway.filter
+package org.radarcns.gateway.auth
 
 import org.radarcns.auth.authentication.TokenValidator
 import org.radarcns.auth.authorization.Permission
 import org.radarcns.auth.exception.TokenValidationException
-import org.radarcns.gateway.auth.Authenticated
-import org.radarcns.gateway.auth.ManagementPortalAuth
-import org.radarcns.gateway.auth.RadarSecurityContext
 import org.slf4j.LoggerFactory
 import javax.annotation.Priority
 import javax.ws.rs.Priorities

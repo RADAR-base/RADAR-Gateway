@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 import org.radarcns.config.ServerConfig
 import org.radarcns.gateway.Config
 import org.radarcns.gateway.GrizzlyServer
-import org.radarcns.gateway.filter.ManagementPortalAuthenticationFilter.Companion.BEARER
+import org.radarcns.gateway.auth.ManagementPortalAuthenticationFilter.Companion.BEARER
 import org.radarcns.gateway.util.Json
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration

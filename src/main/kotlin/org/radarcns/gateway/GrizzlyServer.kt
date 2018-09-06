@@ -3,10 +3,11 @@ package org.radarcns.gateway
 import org.glassfish.grizzly.http.server.HttpServer
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory
 import org.glassfish.jersey.server.ResourceConfig
+import org.radarcns.gateway.auth.ManagementPortalAuthenticationFilter
 import org.radarcns.gateway.inject.GatewayBinder
 import java.util.concurrent.TimeUnit
 
-class GrizzlyServer(private val config: Config) {
+open class GrizzlyServer(private val config: Config) {
     private var httpServer: HttpServer? = null
 
     private fun getResourceConfig(): ResourceConfig {
@@ -17,7 +18,12 @@ class GrizzlyServer(private val config: Config) {
                 "org.radarcns.gateway.io",
                 "org.radarcns.gateway.resource")
         resources.register(GatewayBinder(config))
+        registerAuthentication(resources)
         return resources
+    }
+
+    protected fun registerAuthentication(resources: ResourceConfig) {
+        resources.register(ManagementPortalAuthenticationFilter::class.java)
     }
 
     fun start() {

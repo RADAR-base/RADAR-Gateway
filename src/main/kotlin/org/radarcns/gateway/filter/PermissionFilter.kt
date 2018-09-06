@@ -2,6 +2,7 @@ package org.radarcns.gateway.filter
 
 import org.radarcns.auth.authorization.Permission
 import org.radarcns.gateway.auth.Auth
+import org.radarcns.gateway.auth.ManagementPortalAuthenticationFilter
 import org.radarcns.gateway.auth.NeedsPermission
 import org.slf4j.LoggerFactory
 import javax.ws.rs.container.ContainerRequestContext
