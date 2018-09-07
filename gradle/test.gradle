@@ -27,8 +27,6 @@ dependencies {
     integrationTestImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
     integrationTestImplementation group: 'org.radarcns', name: 'radar-commons-testing', version: radarCommonsVersion
     integrationTestImplementation group: 'org.radarcns', name: 'oauth-client-util', version: radarMpVersion
-
-    integrationTestRuntimeOnly group: 'org.slf4j', name: 'slf4j-simple', version: slf4jVersion
 }
 
 compileTestKotlin {
@@ -65,7 +63,7 @@ tasks.matching { it instanceof Test }.all {
 
     onOutput { TestDescriptor td, TestOutputEvent toe ->
         stdout.addAll(toe.getMessage().split('(?m)$'))
-        while (stdout.size() > 100) {
+        while (stdout.size() > 1000) {
             stdout.remove()
         }
     }
@@ -77,7 +75,7 @@ tasks.matching { it instanceof Test }.all {
             if (stdout.empty) {
                 println(" without any output")
             } else {
-                println(" with last 100 lines of output:")
+                println(" with last 1000 lines of output:")
                 println('=' * 100)
                 stdout.each { print(it) }
                 println('=' * 100)

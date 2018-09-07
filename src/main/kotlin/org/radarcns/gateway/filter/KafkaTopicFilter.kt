@@ -42,7 +42,6 @@ class KafkaTopicFilter constructor(@Context config: Config, @Context private val
         }
     }
 
-
     private fun getSubjects(): Set<String> {
         try {
             return client.newCall(request).execute().use { response ->

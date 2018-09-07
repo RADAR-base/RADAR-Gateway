@@ -7,6 +7,7 @@ import javax.ws.rs.core.UriInfo
 import javax.ws.rs.ext.ExceptionMapper
 import javax.ws.rs.ext.Provider
 
+/** Handle exceptions without a specific mapper. */
 @Provider
 class UnhandledExceptionMapper : ExceptionMapper<Throwable> {
     @Context

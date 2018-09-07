@@ -8,6 +8,7 @@ import javax.ws.rs.core.UriInfo
 import javax.ws.rs.ext.ExceptionMapper
 import javax.ws.rs.ext.Provider
 
+/** Handle WebApplicationException. This uses the status code embedded in the exception. */
 @Provider
 class WebApplicationExceptionMapper : ExceptionMapper<WebApplicationException> {
     @Context

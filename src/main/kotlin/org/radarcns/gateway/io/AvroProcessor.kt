@@ -1,19 +1,25 @@
-package org.radarcns.gateway.util
+package org.radarcns.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import org.radarcns.auth.token.RadarToken
-import org.radarcns.gateway.auth.AvroAuth
+import org.radarcns.gateway.auth.Auth
 import org.radarcns.gateway.exception.InvalidContentException
+import org.radarcns.gateway.util.Json
 import java.io.IOException
 import java.text.ParseException
+import javax.inject.Singleton
 import javax.ws.rs.NotAuthorizedException
+import javax.ws.rs.core.Context
+import javax.ws.rs.ext.Provider
 
 /**
  * Reads messages as semantically valid and authenticated Avro for the RADAR platform. Amends
  * unfilled security metadata as necessary.
  */
-class AvroProcessor {
+@Provider
+@Singleton
+class AvroProcessor(@Context private val auth: Auth) {
+
     /**
      * Validates given data with given access token and returns a modified output array.
      * The Avro content validation consists of testing whether both keys and values are being sent,
@@ -28,8 +34,8 @@ class AvroProcessor {
      * @throws IOException if the data cannot be read
      */
     @Throws(ParseException::class, IOException::class)
-    fun process(tree: JsonNode, token: RadarToken): JsonNode {
-        println("auth $token with tree $tree")
+    fun process(tree: JsonNode): JsonNode {
+        println("auth $auth with tree $tree")
         if (!tree.isObject) {
             throw ParseException("Expecting JSON object in payload", 0)
         }
@@ -41,12 +47,12 @@ class AvroProcessor {
         }
 
         val records = tree["records"] ?: throw InvalidContentException("Missing records")
-        processRecords(records, AvroAuth(token))
+        processRecords(records, auth)
         return tree
     }
 
     @Throws(IOException::class, NotAuthorizedException::class)
-    private fun processRecords(records: JsonNode, auth: AvroAuth) {
+    private fun processRecords(records: JsonNode, auth: Auth) {
         if (!records.isArray) {
             throw InvalidContentException("Records should be an array")
         }
@@ -62,42 +68,31 @@ class AvroProcessor {
 
     /** Parse single record key.  */
     @Throws(IOException::class, NotAuthorizedException::class)
-    private fun processKey(key: JsonNode, auth: AvroAuth) {
+    private fun processKey(key: JsonNode, auth: Auth) {
         if (!key.isObject) {
             throw InvalidContentException("Field key must be a JSON object")
         }
 
         val project = key["projectId"]
-        if (project != null) {
+        val projectId = if (project != null) {
             if (project.isNull) {
                 // no project ID was provided, fill it in for the sender
                 val newProject = Json.mapper.createObjectNode()
                 newProject.put("string", auth.defaultProject)
                 (key as ObjectNode).set("projectId", newProject)
+                auth.defaultProject
             } else {
                 // project ID was provided, it should match one of the validated project IDs.
-                val projectId = project["string"]?.asText() ?:
-                throw InvalidContentException(
+                project["string"]?.asText() ?: throw InvalidContentException(
                         "Project ID should be wrapped in string union type")
-
-                if (!auth.projectIds.contains(projectId)) {
-                    throw NotAuthorizedException("record projectId '$projectId' does not match"
-                            + " authenticated user ID '${auth.userId}'")
-                }
             }
+        } else {
+            auth.defaultProject
         }
 
-        val user = key["userId"]?.asText()
-        if (user != auth.userId) {
-            throw NotAuthorizedException(
-                    "record userId '$user' does not match authenticated user ID '${auth.userId}'")
-        }
-        val source = key["sourceId"]?.asText()
-        if (!auth.sourceIds.contains(source)) {
-            throw NotAuthorizedException(
-                    "record sourceId '$source' has not been added to JWT allowed "
-                            + "IDs ${auth.sourceIds}.")
-        }
+        auth.checkPermission(projectId,
+                key["userId"]?.asText(),
+                key["sourceId"]?.asText())
     }
 
     companion object Util {

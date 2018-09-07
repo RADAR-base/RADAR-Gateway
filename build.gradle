@@ -1,10 +1,10 @@
 buildscript {
-    ext.kotlin_version = '1.2.60'
+    ext.kotlin_version = '1.2.61'
+    repositories {
+        jcenter()
+    }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-    repositories {
-        mavenCentral()
     }
 }
 
@@ -14,7 +14,7 @@ plugins {
 apply plugin: 'kotlin'
 
 group 'org.radarcns'
-version '0.2.2'
+version '0.3.0'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -26,10 +26,10 @@ ext {
     website = 'http://radar-cns.org'
     description = 'RADAR Gateway to handle secured data flow to backend.'
 
-    okhttp3Version = '3.10.0'
-    radarMpVersion = '0.4.1'
-    radarCommonsVersion = '0.9.0'
-    radarSchemasVersion = '0.3.6'
+    okhttp3Version = '3.11.0'
+    radarMpVersion = '0.5.0'
+    radarCommonsVersion = '0.10.0'
+    radarSchemasVersion = '0.4.0'
     jacksonVersion = '2.9.5'
     slf4jVersion = '1.7.25'
     logbackVersion = '1.2.3'
@@ -58,6 +58,7 @@ dependencies {
     compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jersey
 
     compile group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion
+    compile group: 'org.radarcns', name: 'radar-commons', version: radarCommonsVersion
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
@@ -68,11 +69,11 @@ dependencies {
 
 compileKotlin {
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = '1.8'
     }
 }
 
-mainClassName = 'MainKt'
+mainClassName = 'org.radarcns.gateway.MainKt'
 
 if (!hasProperty('profile')) {
     ext.profile = 'dev'

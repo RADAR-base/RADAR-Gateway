@@ -2,6 +2,7 @@ package org.radarcns.gateway.inject
 
 import javax.ws.rs.NameBinding
 
+/** Tag for additional processing required for incoming Avro data. */
 @NameBinding
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION,
         AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)

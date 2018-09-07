@@ -1,18 +1,17 @@
-package org.radarcns.gateway.inject
+package org.radarcns.gateway.auth
 
-import org.radarcns.auth.token.RadarToken
 import java.security.Principal
 import javax.ws.rs.core.SecurityContext
 
 /**
- * Security context from a [RadarToken].
+ * Security context from currently parsed authentication.
  */
 class RadarSecurityContext(
-        /** Get the RadarToken parsed from the bearer token.  */
-        val token: RadarToken) : SecurityContext {
+        /** Get the parsed authentication.  */
+        val auth: Auth) : SecurityContext {
 
     override fun getUserPrincipal(): Principal {
-        return Principal { token.subject }
+        return Principal { auth.userId }
     }
 
     /**
@@ -20,14 +19,12 @@ class RadarSecurityContext(
      * take the shape of `":global_role"`. This allows for example a
      * `@RolesAllowed(":SYS_ADMIN")` annotation to resolve correctly.
      * @param role role to be mapped
-     * @return `true` if the RadarToken contains given project/role,
+     * @return `true` if the authentication contains given project/role,
      * `false` otherwise
      */
     override fun isUserInRole(role: String): Boolean {
         val projectRole = role.split(":")
-        return projectRole.size == 2 && token.roles
-                .getOrDefault(projectRole[0], emptyList())
-                .contains(projectRole[1])
+        return projectRole.size == 2 && auth.hasRole(projectRole[0], projectRole[1])
     }
 
     override fun isSecure(): Boolean {
