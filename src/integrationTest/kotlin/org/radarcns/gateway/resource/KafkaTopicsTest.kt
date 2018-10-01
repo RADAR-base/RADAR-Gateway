@@ -37,7 +37,7 @@ class KafkaTopicsTest {
 
         val clientToken = call(httpClient, Status.OK, "access_token") {
             it.url("${config.managementPortalUrl}/oauth/token")
-                    .addHeader("Authorization", Credentials.basic(MP_CLIENT, MP_SECRET))
+                    .addHeader("Authorization", Credentials.basic(MP_CLIENT, ""))
                     .post(FormBody.Builder()
                             .add("username", ADMIN_USER)
                             .add("password", ADMIN_PASSWORD)
@@ -45,7 +45,7 @@ class KafkaTopicsTest {
                             .build())
         }
 
-        val refreshToken = call(httpClient, Status.OK, "refreshToken") {
+        val tokenUrl = call(httpClient, Status.OK, "tokenUrl") {
             val pairUrl = HttpUrl.parse(config.managementPortalUrl)!!
                     .newBuilder("api/oauth-clients/pair")!!
                     .addEncodedQueryParameter("clientId", REST_CLIENT)
@@ -56,6 +56,10 @@ class KafkaTopicsTest {
                     .url(pairUrl)
         }
 
+        val refreshToken = call(httpClient, Status.OK, "refreshToken") {
+            it.url(tokenUrl)
+        }
+
         val accessToken = call(httpClient, Status.OK, "access_token") {
             val formBody = FormBody.Builder()
                     .add("grant_type", "refresh_token")
@@ -63,7 +67,7 @@ class KafkaTopicsTest {
                     .build()
 
             it.url("${config.managementPortalUrl}/oauth/token")
-                    .addHeader("Authorization", Credentials.basic(REST_CLIENT, SECRET))
+                    .addHeader("Authorization", Credentials.basic(REST_CLIENT, ""))
                     .post(formBody)
         }
 
