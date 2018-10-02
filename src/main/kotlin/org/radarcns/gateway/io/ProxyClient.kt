@@ -4,6 +4,7 @@ import okhttp3.*
 import okio.BufferedSink
 import okio.Okio
 import org.radarcns.gateway.Config
+import java.io.OutputStream
 import javax.inject.Singleton
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.HttpHeaders
@@ -29,23 +30,30 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
 
         val response = client.newCall(request).execute()
 
-        val builder = javax.ws.rs.core.Response.status(response.code())
+        try {
+            val builder = javax.ws.rs.core.Response.status(response.code())
 
-        response.headers().toMultimap().forEach {(name, values) ->
-            values.forEach { value -> builder.header(name, value) }
-        }
+            response.headers().toMultimap().forEach { (name, values) ->
+                values.forEach { value -> builder.header(name, value) }
+            }
 
-        val inputResponse = response.body()?.source()
-        if (inputResponse != null) {
-            builder.entity(StreamingOutput { outputResponse ->
-                inputResponse.readAll(Okio.sink(outputResponse))
-                outputResponse?.flush()
+            val inputResponse = response.body()?.source()
+
+            if (inputResponse != null) {
+                builder.entity(StreamingOutput { outputResponse ->
+                    response.use {
+                        inputResponse.readAll(Okio.sink(outputResponse))
+                        outputResponse?.flush()
+                    }
+                })
+            } else {
                 response.close()
-            })
-        } else {
+            }
+            return builder.build()
+        } catch (ex: Exception) {
             response.close()
+            throw ex
         }
-        return builder.build()
     }
 
     fun proxyRequest(method: String, sinkWriter: ((BufferedSink) -> Unit)? = null): javax.ws.rs.core.Response {
