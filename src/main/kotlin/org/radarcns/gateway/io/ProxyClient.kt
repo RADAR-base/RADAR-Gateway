@@ -34,10 +34,7 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
         val response = client.newCall(request).execute()
         val didStart = AtomicBoolean(false)
 
-        executor.schedule({
-            println("Did test for response close!")
-            if (!didStart.get()) { response.close() }
-        }, 30, TimeUnit.SECONDS)
+        executor.schedule({ if (!didStart.get()) response.close() }, 30, TimeUnit.SECONDS)
 
         try {
             val builder = javax.ws.rs.core.Response.status(response.code())
