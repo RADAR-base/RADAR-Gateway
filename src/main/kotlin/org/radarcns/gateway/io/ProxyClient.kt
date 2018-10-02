@@ -4,6 +4,7 @@ import okhttp3.*
 import okio.BufferedSink
 import okio.Okio
 import org.radarcns.gateway.Config
+import org.slf4j.LoggerFactory
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -34,7 +35,12 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
         val response = client.newCall(request).execute()
         val didStart = AtomicBoolean(false)
 
-        executor.schedule({ if (!didStart.get()) response.close() }, 30, TimeUnit.SECONDS)
+        // close the stream if it does not start within 30 seconds to avoid lingering connections.
+        val compareFuture = executor.schedule({
+            if (didStart.compareAndSet(false, true)) {
+                response.close()
+            }
+        }, 30, TimeUnit.SECONDS)
 
         try {
             val builder = javax.ws.rs.core.Response.status(response.code())
@@ -47,18 +53,24 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
 
             if (inputResponse != null) {
                 builder.entity(StreamingOutput { outputResponse ->
-                    didStart.set(true)
+                    if (!didStart.compareAndSet(false, true)) {
+                        // do not try to stream, the underlying stream is already closed.
+                        logger.error("Failed to start streaming within 30 seconds")
+                        return@StreamingOutput
+                    }
+                    compareFuture.cancel(false)
                     response.use {
                         inputResponse.readAll(Okio.sink(outputResponse))
                         outputResponse?.flush()
                     }
                 })
             } else {
-                didStart.set(true)
                 response.close()
+                compareFuture.cancel(false)
             }
             return builder.build()
         } catch (ex: Exception) {
+            compareFuture.cancel(false)
             response.close()
             throw ex
         }
@@ -93,6 +105,8 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
     }
 
     companion object {
+        private val logger = LoggerFactory.getLogger(ProxyClient::class.java)
+
         fun jerseyToOkHttpHeaders(headers: HttpHeaders): Headers.Builder = headers.requestHeaders
                 .flatMap { entry -> entry.value.map { Pair(entry.key, it) } }
                 .fold(Headers.Builder()) { builder, pair -> builder.add(pair.first, pair.second) }
