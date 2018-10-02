@@ -4,7 +4,9 @@ import okhttp3.*
 import okio.BufferedSink
 import okio.Okio
 import org.radarcns.gateway.Config
-import java.io.OutputStream
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Singleton
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.HttpHeaders
@@ -20,7 +22,8 @@ import javax.ws.rs.ext.Provider
 @Provider
 @Singleton
 class ProxyClient(@Context config: Config, @Context private val client: OkHttpClient,
-        @Context private val uriInfo: UriInfo, @Context private val headers: HttpHeaders) {
+        @Context private val uriInfo: UriInfo, @Context private val headers: HttpHeaders,
+        @Context private val executor: ScheduledExecutorService) {
 
     private val baseUrl = HttpUrl.parse(config.restProxyUrl)
             ?: throw IllegalArgumentException("Base URL ${config.restProxyUrl} is invalid")
@@ -29,6 +32,12 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
         val request = createProxyRequest(method, uriInfo, headers, sinkWriter)
 
         val response = client.newCall(request).execute()
+        val didStart = AtomicBoolean(false)
+
+        executor.schedule({
+            println("Did test for response close!")
+            if (!didStart.get()) { response.close() }
+        }, 30, TimeUnit.SECONDS)
 
         try {
             val builder = javax.ws.rs.core.Response.status(response.code())
@@ -41,12 +50,14 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
 
             if (inputResponse != null) {
                 builder.entity(StreamingOutput { outputResponse ->
+                    didStart.set(true)
                     response.use {
                         inputResponse.readAll(Okio.sink(outputResponse))
                         outputResponse?.flush()
                     }
                 })
             } else {
+                didStart.set(true)
                 response.close()
             }
             return builder.build()
