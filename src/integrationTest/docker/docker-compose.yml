@@ -137,14 +137,16 @@ services:
   # Management Portal                                                         #
   #---------------------------------------------------------------------------#
   managementportal-app:
-    image: radarbase/management-portal:0.4.1
+    image: radarbase/management-portal:0.5.1
     networks:
       - kafka
     ports:
       - "8090:8080"
     environment:
       SPRING_PROFILES_ACTIVE: dev
-      MANAGEMENTPORTAL_FRONTEND_CLIENT_SECRET: my-secret
+      MANAGEMENTPORTAL_FRONTEND_CLIENT_SECRET: ""
+      MANAGEMENTPORTAL_COMMON_BASE_URL: http://localhost:8090
+      MANAGEMENTPORTAL_COMMON_MANAGEMENT_PORTAL_BASE_URL: http://localhost:8090
       MANAGEMENTPORTAL_OAUTH_CLIENTS_FILE: /mp-includes/config/oauth_client_details.csv
       MANAGEMENTPORTAL_CATALOGUE_SERVER_ENABLE_AUTO_IMPORT: 'false'
       JAVA_OPTS: -Xmx256m  # maximum heap size for the JVM running ManagementPortal, increase this as necessary

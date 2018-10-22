@@ -46,6 +46,7 @@ task integrationTest(type: Test) {
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
 
+    outputs.upToDateWhen { false }
     testLogging.events "skipped", "failed", "passed"
 }
 
@@ -54,36 +55,10 @@ task integrationTest(type: Test) {
 //---------------------------------------------------------------------------//
 
 tasks.matching { it instanceof Test }.all {
-    def stdout = new LinkedList<String>()
-    beforeTest { TestDescriptor td ->
-        stdout.clear()
-    }
-
     useJUnitPlatform ()
 
-    onOutput { TestDescriptor td, TestOutputEvent toe ->
-        stdout.addAll(toe.getMessage().split('(?m)$'))
-        while (stdout.size() > 1000) {
-            stdout.remove()
-        }
-    }
-
-    afterTest { TestDescriptor td, TestResult tr ->
-        if (tr.resultType == TestResult.ResultType.FAILURE) {
-            println()
-            print("${td.className}.${td.name} FAILED")
-            if (stdout.empty) {
-                println(" without any output")
-            } else {
-                println(" with last 1000 lines of output:")
-                println('=' * 100)
-                stdout.each { print(it) }
-                println('=' * 100)
-            }
-        }
-    }
-
     testLogging {
+        showStandardStreams = true
         showExceptions = true
         showCauses = true
         showStackTraces = true
