@@ -8,6 +8,7 @@ import org.glassfish.jersey.server.ResourceConfig
 import org.radarcns.auth.authentication.TokenValidator
 import org.radarcns.gateway.Config
 import org.radarcns.gateway.auth.Auth
+import org.radarcns.gateway.auth.AuthenticationFilter
 import org.radarcns.gateway.io.AvroProcessor
 import org.radarcns.gateway.io.BinaryToAvroConverter
 import org.radarcns.gateway.io.ProxyClient
@@ -19,6 +20,7 @@ interface GatewayResources {
     fun getResources(config: Config): ResourceConfig {
         val resources = ResourceConfig()
         resources.packages(
+                "org.radarcns.gateway.auth",
                 "org.radarcns.gateway.exception",
                 "org.radarcns.gateway.filter",
                 "org.radarcns.gateway.io",
@@ -29,6 +31,8 @@ interface GatewayResources {
     }
 
     fun registerAuthentication(resources: ResourceConfig)
+
+    fun registerAuthenticationUtilities(binder: AbstractBinder)
 
     fun getBinder(config: Config) = object : AbstractBinder() {
         override fun configure() {
@@ -63,13 +67,11 @@ interface GatewayResources {
                     .to(Auth::class.java)
                     .`in`(RequestScoped::class.java)
 
-            bindFactory(TokenValidatorFactory::class.java)
-                    .to(TokenValidator::class.java)
-                    .`in`(Singleton::class.java)
-
             bindFactory(SchemaRetrieverFactory::class.java)
                     .to(SchemaRetriever::class.java)
                     .`in`(Singleton::class.java)
+
+            registerAuthenticationUtilities(this)
         }
     }
 }

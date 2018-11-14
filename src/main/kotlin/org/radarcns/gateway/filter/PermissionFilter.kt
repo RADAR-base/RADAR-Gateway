@@ -2,7 +2,7 @@ package org.radarcns.gateway.filter
 
 import org.radarcns.auth.authorization.Permission
 import org.radarcns.gateway.auth.Auth
-import org.radarcns.gateway.auth.ManagementPortalAuthenticationFilter
+import org.radarcns.gateway.auth.AuthenticationFilter
 import org.radarcns.gateway.auth.NeedsPermission
 import org.slf4j.LoggerFactory
 import javax.ws.rs.container.ContainerRequestContext
@@ -47,7 +47,7 @@ class PermissionFilter : ContainerRequestFilter {
 
             requestContext.abortWith(
                     Response.status(Response.Status.FORBIDDEN)
-                            .header("WWW-Authenticate", ManagementPortalAuthenticationFilter.BEARER_REALM
+                            .header("WWW-Authenticate", AuthenticationFilter.BEARER_REALM
                                     + " error=\"insufficient_scope\""
                                     + " error_description=\"$message\""
                                     + " scope=\"$scope\"")
