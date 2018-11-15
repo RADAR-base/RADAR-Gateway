@@ -12,7 +12,7 @@ import javax.ws.rs.ForbiddenException
 class ManagementPortalAuth(private val token: RadarToken) : Auth {
     override val defaultProject = token.roles.keys
             .firstOrNull { token.hasPermissionOnProject(MEASUREMENT_CREATE, it) }
-    override val userId: String? = if (token.subject.isNotEmpty()) token.subject else null
+    override val userId: String? = token.subject.takeUnless { it.isEmpty() }
 
     override fun checkPermission(projectId: String?, userId: String?, sourceId: String?) {
         if (!token.hasPermissionOnSource(MEASUREMENT_CREATE,

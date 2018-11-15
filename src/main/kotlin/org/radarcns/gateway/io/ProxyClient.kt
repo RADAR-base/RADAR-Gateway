@@ -18,6 +18,8 @@ import javax.ws.rs.ext.Provider
 /**
  * Proxies requests to another server.
  *
+ * Requests that do not get a response within 30 seconds are cancelled.
+ *
  * @implNote this implementation is not thread-safe because it uses a object-level buffer.
  */
 @Provider
@@ -82,20 +84,22 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
 
     private fun createProxyRequest(method: String, uriInfo: UriInfo, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?) : Request {
         val url = baseUrl.newBuilder(uriInfo.path)?.build()
-                ?: throw IllegalArgumentException(
-                        "Path $baseUrl/${uriInfo.path} is invalid")
+                ?: throw IllegalArgumentException("Path $baseUrl/${uriInfo.path} is invalid")
 
-        val body = if (sinkWriter != null) object : RequestBody() {
-            override fun writeTo(sink: BufferedSink?) {
-                sink?.let { sinkWriter(sink) }
-                sink?.flush()
-            }
+        val body = sinkWriter?.let { writer ->
+            object : RequestBody() {
+                override fun writeTo(sink: BufferedSink?) {
+                    sink?.let {
+                        writer(it)
+                        it.flush()
+                    }
+                }
 
-            override fun contentType(): MediaType? {
-                val type = headers.get("Content-Type")
-                return if (type != null) MediaType.parse(type) else null
+                override fun contentType(): MediaType? {
+                    return headers.get("Content-Type")?.let { MediaType.parse(it) }
+                }
             }
-        } else null
+        }
 
         return Request.Builder()
                 .url(url)
