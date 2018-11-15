@@ -5,9 +5,11 @@ import org.radarcns.auth.config.YamlServerConfig
 import org.radarcns.gateway.Config
 import org.radarcns.gateway.auth.Auth
 import org.radarcns.gateway.auth.AuthValidator
+import org.radarcns.gateway.auth.AuthenticationFilter
 import org.radarcns.gateway.auth.ManagementPortalAuth
 import java.net.URI
 import java.util.function.Supplier
+import javax.ws.rs.NotAuthorizedException
 import javax.ws.rs.container.ContainerRequestContext
 import javax.ws.rs.core.Context
 
@@ -22,7 +24,8 @@ class RadarTokenValidator constructor(@Context config: Config) : AuthValidator {
         TokenValidator(cfg)
     }
 
-    override fun verify(request: ContainerRequestContext): Auth {
-        return ManagementPortalAuth(tokenValidator.validateAccessToken(getToken(request)))
+    override fun verify(request: ContainerRequestContext): Auth? {
+        val token = getToken(request) ?: return null
+        return ManagementPortalAuth(tokenValidator.validateAccessToken(token))
     }
 }

@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import org.radarcns.gateway.Config
 import org.radarcns.gateway.auth.Auth
 import org.radarcns.gateway.auth.AuthValidator
+import org.radarcns.gateway.auth.AuthenticationFilter
 import org.radarcns.gateway.auth.KeycloakAuth
 import org.slf4j.LoggerFactory
 import java.lang.Exception
@@ -14,6 +15,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.security.KeyStore
 import java.security.interfaces.ECPublicKey
+import javax.ws.rs.NotAuthorizedException
 import javax.ws.rs.container.ContainerRequestContext
 import javax.ws.rs.core.Context
 
@@ -38,8 +40,8 @@ class KeycloakTokenValidator constructor(@Context config: Config) : AuthValidato
     @Context
     private lateinit var config: Config
 
-    override fun verify(request: ContainerRequestContext): Auth {
-        val token = getToken(request)
+    override fun verify(request: ContainerRequestContext): Auth? {
+        val token = getToken(request) ?: return null
         val project = request.getHeaderString("RADAR-Project")
         return KeycloakAuth(project, verifier.verify(token))
     }

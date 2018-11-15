@@ -26,14 +26,6 @@ class AuthenticationFilter : ContainerRequestFilter {
     override fun filter(requestContext: ContainerRequestContext) {
         val radarToken = try {
             validator.verify(requestContext)
-        } catch (ex: NotAuthorizedException) {
-            logger.warn("[401] {}: No token bearer header provided in the request",
-                    requestContext.uriInfo.path)
-            requestContext.abortWith(
-                    Response.status(Response.Status.UNAUTHORIZED)
-                            .header("WWW-Authenticate", "Bearer")
-                            .build())
-            null
         } catch (ex: TokenValidationException) {
             logger.warn("[401] {}: {}", requestContext.uriInfo.path, ex.message, ex)
             requestContext.abortWith(
@@ -44,19 +36,24 @@ class AuthenticationFilter : ContainerRequestFilter {
                                             + " error_description=\"${ex.message}\"")
                             .build())
             null
-        } ?: return
+        }
 
-        if (!radarToken.hasPermission(Permission.MEASUREMENT_CREATE)) {
+        if (radarToken == null) {
+            logger.warn("[401] {}: No token bearer header provided in the request",
+                    requestContext.uriInfo.path)
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
+                    .header("WWW-Authenticate", BEARER_REALM)
+                    .build())
+        } else if (!radarToken.hasPermission(Permission.MEASUREMENT_CREATE)) {
             val message = "MEASUREMENT.CREATE permission not given"
             logger.warn("[403] {}: {}", requestContext.uriInfo.path, message)
             requestContext.abortWith(
                     Response.status(Response.Status.FORBIDDEN)
                                 .header("WWW-Authenticate", getInvalidScopeChallenge(message))
                             .build())
-            return
+        } else {
+            requestContext.securityContext = RadarSecurityContext(radarToken)
         }
-
-        requestContext.securityContext = RadarSecurityContext(radarToken)
     }
 
     companion object {
