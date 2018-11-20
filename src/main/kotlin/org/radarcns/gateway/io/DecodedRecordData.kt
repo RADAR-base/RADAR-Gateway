@@ -51,9 +51,9 @@ class DecodedRecordData(
     private fun createKey(schema: Schema, projectId: String, userId: String, sourceId: String):
             GenericRecord {
         val keyBuilder = GenericRecordBuilder(schema)
-        setIfPresent(keyBuilder, schema, "projectId", projectId)
-        setIfPresent(keyBuilder, schema, "userId", userId)
-        setIfPresent(keyBuilder, schema, "sourceId", sourceId)
+        schema.getField("projectId")?.let { keyBuilder.set(it, projectId) }
+        schema.getField("userId")?.let { keyBuilder.set(it, userId) }
+        schema.getField("sourceId")?.let { keyBuilder.set(it, sourceId) }
         return keyBuilder.build()
     }
 
@@ -84,13 +84,4 @@ class DecodedRecordData(
     override fun size() = size
 
     override fun getTopic() = topic
-
-    companion object {
-        fun setIfPresent(builder: GenericRecordBuilder, schema: Schema, fieldName: String,
-                value: String) {
-            val field = schema.getField(fieldName) ?: return
-
-            builder.set(field, value)
-        }
-    }
 }

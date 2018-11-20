@@ -1,10 +1,10 @@
 package org.radarcns.gateway.auth
 
-import org.radarcns.auth.authentication.TokenValidator
 import org.radarcns.auth.authorization.Permission
 import org.radarcns.auth.exception.TokenValidationException
 import org.slf4j.LoggerFactory
 import javax.annotation.Priority
+import javax.ws.rs.NotAuthorizedException
 import javax.ws.rs.Priorities
 import javax.ws.rs.container.ContainerRequestContext
 import javax.ws.rs.container.ContainerRequestFilter
@@ -18,26 +18,14 @@ import javax.ws.rs.ext.Provider
 @Provider
 @Authenticated
 @Priority(Priorities.AUTHENTICATION)
-class ManagementPortalAuthenticationFilter : ContainerRequestFilter {
+class AuthenticationFilter : ContainerRequestFilter {
 
     @Context
-    private lateinit var validator: TokenValidator
+    private lateinit var validator: AuthValidator
 
     override fun filter(requestContext: ContainerRequestContext) {
-        val token = getToken(requestContext)
-
-        if (token == null) {
-            logger.warn("[401] {}: No token bearer header provided in the request",
-                    requestContext.uriInfo.path)
-            requestContext.abortWith(
-                    Response.status(Response.Status.UNAUTHORIZED)
-                            .header("WWW-Authenticate", "Bearer")
-                            .build())
-            return
-        }
-
         val radarToken = try {
-            validator.validateAccessToken(token)
+            validator.verify(requestContext)
         } catch (ex: TokenValidationException) {
             logger.warn("[401] {}: {}", requestContext.uriInfo.path, ex.message, ex)
             requestContext.abortWith(
@@ -48,37 +36,28 @@ class ManagementPortalAuthenticationFilter : ContainerRequestFilter {
                                             + " error_description=\"${ex.message}\"")
                             .build())
             null
-        } ?: return
+        }
 
-        if (!radarToken.hasPermission(Permission.MEASUREMENT_CREATE)) {
+        if (radarToken == null) {
+            logger.warn("[401] {}: No token bearer header provided in the request",
+                    requestContext.uriInfo.path)
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
+                    .header("WWW-Authenticate", BEARER_REALM)
+                    .build())
+        } else if (!radarToken.hasPermission(Permission.MEASUREMENT_CREATE)) {
             val message = "MEASUREMENT.CREATE permission not given"
             logger.warn("[403] {}: {}", requestContext.uriInfo.path, message)
             requestContext.abortWith(
                     Response.status(Response.Status.FORBIDDEN)
                                 .header("WWW-Authenticate", getInvalidScopeChallenge(message))
                             .build())
-            return
+        } else {
+            requestContext.securityContext = RadarSecurityContext(radarToken)
         }
-
-        requestContext.securityContext = RadarSecurityContext(ManagementPortalAuth(radarToken))
-    }
-
-    private fun getToken(request: ContainerRequestContext): String? {
-        val authorizationHeader = request.getHeaderString("Authorization")
-
-        // Check if the HTTP Authorization header is present and formatted correctly
-        if (authorizationHeader == null
-                || !authorizationHeader.startsWith(BEARER, ignoreCase = true)) {
-            logger.info("No authorization header provided in the request")
-            return null
-        }
-
-        // Extract the token from the HTTP Authorization header
-        return authorizationHeader.substring(BEARER.length).trim { it <= ' ' }
     }
 
     companion object {
-        private val logger = LoggerFactory.getLogger(ManagementPortalAuthenticationFilter::class.java)
+        private val logger = LoggerFactory.getLogger(AuthenticationFilter::class.java)
 
         const val BEARER_REALM: String = "Bearer realm=\"Kafka REST Proxy\""
         const val BEARER = "Bearer "
