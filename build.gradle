@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.71'
+    ext.kotlin_version = '1.3.0'
     repositories {
         jcenter()
     }
@@ -14,7 +14,7 @@ plugins {
 apply plugin: 'kotlin'
 
 group 'org.radarcns'
-version '0.3.1'
+version '0.3.2'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -27,9 +27,9 @@ ext {
     description = 'RADAR Gateway to handle secured data flow to backend.'
 
     okhttp3Version = '3.11.0'
-    radarMpVersion = '0.5.1'
-    radarCommonsVersion = '0.10.0'
-    radarSchemasVersion = '0.4.0'
+    radarMpVersion = '0.5.2'
+    radarCommonsVersion = '0.11.3'
+    radarSchemasVersion = '0.4.1'
     jacksonVersion = '2.9.7'
     slf4jVersion = '1.7.25'
     logbackVersion = '1.2.3'

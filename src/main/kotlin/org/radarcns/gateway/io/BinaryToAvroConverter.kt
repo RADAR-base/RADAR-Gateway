@@ -46,7 +46,7 @@ class BinaryToAvroConverter(
 
     class ReadContext {
         private var buffer: ByteBuffer? = null
-        var record: GenericRecord? = null
+        private var record: GenericRecord? = null
         var valueDecoder : BinaryDecoder? = null
         var valueReader : GenericDatumReader<GenericRecord>? = null
 

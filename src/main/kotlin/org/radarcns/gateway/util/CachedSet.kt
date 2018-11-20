@@ -14,20 +14,22 @@ class CachedSet<in T>(
     fun contains(value: T): Boolean {
         val now = Instant.now()
         val (localSet, mustRefresh, mayRetry) = synchronized(this) {
-            Triple(cached, now.isAfter(lastFetch.plus(refreshDuration)), now.isAfter(lastFetch.plus(retryDuration)))
+            Triple(cached,
+                    now.isAfter(lastFetch.plus(refreshDuration)),
+                    now.isAfter(lastFetch.plus(retryDuration)))
         }
 
         val containsValue = localSet.contains(value)
 
-        return if (!mustRefresh && (containsValue || !mayRetry)) {
-            containsValue
-        } else {
+        return if (mustRefresh || (!containsValue && mayRetry)) {
             val updatedSet = supplier.invoke().toSet()
             synchronized(this) {
                 cached = updatedSet
                 lastFetch = Instant.now()
             }
             updatedSet.contains(value)
+        } else {
+            containsValue
         }
     }
 }

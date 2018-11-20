@@ -137,7 +137,7 @@ services:
   # Management Portal                                                         #
   #---------------------------------------------------------------------------#
   managementportal-app:
-    image: radarbase/management-portal:0.5.1
+    image: radarbase/management-portal:0.5.2
     networks:
       - kafka
     ports:

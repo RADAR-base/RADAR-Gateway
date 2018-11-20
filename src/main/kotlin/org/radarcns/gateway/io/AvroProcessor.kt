@@ -35,7 +35,6 @@ class AvroProcessor(@Context private val auth: Auth) {
      */
     @Throws(ParseException::class, IOException::class)
     fun process(tree: JsonNode): JsonNode {
-        println("auth $auth with tree $tree")
         if (!tree.isObject) {
             throw ParseException("Expecting JSON object in payload", 0)
         }
@@ -73,8 +72,7 @@ class AvroProcessor(@Context private val auth: Auth) {
             throw InvalidContentException("Field key must be a JSON object")
         }
 
-        val project = key["projectId"]
-        val projectId = if (project != null) {
+        val projectId = key["projectId"]?.let { project ->
             if (project.isNull) {
                 // no project ID was provided, fill it in for the sender
                 val newProject = Json.mapper.createObjectNode()
@@ -86,9 +84,7 @@ class AvroProcessor(@Context private val auth: Auth) {
                 project["string"]?.asText() ?: throw InvalidContentException(
                         "Project ID should be wrapped in string union type")
             }
-        } else {
-            auth.defaultProject
-        }
+        } ?: auth.defaultProject
 
         auth.checkPermission(projectId,
                 key["userId"]?.asText(),
