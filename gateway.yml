@@ -2,7 +2,7 @@ baseUri: http://0.0.0.0:8080/radar-gateway/
 managementPortalUrl: http://localhost:8090/managementportal
 schemaRegistryUrl: http://localhost:8081
 restProxyUrl: http://localhost:8082
-resourceConfig: org.radarcns.gateway.inject.KeycloakGatewayResources
-keycloakKeystorePath: src/integrationTest/docker/etc/config/keystore.p12
-keycloakKeystoreAlias: radarbase-managementportal-ec
-keycloakKeystorePassword: radarbase
+resourceConfig: org.radarcns.gateway.inject.EcdsaJwtGatewayResources
+jwtKeystorePath: src/integrationTest/docker/etc/config/keystore.p12
+jwtKeystoreAlias: radarbase-managementportal-ec
+jwtKeystorePassword: radarbase
