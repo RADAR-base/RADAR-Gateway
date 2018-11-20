@@ -20,7 +20,7 @@ class RadarTokenValidator constructor(@Context config: Config) : AuthValidator {
     } catch (e: RuntimeException) {
         val cfg = YamlServerConfig()
         cfg.publicKeyEndpoints = listOf(URI("${config.managementPortalUrl}/oauth/token_key"))
-        cfg.resourceName = "res_gateway"
+        cfg.resourceName = config.resourceName
         TokenValidator(cfg)
     }
 

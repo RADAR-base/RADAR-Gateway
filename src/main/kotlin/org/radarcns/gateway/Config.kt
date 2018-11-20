@@ -12,4 +12,6 @@ class Config {
     var keycloakKeystorePath: String = "/etc/radar-gateway/keystore.p12"
     var keycloakKeystoreAlias: String = "ecdsa2"
     var keycloakKeystorePassword: String? = null
+    var issuer: String? = null
+    var resourceName: String = "res_gateway"
 }

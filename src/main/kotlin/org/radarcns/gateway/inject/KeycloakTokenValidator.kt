@@ -19,11 +19,11 @@ import javax.ws.rs.NotAuthorizedException
 import javax.ws.rs.container.ContainerRequestContext
 import javax.ws.rs.core.Context
 
-class KeycloakTokenValidator constructor(@Context config: Config) : AuthValidator {
+class KeycloakTokenValidator constructor(@Context private val config: Config) : AuthValidator {
     private val verifier: JWTVerifier
     init {
         val algorithm = try {
-            val pkcs12Store = KeyStore.getInstance("pkcs12");
+            val pkcs12Store = KeyStore.getInstance("pkcs12")
             val keyStorePath = Paths.get(config.keycloakKeystorePath)
             pkcs12Store.load(Files.newInputStream(keyStorePath), config.keycloakKeystorePassword?.toCharArray())
             val publicKey: ECPublicKey = pkcs12Store.getCertificate(config.keycloakKeystoreAlias).publicKey as ECPublicKey
@@ -31,14 +31,15 @@ class KeycloakTokenValidator constructor(@Context config: Config) : AuthValidato
         } catch (ex: Exception) {
             throw IllegalStateException("Failed to initialize keycloak key", ex)
         }
-        verifier = JWT.require(algorithm)
-                .withAudience("gateway")
-                .withIssuer("mighealth-keycloak")
-                .withArrayClaim("scope", "MEASUREMENT_CREATE")
-                .build()
+        var jwtBuilder = JWT.require(algorithm)
+                .withAudience(config.resourceName)
+                .withArrayClaim("scope", "MEASUREMENT.CREATE")
+
+        config.issuer?.let {
+            jwtBuilder.withIssuer(it)
+        }
+        verifier = jwtBuilder.build()
     }
-    @Context
-    private lateinit var config: Config
 
     override fun verify(request: ContainerRequestContext): Auth? {
         val token = getToken(request) ?: return null
