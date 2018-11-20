@@ -5,13 +5,13 @@ import org.glassfish.jersey.server.ResourceConfig
 import org.radarcns.gateway.auth.AuthValidator
 import javax.inject.Singleton
 
-class KeycloakGatewayResources : GatewayResources {
+class EcdsaJwtGatewayResources : GatewayResources {
     override fun registerAuthentication(resources: ResourceConfig) {
         // none needed
     }
 
     override fun registerAuthenticationUtilities(binder: AbstractBinder) {
-        binder.bind(KeycloakTokenValidator::class.java)
+        binder.bind(EcdsaJwtTokenValidator::class.java)
                 .to(AuthValidator::class.java)
                 .`in`(Singleton::class.java)
     }

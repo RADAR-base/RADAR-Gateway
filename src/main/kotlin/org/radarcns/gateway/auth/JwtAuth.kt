@@ -8,7 +8,7 @@ import javax.ws.rs.ForbiddenException
 /**
  * Parsed JWT for validating authorization of data contents.
  */
-class KeycloakAuth(project: String?, private val token: DecodedJWT) : Auth {
+class JwtAuth(project: String?, private val token: DecodedJWT) : Auth {
     private val claimProject = token.getClaim("project").asString()
     override val defaultProject = claimProject ?: project
     override val userId: String? = token.subject?.takeUnless { it.isEmpty() }

@@ -5,11 +5,8 @@ import org.radarcns.auth.config.YamlServerConfig
 import org.radarcns.gateway.Config
 import org.radarcns.gateway.auth.Auth
 import org.radarcns.gateway.auth.AuthValidator
-import org.radarcns.gateway.auth.AuthenticationFilter
 import org.radarcns.gateway.auth.ManagementPortalAuth
 import java.net.URI
-import java.util.function.Supplier
-import javax.ws.rs.NotAuthorizedException
 import javax.ws.rs.container.ContainerRequestContext
 import javax.ws.rs.core.Context
 
@@ -20,7 +17,7 @@ class RadarTokenValidator constructor(@Context config: Config) : AuthValidator {
     } catch (e: RuntimeException) {
         val cfg = YamlServerConfig()
         cfg.publicKeyEndpoints = listOf(URI("${config.managementPortalUrl}/oauth/token_key"))
-        cfg.resourceName = config.resourceName
+        cfg.resourceName = config.jwtResourceName
         TokenValidator(cfg)
     }
 
