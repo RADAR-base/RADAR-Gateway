@@ -35,7 +35,6 @@ class AvroProcessor(@Context private val auth: Auth) {
      */
     @Throws(ParseException::class, IOException::class)
     fun process(tree: JsonNode): JsonNode {
-        println("auth $auth with tree $tree")
         if (!tree.isObject) {
             throw ParseException("Expecting JSON object in payload", 0)
         }
