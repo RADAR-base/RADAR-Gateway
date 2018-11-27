@@ -14,7 +14,7 @@ plugins {
 apply plugin: 'kotlin'
 
 group 'org.radarcns'
-version '0.3.3-SNAPSHOT'
+version '0.3.3'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -26,10 +26,10 @@ ext {
     website = 'http://radar-cns.org'
     description = 'RADAR Gateway to handle secured data flow to backend.'
 
-    okhttp3Version = '3.11.0'
+    okhttp3Version = '3.12.0'
     radarMpVersion = '0.5.2'
     radarCommonsVersion = '0.11.3'
-    radarSchemasVersion = '0.4.1'
+    radarSchemasVersion = '0.4.2'
     jacksonVersion = '2.9.7'
     slf4jVersion = '1.7.25'
     logbackVersion = '1.2.3'
