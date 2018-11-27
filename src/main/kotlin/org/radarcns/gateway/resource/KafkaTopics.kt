@@ -16,6 +16,7 @@ import javax.inject.Singleton
 import javax.ws.rs.*
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.HttpHeaders
+import javax.ws.rs.core.Response
 
 /** Topics submission and listing. Requests need authentication. */
 @Path("/topics")
@@ -46,10 +47,10 @@ class KafkaTopics {
     @ProcessAvro
     fun postToTopic(
             tree: JsonNode,
-            @Context avroProcessor: AvroProcessor) {
+            @Context avroProcessor: AvroProcessor): Response {
 
         val modifiedTree = avroProcessor.process(tree)
-        proxyClient.proxyRequest("POST") { sink ->
+        return proxyClient.proxyRequest("POST") { sink ->
             val generator = Json.factory.createGenerator(sink.outputStream())
             generator.writeTree(modifiedTree)
             generator.flush()
@@ -65,13 +66,13 @@ class KafkaTopics {
             input: InputStream,
             @Context headers: HttpHeaders,
             @Context binaryToAvroConverter: BinaryToAvroConverter,
-            @PathParam("topic_name") topic: String) {
+            @PathParam("topic_name") topic: String): Response {
 
         val proxyHeaders = jerseyToOkHttpHeaders(headers)
                 .set("Content-Type", "application/vnd.kafka.avro.v2+json")
                 .build()
 
-        proxyClient.proxyRequest("POST", proxyHeaders,
+        return proxyClient.proxyRequest("POST", proxyHeaders,
                 binaryToAvroConverter.process(topic, input))
     }
 }
