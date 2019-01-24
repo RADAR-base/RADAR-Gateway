@@ -26,6 +26,7 @@ interface GatewayResources {
                 "org.radarcns.gateway.io",
                 "org.radarcns.gateway.resource")
         resources.register(getBinder(config))
+        resources.property("jersey.config.server.wadl.disableWadl", true)
         registerAuthentication(resources)
         return resources
     }
