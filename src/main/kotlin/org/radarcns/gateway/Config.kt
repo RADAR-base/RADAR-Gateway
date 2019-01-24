@@ -9,9 +9,11 @@ class Config {
     var schemaRegistryUrl: String = "http://schema-registry-1:8081"
     var managementPortalUrl: String = "http://managementportal-app:8080/managementportal/"
     var resourceConfig: Class<*> = ManagementPortalGatewayResources::class.java
-    var jwtKeystorePath: String = "/etc/radar-gateway/keystore.p12"
-    var jwtKeystoreAlias: String = "ecdsa2"
+    var jwtKeystorePath: String? = "/etc/radar-gateway/keystore.p12"
+    var jwtKeystoreECAlias: String? = "ecdsa2"
     var jwtKeystorePassword: String? = null
+    var jwtECPublicKeys: List<String>? = null
+    var jwtRSAPublicKeys: List<String>? = null
     var jwtIssuer: String? = null
     var jwtResourceName: String = "res_gateway"
 }
