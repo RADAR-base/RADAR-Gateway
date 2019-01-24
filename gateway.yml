@@ -6,3 +6,5 @@ resourceConfig: org.radarcns.gateway.inject.EcdsaJwtGatewayResources
 jwtKeystorePath: src/integrationTest/docker/etc/config/keystore.p12
 jwtKeystoreAlias: radarbase-managementportal-ec
 jwtKeystorePassword: radarbase
+jwtECPublicKeys: []
+jwtRSAPublicKeys: []
