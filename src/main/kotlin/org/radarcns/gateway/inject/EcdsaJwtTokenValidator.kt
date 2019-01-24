@@ -41,7 +41,7 @@ class EcdsaJwtTokenValidator constructor(@Context private val config: Config) : 
                 val pkcs12Store = KeyStore.getInstance("pkcs12")
                 val keyStorePath = Paths.get(keyStorePathString)
                 pkcs12Store.load(Files.newInputStream(keyStorePath), config.jwtKeystorePassword?.toCharArray())
-                val publicKey: ECPublicKey = pkcs12Store.getCertificate(config.jwtKeystoreECAlias).publicKey as ECPublicKey
+                val publicKey: ECPublicKey = pkcs12Store.getCertificate(config.jwtKeystoreAlias).publicKey as ECPublicKey
                 Algorithm.ECDSA256(publicKey, null)
             } catch (ex: Exception) {
                 throw IllegalStateException("Failed to initialize JWT ECDSA public key", ex)
