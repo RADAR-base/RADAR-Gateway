@@ -36,7 +36,7 @@ class EcdsaJwtTokenValidator constructor(@Context private val config: Config) : 
             algorithms.addAll(keys.map { Algorithm.RSA256(parseKey(it, "RSA") as RSAPublicKey, null) })
         }
 
-        config.jwtKeystorePath.let { keyStorePathString ->
+        config.jwtKeystorePath?.let { keyStorePathString ->
             algorithms.add(try {
                 val pkcs12Store = KeyStore.getInstance("pkcs12")
                 val keyStorePath = Paths.get(keyStorePathString)
