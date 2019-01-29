@@ -3,15 +3,18 @@ package org.radarcns.gateway.inject
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.exceptions.AlgorithmMismatchException
+import com.auth0.jwt.exceptions.InvalidClaimException
 import com.auth0.jwt.exceptions.JWTVerificationException
-import org.bouncycastle.util.io.pem.PemReader
+import com.auth0.jwt.exceptions.SignatureVerificationException
 import org.radarcns.auth.authorization.Permission.MEASUREMENT_CREATE
 import org.radarcns.auth.exception.ConfigurationException
 import org.radarcns.gateway.Config
 import org.radarcns.gateway.auth.Auth
 import org.radarcns.gateway.auth.AuthValidator
 import org.radarcns.gateway.auth.JwtAuth
-import java.io.StringReader
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.security.KeyFactory
@@ -20,14 +23,14 @@ import java.security.PublicKey
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.X509EncodedKeySpec
+import java.util.Base64
 import javax.ws.rs.container.ContainerRequestContext
 import javax.ws.rs.core.Context
 
 class EcdsaJwtTokenValidator constructor(@Context private val config: Config) : AuthValidator {
     private val verifiers: List<JWTVerifier>
     init {
-
-        var algorithms = mutableListOf<Algorithm>()
+        val algorithms = mutableListOf<Algorithm>()
 
         config.jwtECPublicKeys?.let { keys ->
             algorithms.addAll(keys.map { Algorithm.ECDSA256(parseKey(it, "EC") as ECPublicKey, null) })
@@ -50,12 +53,13 @@ class EcdsaJwtTokenValidator constructor(@Context private val config: Config) : 
 
         if (algorithms.isEmpty()) {
             throw ConfigurationException("No verification algorithms given")
+        } else {
+            logger.info("Verifying JWTs with ${algorithms.size} algorithms")
         }
 
         verifiers = algorithms.map { algorithm ->
             val builder = JWT.require(algorithm)
                     .withAudience(config.jwtResourceName)
-                    .withArrayClaim("scope", MEASUREMENT_CREATE.scopeName())
             config.jwtIssuer?.let {
                 builder.withIssuer(it)
             }
@@ -64,14 +68,12 @@ class EcdsaJwtTokenValidator constructor(@Context private val config: Config) : 
     }
 
     private fun parseKey(publicKey: String, algorithm: String): PublicKey {
-        var trimmedPublicKey = publicKey.trim()
-        if (!trimmedPublicKey.contains("-----BEGIN")) {
-            trimmedPublicKey = "-----BEGIN PUBLIC KEY-----\n$trimmedPublicKey\n-----END PUBLIC KEY-----"
-        }
+        var trimmedKey = publicKey.replace(Regex("-----BEGIN ([A-Z]+ )?PUBLIC KEY-----"), "")
+        trimmedKey = trimmedKey.replace(Regex("-----END ([A-Z]+ )?PUBLIC KEY-----"), "")
+        trimmedKey = trimmedKey.trim()
+        logger.info("Using following public key for algorithm $algorithm: \n$trimmedKey")
         try {
-            val keyBytes = PemReader(StringReader(trimmedPublicKey)).use { pemReader ->
-                pemReader.readPemObject().content
-            }
+            val keyBytes = Base64.getDecoder().decode(trimmedKey)
             val spec = X509EncodedKeySpec(keyBytes)
             val kf = KeyFactory.getInstance(algorithm)
             return kf.generatePublic(spec)
@@ -86,11 +88,27 @@ class EcdsaJwtTokenValidator constructor(@Context private val config: Config) : 
 
         for (verifier in verifiers) {
             try {
-                return JwtAuth(project, verifier.verify(token))
+                val decodedJwt = verifier.verify(token)
+
+                val scopeClaim = decodedJwt.getClaim("scope")
+                val scopes: List<String> = (scopeClaim.asString()?.split(" ")
+                        ?: scopeClaim.asList(String::class.java))
+                        ?: emptyList()
+
+                return JwtAuth(project, decodedJwt, scopes)
+            } catch (ex: SignatureVerificationException) {
+                // try next verifier
+            } catch (ex: AlgorithmMismatchException) {
+                // try next verifier
             } catch (ex: JWTVerificationException) {
-                // not the right verifier
+                logger.warn("JWT verification exception", ex)
+                return null
             }
         }
         return null
+    }
+
+    companion object {
+        val logger: Logger = LoggerFactory.getLogger(EcdsaJwtTokenValidator::class.java)
     }
 }
