@@ -14,7 +14,7 @@ plugins {
 apply plugin: 'kotlin'
 
 group 'org.radarcns'
-version '0.3.5'
+version '0.3.6'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -26,15 +26,15 @@ ext {
     website = 'http://radar-cns.org'
     description = 'RADAR Gateway to handle secured data flow to backend.'
 
-    okhttp3Version = '3.12.0'
+    okhttp3Version = '3.12.1'
     radarMpVersion = '0.5.2'
     radarCommonsVersion = '0.11.3'
-    radarSchemasVersion = '0.4.2'
-    jacksonVersion = '2.9.7'
+    radarSchemasVersion = '0.4.3'
+    jacksonVersion = '2.9.8'
     slf4jVersion = '1.7.25'
     logbackVersion = '1.2.3'
-    grizzly = '2.4.3'
-    jersey = '2.27'
+    grizzly = '2.4.4'
+    jersey = '2.28'
 
     junitVersion = '5.3.2'
     mockitoVersion = '2.+'
@@ -62,7 +62,7 @@ dependencies {
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
-    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jacksonVersion
 
     runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
 }
@@ -80,3 +80,7 @@ if (!hasProperty('profile')) {
 }
 
 apply from: "gradle/profile.${profile}.gradle"
+
+wrapper {
+    gradleVersion '5.2'
+}
