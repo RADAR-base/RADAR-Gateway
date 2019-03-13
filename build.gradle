@@ -27,7 +27,7 @@ ext {
     description = 'RADAR Gateway to handle secured data flow to backend.'
 
     okhttp3Version = '3.12.1'
-    radarMpVersion = '0.5.2'
+    radarMpVersion = '0.5.4'
     radarCommonsVersion = '0.11.3'
     radarSchemasVersion = '0.4.3'
     jacksonVersion = '2.9.8'
@@ -60,9 +60,9 @@ dependencies {
     compile group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion
     compile group: 'org.radarcns', name: 'radar-commons', version: radarCommonsVersion
 
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
-    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jacksonVersion
+    compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jacksonVersion
 
     runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
 }
