@@ -1,7 +1,7 @@
 package org.radarcns.gateway.inject
 
 import org.radarcns.auth.authentication.TokenValidator
-import org.radarcns.auth.config.YamlServerConfig
+import org.radarcns.auth.config.TokenVerifierPublicKeyConfig
 import org.radarcns.gateway.Config
 import org.radarcns.gateway.auth.Auth
 import org.radarcns.gateway.auth.AuthValidator
@@ -15,7 +15,7 @@ class RadarTokenValidator constructor(@Context config: Config) : AuthValidator {
     private val tokenValidator: TokenValidator = try {
         TokenValidator()
     } catch (e: RuntimeException) {
-        val cfg = YamlServerConfig()
+        val cfg = TokenVerifierPublicKeyConfig()
         cfg.publicKeyEndpoints = listOf(URI("${config.managementPortalUrl}/oauth/token_key"))
         cfg.resourceName = config.jwtResourceName
         TokenValidator(cfg)
