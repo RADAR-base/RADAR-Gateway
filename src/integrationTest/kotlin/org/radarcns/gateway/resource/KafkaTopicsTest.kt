@@ -177,13 +177,12 @@ class KafkaTopicsTest {
             val request = Request.Builder().apply(requestSupplier).build()
             println(request.url())
             return newCall(request).execute().use { response ->
-                val body = response.body()?.let {
-                    val tree = Json.mapper.readTree(it.byteStream())
-                    println(tree)
-                    tree
-                }
                 assertThat(response.code(), `is`(expectedStatus))
-                body
+
+                response.body()?.let { responseBody ->
+                    Json.mapper.readTree(responseBody.byteStream())
+                            .also { println(it) }
+                }
             }
         }
 
