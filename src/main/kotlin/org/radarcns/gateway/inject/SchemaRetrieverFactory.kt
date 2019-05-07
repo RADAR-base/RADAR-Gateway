@@ -1,8 +1,8 @@
 package org.radarcns.gateway.inject
 
-import org.radarcns.config.ServerConfig
+import org.radarbase.config.ServerConfig
 import org.radarcns.gateway.Config
-import org.radarcns.producer.rest.SchemaRetriever
+import org.radarbase.producer.rest.SchemaRetriever
 import java.util.function.Supplier
 import javax.ws.rs.core.Context
 

@@ -40,6 +40,6 @@ COPY --from=builder /code/build/distributions/radar-gateway-*/bin/* /usr/bin/
 COPY --from=builder /code/build/distributions/radar-gateway-*/lib/* /usr/lib/
 COPY --from=builder /code/build/libs/radar-gateway-*.jar /usr/lib/
 
-EXPOSE 8080
+EXPOSE 8090
 
 CMD ["radar-gateway"]

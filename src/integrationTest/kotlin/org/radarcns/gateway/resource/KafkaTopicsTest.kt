@@ -26,9 +26,9 @@ import javax.ws.rs.core.Response.Status
 class KafkaTopicsTest {
     @Test
     fun testListTopics() {
-        val baseUri = "http://localhost:8080/radar-gateway"
+        val baseUri = "http://localhost:8090/radar-gateway"
         val config = Config()
-        config.managementPortalUrl = "http://localhost:8090"
+        config.managementPortalUrl = "http://localhost:8080"
         config.schemaRegistryUrl = "http://localhost:8081"
         config.restProxyUrl = "http://localhost:8082"
         config.baseUri = URI.create(baseUri)

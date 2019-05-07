@@ -5,14 +5,12 @@ import org.glassfish.jersey.internal.inject.AbstractBinder
 import org.glassfish.jersey.internal.inject.PerThread
 import org.glassfish.jersey.process.internal.RequestScoped
 import org.glassfish.jersey.server.ResourceConfig
-import org.radarcns.auth.authentication.TokenValidator
+import org.radarbase.producer.rest.SchemaRetriever
 import org.radarcns.gateway.Config
 import org.radarcns.gateway.auth.Auth
-import org.radarcns.gateway.auth.AuthenticationFilter
 import org.radarcns.gateway.io.AvroProcessor
 import org.radarcns.gateway.io.BinaryToAvroConverter
 import org.radarcns.gateway.io.ProxyClient
-import org.radarcns.producer.rest.SchemaRetriever
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 

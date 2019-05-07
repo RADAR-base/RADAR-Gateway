@@ -11,7 +11,7 @@ import javax.ws.rs.core.Response
 class KafkaRootTest {
     @Test
     fun queryRoot() {
-        val baseUri = "http://localhost:8080/radar-gateway"
+        val baseUri = "http://localhost:8090/radar-gateway"
         val config = Config()
         config.restProxyUrl = "http://localhost:8082"
         config.schemaRegistryUrl = "http://localhost:8081"
