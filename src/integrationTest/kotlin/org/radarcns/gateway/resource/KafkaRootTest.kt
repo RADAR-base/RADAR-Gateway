@@ -6,7 +6,7 @@ import org.radarcns.gateway.Config
 import org.radarcns.gateway.GrizzlyServer
 import org.radarcns.gateway.resource.KafkaTopicsTest.Companion.call
 import java.net.URI
-import javax.ws.rs.core.Response
+import javax.ws.rs.core.Response.Status
 
 class KafkaRootTest {
     @Test
@@ -23,11 +23,12 @@ class KafkaRootTest {
         server.start()
 
         try {
-            call(httpClient, Response.Status.OK) {
-                it.url(baseUri)
+            httpClient.call(Status.OK) {
+                url(baseUri)
             }
-            call(httpClient, Response.Status.OK) {
-                it.url(baseUri).head()
+            httpClient.call(Status.OK) {
+                url(baseUri)
+                head()
             }
         } finally {
             server.shutdown()
