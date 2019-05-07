@@ -16,8 +16,8 @@ apply plugin: 'kotlin'
 group 'org.radarcns'
 version '0.3.7-SNAPSHOT'
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+sourceCompatibility = '11'
+targetCompatibility = '11'
 
 ext {
     githubRepoName = 'RADAR-Base/RADAR-Gateway'
@@ -78,7 +78,7 @@ dependencies {
 
 compileKotlin {
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
 }
 
@@ -91,5 +91,5 @@ if (!hasProperty('profile')) {
 apply from: "gradle/profile.${profile}.gradle"
 
 wrapper {
-    gradleVersion '5.2'
+    gradleVersion '5.4.1'
 }
