@@ -1,17 +1,7 @@
-buildscript {
-    ext.kotlin_version = '1.3.31'
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
 plugins {
     id 'application'
+    id "org.jetbrains.kotlin.jvm" version "1.3.31"
 }
-apply plugin: 'kotlin'
 
 group 'org.radarcns'
 version '0.3.7-SNAPSHOT'
@@ -51,7 +41,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: kotlin_version
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8'
 
     compile group: 'org.glassfish.grizzly', name: 'grizzly-http-server', version: grizzly
 
@@ -59,7 +49,7 @@ dependencies {
     compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-servlet', version: jersey
     compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jersey
 
-    compile group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion, classifier: 'all'
+    compile group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion
     compile group: 'org.radarbase', name: 'radar-commons', version: radarCommonsVersion
     compile group: 'org.radarbase', name: 'lzfse-decode', version: lzfseVersion
 
