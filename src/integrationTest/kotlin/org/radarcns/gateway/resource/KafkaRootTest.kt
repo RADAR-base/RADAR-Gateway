@@ -30,6 +30,10 @@ class KafkaRootTest {
                 url(baseUri)
                 head()
             }
+            httpClient.call(Status.NO_CONTENT) {
+                url(baseUri)
+                method("OPTIONS", null)
+            }
         } finally {
             server.shutdown()
         }
