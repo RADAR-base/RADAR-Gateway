@@ -117,6 +117,18 @@ class KafkaTopicsTest {
 
             assertThat(gatewayTopicList, `is`(topicList))
 
+            httpClient.call(Status.NO_CONTENT) {
+                url("$baseUri/topics")
+                method("OPTIONS", null)
+                addHeader("Authorization", BEARER + accessToken)
+            }
+
+            httpClient.call(Status.NO_CONTENT) {
+                url("$baseUri/topics/test")
+                method("OPTIONS", null)
+                addHeader("Authorization", BEARER + accessToken)
+            }
+
             httpClient.call(Status.OK) {
                 url(config.restProxyUrl + "/topics")
                 head()
@@ -175,13 +187,14 @@ class KafkaTopicsTest {
 
         fun OkHttpClient.call(expectedStatus: Int, requestSupplier: Request.Builder.() -> Unit): JsonNode? {
             val request = Request.Builder().apply(requestSupplier).build()
-            println(request.url())
             return newCall(request).execute().use { response ->
+                println("${request.method()} ${request.url()}")
                 assertThat(response.code(), `is`(expectedStatus))
-
+                println(response.headers())
                 response.body()?.let { responseBody ->
-                    Json.mapper.readTree(responseBody.byteStream())
-                            .also { println(it) }
+                    val string = responseBody.string()
+                    println(string)
+                    Json.mapper.readTree(string)
                 }
             }
         }
