@@ -6,12 +6,12 @@ import org.radarcns.gateway.Config
 import org.radarcns.gateway.GrizzlyServer
 import org.radarcns.gateway.resource.KafkaTopicsTest.Companion.call
 import java.net.URI
-import javax.ws.rs.core.Response
+import javax.ws.rs.core.Response.Status
 
 class KafkaRootTest {
     @Test
     fun queryRoot() {
-        val baseUri = "http://localhost:8080/radar-gateway"
+        val baseUri = "http://localhost:8090/radar-gateway"
         val config = Config()
         config.restProxyUrl = "http://localhost:8082"
         config.schemaRegistryUrl = "http://localhost:8081"
@@ -23,11 +23,16 @@ class KafkaRootTest {
         server.start()
 
         try {
-            call(httpClient, Response.Status.OK) {
-                it.url(baseUri)
+            httpClient.call(Status.OK) {
+                url(baseUri)
             }
-            call(httpClient, Response.Status.OK) {
-                it.url(baseUri).head()
+            httpClient.call(Status.OK) {
+                url(baseUri)
+                head()
+            }
+            httpClient.call(Status.NO_CONTENT) {
+                url(baseUri)
+                method("OPTIONS", null)
             }
         } finally {
             server.shutdown()

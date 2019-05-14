@@ -4,11 +4,11 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.io.BinaryDecoder
-import org.radarcns.data.RecordData
+import org.radarbase.data.RecordData
 import org.radarcns.gateway.auth.Auth
-import org.radarcns.producer.rest.ParsedSchemaMetadata
-import org.radarcns.producer.rest.SchemaRetriever
-import org.radarcns.topic.AvroTopic
+import org.radarbase.producer.rest.ParsedSchemaMetadata
+import org.radarbase.producer.rest.SchemaRetriever
+import org.radarbase.topic.AvroTopic
 import java.lang.UnsupportedOperationException
 
 class DecodedRecordData(

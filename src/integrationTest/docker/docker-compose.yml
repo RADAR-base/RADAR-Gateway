@@ -12,7 +12,7 @@ services:
   # Zookeeper Cluster                                                         #
   #---------------------------------------------------------------------------#
   zookeeper-1:
-    image: confluentinc/cp-zookeeper:5.0.0
+    image: confluentinc/cp-zookeeper:5.2.1
     networks:
       - zookeeper
     environment:
@@ -21,7 +21,7 @@ services:
       ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
 
   zookeeper-2:
-    image: confluentinc/cp-zookeeper:5.0.0
+    image: confluentinc/cp-zookeeper:5.2.1
     networks:
     - zookeeper
     environment:
@@ -30,7 +30,7 @@ services:
       ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
 
   zookeeper-3:
-    image: confluentinc/cp-zookeeper:5.0.0
+    image: confluentinc/cp-zookeeper:5.2.1
     networks:
     - zookeeper
     environment:
@@ -42,7 +42,7 @@ services:
   # Kafka Cluster                                                             #
   #---------------------------------------------------------------------------#
   kafka-1:
-    image: confluentinc/cp-kafka:5.0.0
+    image: confluentinc/cp-kafka:5.2.1
     networks:
       - kafka
       - zookeeper
@@ -59,7 +59,7 @@ services:
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
 
   kafka-2:
-    image: confluentinc/cp-kafka:5.0.0
+    image: confluentinc/cp-kafka:5.2.1
     networks:
       - kafka
       - zookeeper
@@ -76,7 +76,7 @@ services:
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
 
   kafka-3:
-    image: confluentinc/cp-kafka:5.0.0
+    image: confluentinc/cp-kafka:5.2.1
     networks:
       - kafka
       - zookeeper
@@ -96,7 +96,7 @@ services:
   # Schema Registry                                                           #
   #---------------------------------------------------------------------------#
   schema-registry-1:
-    image: confluentinc/cp-schema-registry:5.0.0
+    image: confluentinc/cp-schema-registry:5.2.1
     networks:
       - kafka
       - zookeeper
@@ -115,7 +115,7 @@ services:
   # REST proxy                                                                #
   #---------------------------------------------------------------------------#
   rest-proxy-1:
-    image: confluentinc/cp-kafka-rest:5.0.0
+    image: confluentinc/cp-kafka-rest:5.2.1
     networks:
       - kafka
       - zookeeper
@@ -137,16 +137,16 @@ services:
   # Management Portal                                                         #
   #---------------------------------------------------------------------------#
   managementportal-app:
-    image: radarbase/management-portal:0.5.4
+    image: radarbase/management-portal:0.5.6
     networks:
       - kafka
     ports:
-      - "8090:8080"
+      - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: dev
       MANAGEMENTPORTAL_FRONTEND_CLIENT_SECRET: ""
-      MANAGEMENTPORTAL_COMMON_BASE_URL: http://localhost:8090
-      MANAGEMENTPORTAL_COMMON_MANAGEMENT_PORTAL_BASE_URL: http://localhost:8090
+      MANAGEMENTPORTAL_COMMON_BASE_URL: http://localhost:8080
+      MANAGEMENTPORTAL_COMMON_MANAGEMENT_PORTAL_BASE_URL: http://localhost:8080
       MANAGEMENTPORTAL_OAUTH_CLIENTS_FILE: /mp-includes/config/oauth_client_details.csv
       MANAGEMENTPORTAL_CATALOGUE_SERVER_ENABLE_AUTO_IMPORT: 'false'
       JAVA_OPTS: -Xmx256m  # maximum heap size for the JVM running ManagementPortal, increase this as necessary

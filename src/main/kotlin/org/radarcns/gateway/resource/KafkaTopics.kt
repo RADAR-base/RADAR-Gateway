@@ -32,6 +32,11 @@ class KafkaTopics {
     @HEAD
     fun topicsHead() = proxyClient.proxyRequest("HEAD")
 
+    @OPTIONS
+    fun topicsOptions(): Response = Response.noContent()
+            .header("Allow", "HEAD,GET,OPTIONS")
+            .build()
+
     @Path("/{topic_name}")
     @GET
     fun topic() = proxyClient.proxyRequest("GET")
@@ -40,9 +45,18 @@ class KafkaTopics {
     @HEAD
     fun topicHead() = proxyClient.proxyRequest("HEAD")
 
+    @OPTIONS
+    @Path("/{topic_name}")
+    fun topicOptions(): Response = Response.noContent()
+            .header("Accept", "$ACCEPT_BINARY_V1,$ACCEPT_AVRO_V2_JSON,$ACCEPT_AVRO_V1_JSON")
+            .header("Accept-Encoding", "gzip,lzfse")
+            .header("Accept-Charset", "utf-8")
+            .header("Allow", "HEAD,GET,POST,OPTIONS")
+            .build()
+
     @Path("/{topic_name}")
     @POST
-    @Consumes("application/vnd.kafka.avro.v1+json", "application/vnd.kafka.avro.v2+json")
+    @Consumes(ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON)
     @NeedsPermission(MEASUREMENT, CREATE)
     @ProcessAvro
     fun postToTopic(
@@ -60,7 +74,7 @@ class KafkaTopics {
     @Path("/{topic_name}")
     @POST
     @ProcessAvro
-    @Consumes("application/vnd.radarbase.avro.v1+binary")
+    @Consumes(ACCEPT_BINARY_V1)
     @NeedsPermission(MEASUREMENT, CREATE)
     fun postToTopicBinary(
             input: InputStream,
@@ -74,5 +88,11 @@ class KafkaTopics {
 
         return proxyClient.proxyRequest("POST", proxyHeaders,
                 binaryToAvroConverter.process(topic, input))
+    }
+
+    companion object {
+        const val ACCEPT_AVRO_V1_JSON = "application/vnd.kafka.avro.v1+json"
+        const val ACCEPT_AVRO_V2_JSON = "application/vnd.kafka.avro.v2+json"
+        const val ACCEPT_BINARY_V1 = "application/vnd.radarbase.avro.v1+binary"
     }
 }

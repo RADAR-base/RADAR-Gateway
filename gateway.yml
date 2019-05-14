@@ -1,5 +1,5 @@
-baseUri: http://0.0.0.0:8080/radar-gateway/
-managementPortalUrl: http://localhost:8090/managementportal
+baseUri: http://0.0.0.0:8090/radar-gateway/
+managementPortalUrl: http://localhost:8080/managementportal
 schemaRegistryUrl: http://localhost:8081
 restProxyUrl: http://localhost:8082
 resourceConfig: org.radarcns.gateway.inject.EcdsaJwtGatewayResources

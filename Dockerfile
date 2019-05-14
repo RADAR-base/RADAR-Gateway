@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:8-alpine as builder
+FROM openjdk:11-jdk-slim as builder
 
 RUN mkdir /code
 WORKDIR /code
@@ -30,7 +30,7 @@ RUN ./gradlew -Dkotlin.compiler.execution.strategy="in-process" -Dorg.gradle.par
     && tar xf *.tar \
     && rm *.tar radar-gateway-*/lib/radar-gateway-*.jar
 
-FROM openjdk:8-jre-alpine
+FROM openjdk:11-jre-slim
 
 MAINTAINER @blootsvoets
 
@@ -40,6 +40,6 @@ COPY --from=builder /code/build/distributions/radar-gateway-*/bin/* /usr/bin/
 COPY --from=builder /code/build/distributions/radar-gateway-*/lib/* /usr/lib/
 COPY --from=builder /code/build/libs/radar-gateway-*.jar /usr/lib/
 
-EXPOSE 8080
+EXPOSE 8090
 
 CMD ["radar-gateway"]

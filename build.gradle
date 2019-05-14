@@ -1,40 +1,31 @@
-buildscript {
-    ext.kotlin_version = '1.3.21'
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
 plugins {
     id 'application'
+    id "org.jetbrains.kotlin.jvm" version "1.3.31"
 }
-apply plugin: 'kotlin'
 
 group 'org.radarcns'
-version '0.3.7'
+version '0.3.8'
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+sourceCompatibility = '11'
+targetCompatibility = '11'
 
 ext {
-    githubRepoName = 'RADAR-CNS/RADAR-Gateway'
+    githubRepoName = 'RADAR-Base/RADAR-Gateway'
     githubUrl = 'https://github.com/' + githubRepoName + '.git'
     issueUrl = 'https://github.com/' + githubRepoName + '/issues'
-    website = 'http://radar-cns.org'
+    website = 'http://radar-base.org'
     description = 'RADAR Gateway to handle secured data flow to backend.'
 
-    okhttp3Version = '3.12.1'
-    radarMpVersion = '0.5.4'
-    radarCommonsVersion = '0.11.3'
-    radarSchemasVersion = '0.4.3'
+    okhttp3Version = '3.14.1'
+    radarMpVersion = '0.5.6'
+    radarCommonsVersion = '0.12.0'
+    radarSchemasVersion = '0.5.0'
     jacksonVersion = '2.9.8'
-    slf4jVersion = '1.7.25'
+    slf4jVersion = '1.7.26'
     logbackVersion = '1.2.3'
     grizzly = '2.4.4'
     jersey = '2.28'
+    lzfseVersion = '0.1.0'
 
     junitVersion = '5.3.2'
     mockitoVersion = '2.+'
@@ -44,12 +35,13 @@ repositories {
     jcenter()
     // Non-jcenter radar releases
     maven { url 'https://dl.bintray.com/radar-cns/org.radarcns' }
+    maven { url 'https://dl.bintray.com/radar-base/org.radarbase' }
     // For working with dev-branches
     maven { url 'https://oss.jfrog.org/artifactory/libs-snapshot/' }
 }
 
 dependencies {
-    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: kotlin_version
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8'
 
     compile group: 'org.glassfish.grizzly', name: 'grizzly-http-server', version: grizzly
 
@@ -58,18 +50,25 @@ dependencies {
     compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jersey
 
     compile group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion
-    compile group: 'org.radarcns', name: 'radar-commons', version: radarCommonsVersion
+    compile group: 'org.radarbase', name: 'radar-commons', version: radarCommonsVersion
+    compile group: 'org.radarbase', name: 'lzfse-decode', version: lzfseVersion
 
     compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
     compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jacksonVersion
+
+    // HK2 dependencies for Java 11+
+    runtimeOnly group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'
+    runtimeOnly group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '2.3.0'
+    runtimeOnly group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: '2.3.0'
+    runtimeOnly group: 'javax.activation', name: 'activation', version: '1.1.1'
 
     runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
 }
 
 compileKotlin {
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
 }
 
@@ -82,5 +81,5 @@ if (!hasProperty('profile')) {
 apply from: "gradle/profile.${profile}.gradle"
 
 wrapper {
-    gradleVersion '5.2'
+    gradleVersion '5.4.1'
 }

@@ -10,8 +10,8 @@ import org.apache.avro.io.Decoder
 import org.apache.avro.io.DecoderFactory
 import org.glassfish.jersey.internal.inject.PerThread
 import org.radarcns.gateway.auth.Auth
-import org.radarcns.producer.rest.JsonRecordRequest
-import org.radarcns.producer.rest.SchemaRetriever
+import org.radarbase.producer.rest.JsonRecordRequest
+import org.radarbase.producer.rest.SchemaRetriever
 import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
