@@ -36,6 +36,10 @@ MAINTAINER @blootsvoets
 
 LABEL description="RADAR-CNS Gateway docker container"
 
+RUN apt-get update && \
+        apt-get install -y curl && \
+        rm -rf /var/lib/apt/lists/* # remove the cached files.
+
 COPY --from=builder /code/build/distributions/radar-gateway-*/bin/* /usr/bin/
 COPY --from=builder /code/build/distributions/radar-gateway-*/lib/* /usr/lib/
 COPY --from=builder /code/build/libs/radar-gateway-*.jar /usr/lib/
