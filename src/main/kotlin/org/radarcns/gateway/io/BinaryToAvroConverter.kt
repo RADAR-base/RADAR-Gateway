@@ -1,4 +1,4 @@
-package org.radarcns.gateway.io;
+package org.radarcns.gateway.io
 
 import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream
 import okio.BufferedSink
@@ -9,9 +9,9 @@ import org.apache.avro.io.BinaryDecoder
 import org.apache.avro.io.Decoder
 import org.apache.avro.io.DecoderFactory
 import org.glassfish.jersey.internal.inject.PerThread
-import org.radarcns.gateway.auth.Auth
 import org.radarbase.producer.rest.JsonRecordRequest
 import org.radarbase.producer.rest.SchemaRetriever
+import org.radarcns.gateway.auth.Auth
 import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -47,11 +47,11 @@ class BinaryToAvroConverter(
     class ReadContext {
         private var buffer: ByteBuffer? = null
         private var record: GenericRecord? = null
-        var valueDecoder : BinaryDecoder? = null
-        var valueReader : GenericDatumReader<GenericRecord>? = null
+        private var valueDecoder : BinaryDecoder? = null
+        private var valueReader : GenericDatumReader<GenericRecord>? = null
 
         fun init(schema: Schema) {
-            if (valueReader == null || valueReader?.schema != schema) {
+            if (valueReader?.schema != schema) {
                 valueReader = GenericDatumReader(schema)
             }
         }

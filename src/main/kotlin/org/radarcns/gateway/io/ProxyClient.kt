@@ -1,6 +1,7 @@
 package org.radarcns.gateway.io
 
 import okhttp3.*
+import okio.Buffer
 import okio.BufferedSink
 import okio.Okio
 import org.radarcns.gateway.Config
@@ -51,6 +52,8 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
                 values.forEach { value -> builder.header(name, value) }
             }
 
+            logger.info("[{}] {} {} - {}", response.code(), method, request.url().encodedPath(), response.header("Content-Length") ?: 0)
+
             val inputResponse = response.body()?.source()
 
             if (inputResponse != null) {
@@ -86,17 +89,10 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
         val url = baseUrl.newBuilder(uriInfo.path)?.build()
                 ?: throw IllegalArgumentException("Path $baseUrl/${uriInfo.path} is invalid")
 
-        val body = if (sinkWriter != null) object : RequestBody() {
-            override fun writeTo(sink: BufferedSink?) {
-                sink?.let {
-                    sinkWriter(it)
-                    it.flush()
-                }
-            }
-
-            override fun contentType(): MediaType? {
-                return headers.get("Content-Type")?.let { MediaType.parse(it) }
-            }
+        val body = if (sinkWriter != null) {
+            val buffer = Buffer()
+            sinkWriter(buffer)
+            RequestBody.create(headers.get("Content-Type")?.let { MediaType.parse(it) }, buffer.readByteArray())
         } else null
 
         return Request.Builder()

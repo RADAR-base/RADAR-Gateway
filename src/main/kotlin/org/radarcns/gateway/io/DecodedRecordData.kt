@@ -5,11 +5,10 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.io.BinaryDecoder
 import org.radarbase.data.RecordData
-import org.radarcns.gateway.auth.Auth
 import org.radarbase.producer.rest.ParsedSchemaMetadata
 import org.radarbase.producer.rest.SchemaRetriever
 import org.radarbase.topic.AvroTopic
-import java.lang.UnsupportedOperationException
+import org.radarcns.gateway.auth.Auth
 
 class DecodedRecordData(
         topicName: String,
@@ -35,8 +34,8 @@ class DecodedRecordData(
 
         auth.checkPermission(projectId, userId, sourceId)
 
-        size = decoder.readArrayStart().toInt()
-        remaining = size
+        remaining = decoder.readArrayStart().toInt()
+        size = remaining
 
         keySchemaMetadata = schemaRetriever.getSchemaMetadata(topicName, false, keyVersion)
         valueSchemaMetadata = schemaRetriever.getSchemaMetadata(topicName, true, valueVersion)
@@ -59,9 +58,12 @@ class DecodedRecordData(
 
     override fun getKey() = key
 
-    override fun isEmpty() = size > 0
+    override fun isEmpty() = size == 0
 
     override fun iterator(): MutableIterator<GenericRecord> {
+        if (isEmpty)
+            throw IllegalStateException("Cannot read decoded record data twice.")
+
         return object : MutableIterator<GenericRecord> {
             override fun hasNext() = remaining > 0
 
@@ -69,8 +71,8 @@ class DecodedRecordData(
                 val result = readContext.decodeValue(decoder)
                 remaining--
                 if (remaining == 0) {
-                    size = decoder.arrayNext().toInt()
-                    remaining = size
+                    remaining = decoder.arrayNext().toInt()
+                    size += remaining
                 }
                 return result
             }

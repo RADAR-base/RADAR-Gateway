@@ -34,7 +34,7 @@ FROM openjdk:11-jre-slim
 
 MAINTAINER @blootsvoets
 
-LABEL description="RADAR-CNS Gateway docker container"
+LABEL description="RADAR-base Gateway docker container"
 
 RUN apt-get update && \
         apt-get install -y curl && \
