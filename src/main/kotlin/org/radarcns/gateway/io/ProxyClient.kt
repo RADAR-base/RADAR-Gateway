@@ -89,10 +89,12 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
         val url = baseUrl.newBuilder(uriInfo.path)?.build()
                 ?: throw IllegalArgumentException("Path $baseUrl/${uriInfo.path} is invalid")
 
-        val body = if (sinkWriter != null) {
-            val buffer = Buffer()
-            sinkWriter(buffer)
-            RequestBody.create(headers.get("Content-Type")?.let { MediaType.parse(it) }, buffer.readByteArray())
+        val body = if (sinkWriter != null) object : RequestBody() {
+            override fun writeTo(sink: BufferedSink) {
+                sinkWriter(sink)
+            }
+            override fun isOneShot() = true
+            override fun contentType() = headers.get("Content-Type")?.let { MediaType.parse(it) }
         } else null
 
         return Request.Builder()

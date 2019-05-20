@@ -52,6 +52,7 @@ dependencies {
     compile group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion
     compile group: 'org.radarbase', name: 'radar-commons', version: radarCommonsVersion
     compile group: 'org.radarbase', name: 'lzfse-decode', version: lzfseVersion
+    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
 
     compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
