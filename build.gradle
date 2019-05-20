@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'org.radarcns'
-version '0.3.9'
+version '0.3.10-SNAPSHOT'
 
 sourceCompatibility = '11'
 targetCompatibility = '11'
