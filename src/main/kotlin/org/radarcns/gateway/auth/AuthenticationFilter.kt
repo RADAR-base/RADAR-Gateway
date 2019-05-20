@@ -4,7 +4,6 @@ import org.radarcns.auth.authorization.Permission
 import org.radarcns.auth.exception.TokenValidationException
 import org.slf4j.LoggerFactory
 import javax.annotation.Priority
-import javax.ws.rs.NotAuthorizedException
 import javax.ws.rs.Priorities
 import javax.ws.rs.container.ContainerRequestContext
 import javax.ws.rs.container.ContainerRequestFilter

@@ -24,6 +24,8 @@ dependencies {
     testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: okhttp3Version
     testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
 
+    testImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
+
     integrationTestImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
     integrationTestImplementation group: 'org.radarbase', name: 'radar-commons-testing', version: radarCommonsVersion
     integrationTestImplementation group: 'org.radarcns', name: 'oauth-client-util', version: radarMpVersion
