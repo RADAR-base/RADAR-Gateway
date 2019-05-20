@@ -92,6 +92,7 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
         val body = if (sinkWriter != null) object : RequestBody() {
             override fun writeTo(sink: BufferedSink) {
                 sinkWriter(sink)
+                sink.flush()
             }
             override fun isOneShot() = true
             override fun contentType() = headers.get("Content-Type")?.let { MediaType.parse(it) }
