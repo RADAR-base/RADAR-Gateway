@@ -23,9 +23,11 @@ ext {
     jacksonVersion = '2.9.9'
     slf4jVersion = '1.7.26'
     logbackVersion = '1.2.3'
-    grizzly = '2.4.4'
-    jersey = '2.28'
+    grizzlyVersion = '2.4.4'
+    jerseyVersion = '2.28'
     lzfseVersion = '0.1.0'
+    jaxbVersion = '2.3.0'
+    javaxActivationVersion = '1.1.1'
 
     junitVersion = '5.3.2'
     mockitoVersion = '2.+'
@@ -43,11 +45,11 @@ repositories {
 dependencies {
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8'
 
-    compile group: 'org.glassfish.grizzly', name: 'grizzly-http-server', version: grizzly
+    compile group: 'org.glassfish.grizzly', name: 'grizzly-http-server', version: grizzlyVersion
 
-    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jersey
-    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-servlet', version: jersey
-    compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jersey
+    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
+    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-servlet', version: jerseyVersion
+    compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jerseyVersion
 
     compile group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion
     compile group: 'org.radarbase', name: 'radar-commons', version: radarCommonsVersion
@@ -59,10 +61,15 @@ dependencies {
     compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jacksonVersion
 
     // HK2 dependencies for Java 11+
-    runtimeOnly group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'
-    runtimeOnly group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '2.3.0'
-    runtimeOnly group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: '2.3.0'
-    runtimeOnly group: 'javax.activation', name: 'activation', version: '1.1.1'
+    runtimeOnly group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
+    runtimeOnly group: 'com.sun.xml.bind', name: 'jaxb-impl', version: jaxbVersion
+    runtimeOnly group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
+    runtimeOnly group: 'javax.activation', name: 'activation', version: javaxActivationVersion
+
+    // JMX monitoring
+    runtimeOnly group: 'org.glassfish.grizzly', name: 'grizzly-framework-monitoring', version: grizzlyVersion
+    runtimeOnly group: 'org.glassfish.grizzly', name: 'grizzly-http-monitoring', version: grizzlyVersion
+    runtimeOnly group: 'org.glassfish.grizzly', name: 'grizzly-http-server-monitoring', version: grizzlyVersion
 
     runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
 }
