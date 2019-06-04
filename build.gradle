@@ -68,9 +68,7 @@ dependencies {
 }
 
 compileKotlin {
-    kotlinOptions {
-        jvmTarget = '11'
-    }
+    kotlinOptions.jvmTarget = '11'
 }
 
 mainClassName = 'org.radarcns.gateway.MainKt'

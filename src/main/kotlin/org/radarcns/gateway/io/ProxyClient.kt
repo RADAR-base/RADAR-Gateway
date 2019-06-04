@@ -1,11 +1,14 @@
 package org.radarcns.gateway.io
 
 import okhttp3.*
-import okio.Buffer
 import okio.BufferedSink
 import okio.Okio
 import org.radarcns.gateway.Config
+import org.radarcns.gateway.exception.BadGatewayException
+import org.radarcns.gateway.exception.GatewayTimeoutException
 import org.slf4j.LoggerFactory
+import java.io.IOException
+import java.net.SocketTimeoutException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -23,6 +26,9 @@ import javax.ws.rs.ext.Provider
  *
  * @implNote this implementation is not thread-safe because it uses a object-level buffer.
  */
+
+typealias JavaxResponse = javax.ws.rs.core.Response
+
 @Provider
 @Singleton
 class ProxyClient(@Context config: Config, @Context private val client: OkHttpClient,
@@ -32,10 +38,17 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
     private val baseUrl = HttpUrl.parse(config.restProxyUrl)
             ?: throw IllegalArgumentException("Base URL ${config.restProxyUrl} is invalid")
 
-    fun proxyRequest(method: String, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?): javax.ws.rs.core.Response {
+    fun proxyRequest(method: String, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?): JavaxResponse {
         val request = createProxyRequest(method, uriInfo, headers, sinkWriter)
 
-        val response = client.newCall(request).execute()
+        val response = try {
+            client.newCall(request).execute()
+        } catch (ex: SocketTimeoutException) {
+            throw GatewayTimeoutException("Connection to Kafka rest proxy timed out")
+        } catch (ex: IOException) {
+            throw BadGatewayException("Failed to connect to Kafka rest proxy")
+        }
+
         val didStart = AtomicBoolean(false)
 
         // close the stream if it does not start within 30 seconds to avoid lingering connections.
@@ -81,7 +94,7 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
         }
     }
 
-    fun proxyRequest(method: String, sinkWriter: ((BufferedSink) -> Unit)? = null): javax.ws.rs.core.Response {
+    fun proxyRequest(method: String, sinkWriter: ((BufferedSink) -> Unit)? = null): JavaxResponse {
         return proxyRequest(method, jerseyToOkHttpHeaders(headers).build(), sinkWriter)
     }
 
