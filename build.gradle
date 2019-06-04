@@ -80,10 +80,9 @@ compileKotlin {
     }
 }
 
-mainClassName = 'org.radarcns.gateway.MainKt'
+application {
+    mainClassName = 'org.radarcns.gateway.MainKt'
 
-
-installApp {
     applicationDefaultJvmArgs = [
         "-Dcom.sun.management.jmxremote",
         "-Dcom.sun.management.jmxremote.local.only=false",
