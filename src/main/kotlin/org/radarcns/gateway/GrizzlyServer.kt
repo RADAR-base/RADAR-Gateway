@@ -13,7 +13,9 @@ class GrizzlyServer(private val config: Config) {
         val resourceConfig = (gatewayResources as GatewayResources).getResources(config)
 
         httpServer = GrizzlyHttpServerFactory.createHttpServer(config.baseUri, resourceConfig)
-        httpServer!!.start()
+                .apply {
+                    serverConfiguration.isJmxEnabled = config.isJmxEnabled
+                }.also { it.start() }
     }
 
     fun shutdown() {
