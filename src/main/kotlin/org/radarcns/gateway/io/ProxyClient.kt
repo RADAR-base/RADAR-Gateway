@@ -44,9 +44,10 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
         val response = try {
             client.newCall(request).execute()
         } catch (ex: SocketTimeoutException) {
-            throw GatewayTimeoutException("Connection to Kafka rest proxy timed out")
+            throw GatewayTimeoutException("Connection to Kafka REST proxy timed out")
         } catch (ex: IOException) {
-            throw BadGatewayException("Failed to connect to Kafka rest proxy")
+            logger.error("Failed to connecto to Kafka REST proxy: {}", ex.toString())
+            throw BadGatewayException("Failed to connect to Kafka REST proxy")
         }
 
         val didStart = AtomicBoolean(false)
