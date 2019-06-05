@@ -17,5 +17,6 @@ class Config {
     var jwtIssuer: String? = null
     var jwtResourceName: String = "res_gateway"
     var maxRequestSize: Long = 24*1024*1024
+    var maxRequests: Int = 200
     var isJmxEnabled: Boolean = true
 }

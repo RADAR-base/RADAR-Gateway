@@ -6,8 +6,8 @@ plugins {
 group 'org.radarcns'
 version '0.3.10-SNAPSHOT'
 
-sourceCompatibility = '11'
-targetCompatibility = '11'
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 ext {
     githubRepoName = 'RADAR-Base/RADAR-Gateway'
@@ -75,9 +75,7 @@ dependencies {
 }
 
 compileKotlin {
-    kotlinOptions {
-        jvmTarget = '11'
-    }
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }
 
 application {

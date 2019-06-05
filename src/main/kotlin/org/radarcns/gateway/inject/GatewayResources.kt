@@ -1,5 +1,7 @@
 package org.radarcns.gateway.inject
 
+import okhttp3.ConnectionPool
+import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import org.glassfish.jersey.internal.inject.AbstractBinder
 import org.glassfish.jersey.internal.inject.PerThread
@@ -43,6 +45,11 @@ interface GatewayResources {
                     .readTimeout(1, TimeUnit.MINUTES)
                     .writeTimeout(1, TimeUnit.MINUTES)
                     .connectTimeout(10, TimeUnit.SECONDS)
+                    .dispatcher(Dispatcher().apply {
+                        maxRequests = config.maxRequests
+                        maxRequestsPerHost = config.maxRequests
+                    })
+                    .connectionPool(ConnectionPool(config.maxRequests, 5, TimeUnit.MINUTES))
                     .build())
                     .to(OkHttpClient::class.java)
 
