@@ -92,7 +92,7 @@ class KafkaTopics {
         val dataProcessor = try {
             binaryToAvroConverter.process(topic, input)
         } catch (ex: IOException) {
-            logger.error("Invalid recordset content: {}", ex.toString())
+            logger.error("Invalid RecordSet content: {}", ex.toString())
             throw BadRequestException(jsonErrorResponse(Response.Status.BAD_REQUEST, "bad_content", "Content is not a valid binary RecordSet"))
         }
         return proxyClient.proxyRequest("POST", proxyHeaders, dataProcessor)
