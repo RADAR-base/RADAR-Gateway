@@ -12,8 +12,10 @@ import org.glassfish.jersey.internal.inject.PerThread
 import org.radarbase.producer.rest.JsonRecordRequest
 import org.radarbase.producer.rest.SchemaRetriever
 import org.radarcns.gateway.auth.Auth
+import org.radarcns.gateway.exception.InvalidContentException
 import java.io.IOException
 import java.io.InputStream
+import java.lang.IllegalStateException
 import java.nio.ByteBuffer
 import javax.ws.rs.core.Context
 import javax.ws.rs.ext.Provider
@@ -57,10 +59,16 @@ class BinaryToAvroConverter(
         }
 
         fun decodeValue(decoder: Decoder): GenericRecord {
-            buffer = decoder.readBytes(buffer)
-            valueDecoder = DecoderFactory.get().binaryDecoder(ByteBufferBackedInputStream(buffer), valueDecoder)
-            record = valueReader?.read(record, valueDecoder)
-            return record ?: throw IOException("Failed to read record")
+            return try {
+                buffer = decoder.readBytes(buffer)
+                valueDecoder = DecoderFactory.get().binaryDecoder(ByteBufferBackedInputStream(buffer), valueDecoder)
+                val reader = valueReader ?: throw IllegalStateException("Value reader is not yet set")
+                reader.read(record, valueDecoder)
+                        ?.also { record = it }
+                        ?: throw InvalidContentException("No record in data")
+            } catch (ex: IOException) {
+                throw InvalidContentException("Malformed record contents: ${ex.message}")
+            }
         }
     }
 }

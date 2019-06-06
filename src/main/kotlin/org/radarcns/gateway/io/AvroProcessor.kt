@@ -36,7 +36,7 @@ class AvroProcessor(@Context private val auth: Auth) {
     @Throws(ParseException::class, IOException::class)
     fun process(tree: JsonNode): JsonNode {
         if (!tree.isObject) {
-            throw ParseException("Expecting JSON object in payload", 0)
+            throw InvalidContentException("Expecting JSON object in payload")
         }
         if (isNullField(tree["key_schema_id"]) && isNullField(tree["key_schema"])) {
             throw InvalidContentException("Missing key schema")

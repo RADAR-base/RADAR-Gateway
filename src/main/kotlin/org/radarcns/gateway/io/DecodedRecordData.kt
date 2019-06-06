@@ -61,7 +61,7 @@ class DecodedRecordData(
     override fun isEmpty() = size == 0
 
     override fun iterator(): MutableIterator<GenericRecord> {
-        if (isEmpty)
+        if (remaining == 0)
             throw IllegalStateException("Cannot read decoded record data twice.")
 
         return object : MutableIterator<GenericRecord> {

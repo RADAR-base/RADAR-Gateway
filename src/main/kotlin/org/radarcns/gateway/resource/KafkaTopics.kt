@@ -11,6 +11,9 @@ import org.radarcns.gateway.io.BinaryToAvroConverter
 import org.radarcns.gateway.io.ProxyClient
 import org.radarcns.gateway.io.ProxyClient.Companion.jerseyToOkHttpHeaders
 import org.radarcns.gateway.util.Json
+import org.radarcns.gateway.util.Json.jsonErrorResponse
+import org.slf4j.LoggerFactory
+import java.io.IOException
 import java.io.InputStream
 import javax.inject.Singleton
 import javax.ws.rs.*
@@ -86,11 +89,17 @@ class KafkaTopics {
                 .set("Content-Type", "application/vnd.kafka.avro.v2+json")
                 .build()
 
-        return proxyClient.proxyRequest("POST", proxyHeaders,
-                binaryToAvroConverter.process(topic, input))
+        val dataProcessor = try {
+            binaryToAvroConverter.process(topic, input)
+        } catch (ex: IOException) {
+            logger.error("Invalid recordset content: {}", ex.toString())
+            throw BadRequestException(jsonErrorResponse(Response.Status.BAD_REQUEST, "bad_content", "Content is not a valid binary RecordSet"))
+        }
+        return proxyClient.proxyRequest("POST", proxyHeaders, dataProcessor)
     }
 
     companion object {
+        private val logger = LoggerFactory.getLogger(KafkaTopics::class.java)
         const val ACCEPT_AVRO_V1_JSON = "application/vnd.kafka.avro.v1+json"
         const val ACCEPT_AVRO_V2_JSON = "application/vnd.kafka.avro.v2+json"
         const val ACCEPT_BINARY_V1 = "application/vnd.radarbase.avro.v1+binary"
