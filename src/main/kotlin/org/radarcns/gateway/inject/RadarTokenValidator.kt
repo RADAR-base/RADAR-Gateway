@@ -21,8 +21,7 @@ class RadarTokenValidator constructor(@Context config: Config) : AuthValidator {
         TokenValidator(cfg)
     }
 
-    override fun verify(request: ContainerRequestContext): Auth? {
-        val token = getToken(request) ?: return null
+    override fun verify(token: String, request: ContainerRequestContext): Auth? {
         return ManagementPortalAuth(tokenValidator.validateAccessToken(token))
     }
 }

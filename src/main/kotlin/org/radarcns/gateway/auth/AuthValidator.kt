@@ -6,7 +6,7 @@ import javax.ws.rs.container.ContainerRequestContext
 
 interface AuthValidator {
     @Throws(TokenValidationException::class, NotAuthorizedException::class)
-    fun verify(request: ContainerRequestContext): Auth?
+    fun verify(token: String, request: ContainerRequestContext): Auth?
 
     fun getToken(request: ContainerRequestContext): String? {
         val authorizationHeader = request.getHeaderString("Authorization")

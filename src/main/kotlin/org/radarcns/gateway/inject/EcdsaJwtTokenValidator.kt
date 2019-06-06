@@ -80,8 +80,7 @@ class EcdsaJwtTokenValidator constructor(@Context private val config: Config) : 
         }
     }
 
-    override fun verify(request: ContainerRequestContext): Auth? {
-        val token = getToken(request) ?: return null
+    override fun verify(token: String, request: ContainerRequestContext): Auth? {
         val project = request.getHeaderString("RADAR-Project")
 
         for (verifier in verifiers) {

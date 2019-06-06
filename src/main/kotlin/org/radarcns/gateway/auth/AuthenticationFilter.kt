@@ -23,10 +23,21 @@ class AuthenticationFilter : ContainerRequestFilter {
     private lateinit var validator: AuthValidator
 
     override fun filter(requestContext: ContainerRequestContext) {
+        val rawToken = validator.getToken(requestContext)
+
+        if (rawToken == null) {
+            logger.warn("[401] {}: No token bearer header provided in the request",
+                    requestContext.uriInfo.path)
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
+                    .header("WWW-Authenticate", BEARER_REALM)
+                    .build())
+            return
+        }
+
         val radarToken = try {
-            validator.verify(requestContext)
+            validator.verify(rawToken, requestContext)
         } catch (ex: TokenValidationException) {
-            logger.warn("[401] {}: {}", requestContext.uriInfo.path, ex.message, ex)
+            logger.warn("[401] {}: {}", requestContext.uriInfo.path, ex.toString())
             requestContext.abortWith(
                     Response.status(Response.Status.UNAUTHORIZED)
                             .header("WWW-Authenticate",
@@ -38,7 +49,7 @@ class AuthenticationFilter : ContainerRequestFilter {
         }
 
         if (radarToken == null) {
-            logger.warn("[401] {}: No token bearer header provided in the request",
+            logger.warn("[401] {}: Bearer token invalid",
                     requestContext.uriInfo.path)
             requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
                     .header("WWW-Authenticate", BEARER_REALM)
@@ -64,6 +75,6 @@ class AuthenticationFilter : ContainerRequestFilter {
         fun getInvalidScopeChallenge(message: String) = BEARER_REALM +
                 " error=\"insufficient_scope\"" +
                 " error_description=\"$message\"" +
-                " scope=\"${Permission.MEASUREMENT_CREATE}\""
+                " scope=\"${Permission.MEASUREMENT_CREATE.scopeName()}\""
     }
 }
