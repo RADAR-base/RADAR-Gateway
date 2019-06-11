@@ -13,7 +13,6 @@ import org.radarbase.gateway.auth.Auth
 import org.radarbase.gateway.auth.AuthenticationFilter
 import org.radarbase.gateway.exception.HttpApplicationExceptionMapper
 import org.radarbase.gateway.exception.UnhandledExceptionMapper
-import org.radarbase.gateway.exception.UnhandledThrowableMapper
 import org.radarbase.gateway.exception.WebApplicationExceptionMapper
 import org.radarbase.gateway.filter.AuthorizationFeature
 import org.radarbase.gateway.filter.KafkaTopicFilter
@@ -27,7 +26,6 @@ interface GatewayResources {
     fun getResources(config: Config): ResourceConfig {
         val resources = ResourceConfig(
                 AuthenticationFilter::class.java,
-                UnhandledThrowableMapper::class.java,
                 UnhandledExceptionMapper::class.java,
                 WebApplicationExceptionMapper::class.java,
                 HttpApplicationExceptionMapper::class.java,
