@@ -15,8 +15,6 @@ import javax.ws.rs.ext.Provider
  * Reads messages as semantically valid and authenticated Avro for the RADAR platform. Amends
  * unfilled security metadata as necessary.
  */
-@Provider
-@Singleton
 class AvroProcessor(@Context private val auth: Auth) {
 
     /**

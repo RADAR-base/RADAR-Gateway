@@ -7,35 +7,25 @@ import org.glassfish.jersey.internal.inject.AbstractBinder
 import org.glassfish.jersey.internal.inject.PerThread
 import org.glassfish.jersey.process.internal.RequestScoped
 import org.glassfish.jersey.server.ResourceConfig
-import org.radarbase.producer.rest.SchemaRetriever
 import org.radarbase.gateway.Config
 import org.radarbase.gateway.auth.Auth
-import org.radarbase.gateway.auth.AuthenticationFilter
-import org.radarbase.gateway.exception.HttpApplicationExceptionMapper
-import org.radarbase.gateway.exception.UnhandledExceptionMapper
-import org.radarbase.gateway.exception.WebApplicationExceptionMapper
-import org.radarbase.gateway.filter.AuthorizationFeature
-import org.radarbase.gateway.filter.KafkaTopicFilter
-import org.radarbase.gateway.io.*
-import org.radarbase.gateway.resource.KafkaRoot
-import org.radarbase.gateway.resource.KafkaTopics
+import org.radarbase.gateway.io.AvroProcessor
+import org.radarbase.gateway.io.BinaryToAvroConverter
+import org.radarbase.gateway.io.ProxyClient
+import org.radarbase.producer.rest.SchemaRetriever
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 interface GatewayResources {
     fun getResources(config: Config): ResourceConfig {
-        val resources = ResourceConfig(
-                AuthenticationFilter::class.java,
-                UnhandledExceptionMapper::class.java,
-                WebApplicationExceptionMapper::class.java,
-                HttpApplicationExceptionMapper::class.java,
-                AuthorizationFeature::class.java,
-                KafkaTopicFilter::class.java,
-                AvroJsonReader::class.java,
-                SizeLimitInterceptor::class.java,
-                DecompressInterceptor::class.java,
-                KafkaRoot::class.java,
-                KafkaTopics::class.java)
+        val resources = ResourceConfig()
+        resources.packages(
+                "org.radarbase.gateway.auth",
+                "org.radarbase.gateway.exception",
+                "org.radarbase.gateway.filter",
+                "org.radarbase.gateway.io",
+                "org.radarbase.gateway.resource")
+
         resources.register(getBinder(config))
         resources.property("jersey.config.server.wadl.disableWadl", true)
         registerAuthentication(resources)

@@ -29,8 +29,6 @@ import javax.ws.rs.ext.Provider
 
 typealias JavaxResponse = javax.ws.rs.core.Response
 
-@Provider
-@Singleton
 class ProxyClient(@Context config: Config, @Context private val client: OkHttpClient,
         @Context private val uriInfo: UriInfo, @Context private val headers: HttpHeaders,
         @Context private val executor: ScheduledExecutorService) {

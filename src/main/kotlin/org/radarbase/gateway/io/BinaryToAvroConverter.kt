@@ -21,8 +21,6 @@ import javax.ws.rs.core.Context
 import javax.ws.rs.ext.Provider
 
 /** Converts binary input from a RecordSet to Kafka JSON. */
-@Provider
-@PerThread
 class BinaryToAvroConverter(
         @Context private val schemaRetriever: SchemaRetriever,
         @Context private val auth: Auth) {

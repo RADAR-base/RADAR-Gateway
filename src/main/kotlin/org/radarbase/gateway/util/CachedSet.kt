@@ -9,14 +9,15 @@ class CachedSet<in T>(
         private val supplier: () -> Iterable<T>) {
 
     private var cached: Set<T> = emptySet()
-    private var lastFetch: Instant = Instant.MIN
+    private var nextRefresh: Instant = Instant.MIN
+    private var nextRetry: Instant = Instant.MIN
 
     fun contains(value: T): Boolean {
         val now = Instant.now()
         val (localSet, mustRefresh, mayRetry) = synchronized(this) {
             Triple(cached,
-                    now.isAfter(lastFetch.plus(refreshDuration)),
-                    now.isAfter(lastFetch.plus(retryDuration)))
+                    now.isAfter(nextRefresh),
+                    now.isAfter(nextRetry))
         }
 
         val containsValue = localSet.contains(value)
@@ -25,7 +26,8 @@ class CachedSet<in T>(
             val updatedSet = supplier.invoke().toSet()
             synchronized(this) {
                 cached = updatedSet
-                lastFetch = Instant.now()
+                nextRefresh = now.plus(refreshDuration)
+                nextRetry = now.plus(retryDuration)
             }
             updatedSet.contains(value)
         } else {

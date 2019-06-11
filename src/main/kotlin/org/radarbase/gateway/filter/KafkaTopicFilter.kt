@@ -8,7 +8,6 @@ import org.radarbase.gateway.exception.HttpApplicationException
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.gateway.util.CachedSet
 import org.radarbase.gateway.util.Json
-import org.radarbase.gateway.util.Json.jsonErrorResponse
 import java.io.IOException
 import java.time.Duration
 import javax.annotation.Priority
