@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:13-ea-oraclelinux7 as builder
+FROM openjdk:11-jdk-oraclelinux7 as builder
 
 RUN mkdir /code
 WORKDIR /code
@@ -30,7 +30,7 @@ RUN ./gradlew -Dkotlin.compiler.execution.strategy="in-process" -Dorg.gradle.par
     && tar xf *.tar \
     && rm *.tar radar-gateway-*/lib/radar-gateway-*.jar
 
-FROM openjdk:13-ea-oraclelinux7
+FROM openjdk:11-jdk-oraclelinux7
 
 MAINTAINER @blootsvoets
 
