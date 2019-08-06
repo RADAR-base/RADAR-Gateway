@@ -34,6 +34,6 @@ Data compressed with GZIP is decompressed if the `Content-Encoding: gzip` header
 
 Otherwise, it accepts all the same Avro messages and headers as specified in the Kafka [REST Proxy documentation].
 
-[REST Proxy documentation]: https://docs.confluent.io/current/kafka-rest/docs/intro.html#produce-and-consume-avro-messages
+[REST Proxy documentation]: https://docs.confluent.io/current/kafka-rest/api.html
 [RADAR-Auth]: https://github.com/RADAR-base/ManagementPortal/tree/master/radar-auth
 [ManagementPortal]: https://github.com/RADAR-base/ManagementPortal
