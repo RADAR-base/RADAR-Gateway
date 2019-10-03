@@ -2,19 +2,23 @@ package org.radarbase.gateway.resource
 
 import com.fasterxml.jackson.databind.JsonNode
 import okhttp3.*
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
+import org.radarbase.auth.jersey.inject.AuthenticationFilter.Companion.BEARER
 import org.radarbase.config.ServerConfig
+import org.radarbase.gateway.Config
+import org.radarbase.gateway.GrizzlyServer
+import org.radarbase.gateway.resource.KafkaTopics.Companion.ACCEPT_AVRO_V2_JSON
+import org.radarbase.gateway.util.Json
 import org.radarbase.producer.rest.RestClient
 import org.radarbase.producer.rest.RestSender
 import org.radarbase.producer.rest.SchemaRetriever
 import org.radarbase.topic.AvroTopic
-import org.radarbase.gateway.Config
-import org.radarbase.gateway.GrizzlyServer
-import org.radarbase.gateway.auth.AuthenticationFilter.Companion.BEARER
-import org.radarbase.gateway.util.Json
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
 import java.net.URI
@@ -46,7 +50,7 @@ class KafkaTopicsTest {
 
         val tokenUrl = httpClient.call(Status.OK, "tokenUrl") {
             addHeader("Authorization", BEARER + clientToken)
-            url(HttpUrl.parse(config.managementPortalUrl)!!
+            url(config.managementPortalUrl.toHttpUrl()
                     .newBuilder("api/oauth-clients/pair")!!
                     .addEncodedQueryParameter("clientId", REST_CLIENT)
                     .addEncodedQueryParameter("login", USER)
@@ -145,19 +149,19 @@ class KafkaTopicsTest {
 
             httpClient.call(Status.UNSUPPORTED_MEDIA_TYPE) {
                 url("$baseUri/topics/test")
-                post(RequestBody.create(MediaType.parse(APPLICATION_JSON), "{}"))
+                post("{}".toRequestBody(JSON_TYPE))
                 addHeader("Authorization", BEARER + accessToken)
             }
 
             httpClient.call(422) {
                 url("$baseUri/topics/test")
-                post(RequestBody.create(MediaType.parse("application/vnd.kafka.avro.v2+json"), "{}"))
+                post("{}".toRequestBody(KAFKA_JSON_TYPE))
                 addHeader("Authorization", BEARER + accessToken)
             }
 
             httpClient.call(Status.BAD_REQUEST) {
                 url("$baseUri/topics/test")
-                post(RequestBody.create(MediaType.parse("application/vnd.kafka.avro.v2+json"), ""))
+                post("".toRequestBody(KAFKA_JSON_TYPE))
                 addHeader("Authorization", BEARER + accessToken)
             }
 
@@ -184,14 +188,16 @@ class KafkaTopicsTest {
         const val SOURCE = "03d28e5c-e005-46d4-a9b3-279c27fbbc83"
         const val ADMIN_USER = "admin"
         const val ADMIN_PASSWORD = "admin"
+        private val JSON_TYPE = APPLICATION_JSON.toMediaType()
+        private val KAFKA_JSON_TYPE = ACCEPT_AVRO_V2_JSON.toMediaType()
 
         fun OkHttpClient.call(expectedStatus: Int, requestSupplier: Request.Builder.() -> Unit): JsonNode? {
             val request = Request.Builder().apply(requestSupplier).build()
             return newCall(request).execute().use { response ->
-                println("${request.method()} ${request.url()}")
-                assertThat(response.code(), `is`(expectedStatus))
-                println(response.headers())
-                response.body()?.let { responseBody ->
+                println("${request.method} ${request.url}")
+                assertThat(response.code, `is`(expectedStatus))
+                println(response.headers)
+                response.body?.let { responseBody ->
                     val string = responseBody.string()
                     println(string)
                     Json.mapper.readTree(string)

@@ -5,10 +5,9 @@ import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import org.glassfish.jersey.internal.inject.AbstractBinder
 import org.glassfish.jersey.internal.inject.PerThread
-import org.glassfish.jersey.process.internal.RequestScoped
 import org.glassfish.jersey.server.ResourceConfig
+import org.radarbase.auth.jersey.JerseyResourceEnhancer
 import org.radarbase.gateway.Config
-import org.radarbase.gateway.auth.Auth
 import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.BinaryToAvroConverter
 import org.radarbase.gateway.io.ProxyClient
@@ -18,6 +17,8 @@ import javax.inject.Singleton
 
 interface GatewayResources {
     fun getResources(config: Config): ResourceConfig {
+        val enhancers = createEnhancers(config)
+
         val resources = ResourceConfig()
         resources.packages(
                 "org.radarbase.gateway.auth",
@@ -26,17 +27,18 @@ interface GatewayResources {
                 "org.radarbase.gateway.io",
                 "org.radarbase.gateway.resource")
 
-        resources.register(getBinder(config))
+        enhancers.forEach { resources.packages(*it.packages) }
+
+        resources.register(getBinder(config, enhancers))
         resources.property("jersey.config.server.wadl.disableWadl", true)
-        registerAuthentication(resources)
         return resources
     }
 
-    fun registerAuthentication(resources: ResourceConfig)
+    fun createEnhancers(config: Config): List<JerseyResourceEnhancer>
 
-    fun registerAuthenticationUtilities(binder: AbstractBinder)
+    fun enhanceBinder(binder: AbstractBinder)
 
-    fun getBinder(config: Config) = object : AbstractBinder() {
+    fun getBinder(config: Config, enhancers: List<JerseyResourceEnhancer>) = object : AbstractBinder() {
         override fun configure() {
             // Bind instances. These cannot use any injects themselves
             bind(config)
@@ -68,17 +70,13 @@ interface GatewayResources {
                     .`in`(PerThread::class.java)
 
             // Bind factories.
-            bindFactory(AuthFactory::class.java)
-                    .proxy(true)
-                    .proxyForSameScope(false)
-                    .to(Auth::class.java)
-                    .`in`(RequestScoped::class.java)
-
             bindFactory(SchemaRetrieverFactory::class.java)
                     .to(SchemaRetriever::class.java)
                     .`in`(Singleton::class.java)
 
-            registerAuthenticationUtilities(this)
+            enhancers.forEach { it.enhance(this) }
+
+            enhanceBinder(this)
         }
     }
 }

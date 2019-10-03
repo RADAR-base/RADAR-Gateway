@@ -12,10 +12,9 @@ import javax.ws.rs.ext.Provider
 /** Handle WebApplicationException. This uses the status code embedded in the exception. */
 @Provider
 @Singleton
-class WebApplicationExceptionMapper : ExceptionMapper<WebApplicationException> {
-    @Context
-    private lateinit var uriInfo: UriInfo
-
+class WebApplicationExceptionMapper(
+        @Context private var uriInfo: UriInfo
+) : ExceptionMapper<WebApplicationException> {
     override fun toResponse(exception: WebApplicationException): Response {
         val response = exception.response
         logger.error("[{}] {}: {}", response.status, uriInfo.absolutePath, exception.message)

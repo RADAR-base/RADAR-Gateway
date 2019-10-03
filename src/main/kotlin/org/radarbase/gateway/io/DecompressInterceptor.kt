@@ -1,7 +1,6 @@
 package org.radarbase.gateway.io
 
-
-import org.radarbase.gateway.exception.HttpApplicationException
+import org.radarbase.auth.jersey.exception.HttpApplicationException
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.io.lzfse.LZFSEInputStream
 import java.util.*

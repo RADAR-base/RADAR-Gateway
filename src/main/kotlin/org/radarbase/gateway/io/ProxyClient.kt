@@ -1,8 +1,10 @@
 package org.radarbase.gateway.io
 
 import okhttp3.*
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MediaType.Companion.toMediaType
 import okio.BufferedSink
-import okio.Okio
+import okio.sink
 import org.radarbase.gateway.Config
 import org.radarbase.gateway.exception.BadGatewayException
 import org.radarbase.gateway.exception.GatewayTimeoutException
@@ -12,12 +14,10 @@ import java.net.SocketTimeoutException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.inject.Singleton
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.StreamingOutput
 import javax.ws.rs.core.UriInfo
-import javax.ws.rs.ext.Provider
 
 /**
  * Proxies requests to another server.
@@ -29,12 +29,17 @@ import javax.ws.rs.ext.Provider
 
 typealias JavaxResponse = javax.ws.rs.core.Response
 
-class ProxyClient(@Context config: Config, @Context private val client: OkHttpClient,
-        @Context private val uriInfo: UriInfo, @Context private val headers: HttpHeaders,
-        @Context private val executor: ScheduledExecutorService) {
+class ProxyClient(
+        @Context config: Config,
+        @Context private val client: OkHttpClient,
+        @Context private val uriInfo: UriInfo,
+        @Context private val headers: HttpHeaders,
+        @Context private val executor: ScheduledExecutorService
+) {
 
-    private val baseUrl = HttpUrl.parse(config.restProxyUrl)
-            ?: throw IllegalArgumentException("Base URL ${config.restProxyUrl} is invalid")
+    private val baseUrl = requireNotNull(config.restProxyUrl.toHttpUrlOrNull()) {
+        "Base URL ${config.restProxyUrl} is invalid"
+    }
 
     fun proxyRequest(method: String, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?): JavaxResponse {
         val request = createProxyRequest(method, uriInfo, headers, sinkWriter)
@@ -58,15 +63,15 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
         }, 30, TimeUnit.SECONDS)
 
         try {
-            val builder = javax.ws.rs.core.Response.status(response.code())
+            val builder = javax.ws.rs.core.Response.status(response.code)
 
-            response.headers().toMultimap().forEach { (name, values) ->
+            response.headers.toMultimap().forEach { (name, values) ->
                 values.forEach { value -> builder.header(name, value) }
             }
 
-            logger.info("[{}] {} {} - {}", response.code(), method, request.url().encodedPath(), response.header("Content-Length") ?: 0)
+            logger.info("[{}] {} {} - {}", response.code, method, request.url.encodedPath, response.header("Content-Length") ?: 0)
 
-            val inputResponse = response.body()?.source()
+            val inputResponse = response.body?.source()
 
             if (inputResponse != null) {
                 builder.entity(StreamingOutput { outputResponse ->
@@ -77,7 +82,7 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
                     }
                     compareFuture.cancel(false)
                     response.use {
-                        inputResponse.readAll(Okio.sink(outputResponse))
+                        inputResponse.readAll(outputResponse.sink())
                         outputResponse?.flush()
                     }
                 })
@@ -93,9 +98,8 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
         }
     }
 
-    fun proxyRequest(method: String, sinkWriter: ((BufferedSink) -> Unit)? = null): JavaxResponse {
-        return proxyRequest(method, jerseyToOkHttpHeaders(headers).build(), sinkWriter)
-    }
+    fun proxyRequest(method: String, sinkWriter: ((BufferedSink) -> Unit)? = null): JavaxResponse =
+            proxyRequest(method, jerseyToOkHttpHeaders(headers).build(), sinkWriter)
 
     private fun createProxyRequest(method: String, uriInfo: UriInfo, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?) : Request {
         val url = baseUrl.newBuilder(uriInfo.path)?.build()
@@ -107,7 +111,7 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
                 sink.flush()
             }
             override fun isOneShot() = true
-            override fun contentType() = headers.get("Content-Type")?.let { MediaType.parse(it) }
+            override fun contentType() = headers["Content-Type"]?.toMediaType()
         } else null
 
         return Request.Builder()
@@ -121,7 +125,7 @@ class ProxyClient(@Context config: Config, @Context private val client: OkHttpCl
         private val logger = LoggerFactory.getLogger(ProxyClient::class.java)
 
         fun jerseyToOkHttpHeaders(headers: HttpHeaders): Headers.Builder = headers.requestHeaders
-                .flatMap { entry -> entry.value.map { Pair(entry.key, it) } }
+                .flatMap { entry -> entry.value.map { entry.key to it } }
                 .fold(Headers.Builder()) { builder, pair -> builder.add(pair.first, pair.second) }
     }
 }

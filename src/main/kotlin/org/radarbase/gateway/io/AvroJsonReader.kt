@@ -2,7 +2,7 @@ package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonNode
-import org.radarbase.gateway.exception.HttpApplicationException
+import org.radarbase.auth.jersey.exception.HttpApplicationException
 import org.radarbase.gateway.util.Json
 import java.io.InputStream
 import java.lang.reflect.Type

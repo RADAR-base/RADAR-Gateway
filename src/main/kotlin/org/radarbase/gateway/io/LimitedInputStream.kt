@@ -17,7 +17,7 @@ internal class LimitedInputStream(private val subStream: InputStream, private va
         }
     }
 
-    override fun read(b: ByteArray?, off: Int, len: Int): Int {
+    override fun read(b: ByteArray, off: Int, len: Int): Int {
         if (len == 0) return 0
         return subStream.read(b, off, min(max(limit - count, 1L), len.toLong()).toInt()).also {
             if (it != -1) count += it

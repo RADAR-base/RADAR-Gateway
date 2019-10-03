@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
-    testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
+    testCompile "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0"
     testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: okhttp3Version
     testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
 
@@ -28,19 +28,14 @@ dependencies {
 
     integrationTestImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
     integrationTestImplementation group: 'org.radarbase', name: 'radar-commons-testing', version: radarCommonsVersion
-    integrationTestImplementation group: 'org.radarcns', name: 'oauth-client-util', version: radarMpVersion
 }
 
 compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }
 
 compileIntegrationTestKotlin {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }
 
 task integrationTest(type: Test) {

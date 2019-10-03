@@ -8,17 +8,15 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.io.BinaryDecoder
 import org.apache.avro.io.Decoder
 import org.apache.avro.io.DecoderFactory
-import org.glassfish.jersey.internal.inject.PerThread
+import org.radarbase.auth.jersey.Auth
 import org.radarbase.producer.rest.JsonRecordRequest
 import org.radarbase.producer.rest.SchemaRetriever
-import org.radarbase.gateway.auth.Auth
 import org.radarbase.gateway.exception.InvalidContentException
 import java.io.IOException
 import java.io.InputStream
 import java.lang.IllegalStateException
 import java.nio.ByteBuffer
 import javax.ws.rs.core.Context
-import javax.ws.rs.ext.Provider
 
 /** Converts binary input from a RecordSet to Kafka JSON. */
 class BinaryToAvroConverter(

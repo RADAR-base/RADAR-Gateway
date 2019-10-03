@@ -16,16 +16,16 @@ ext {
     website = 'http://radar-base.org'
     description = 'RADAR Gateway to handle secured data flow to backend.'
 
-    okhttp3Version = '3.14.2'
-    radarMpVersion = '0.5.6'
-    radarCommonsVersion = '0.12.1'
-    radarSchemasVersion = '0.5.1'
-    jacksonVersion = '2.9.9.2'
-    jacksonYamlVersion = '2.9.9'
+    okhttp3Version = '4.2.0'
+    radarAuthVersion = '0.1.0'
+    radarCommonsVersion = '0.12.2'
+    radarSchemasVersion = '0.5.2'
+    jacksonVersion = '2.9.10'
+    jacksonYamlVersion = '2.9.10'
     slf4jVersion = '1.7.26'
     logbackVersion = '1.2.3'
     grizzlyVersion = '2.4.4'
-    jerseyVersion = '2.28'
+    jerseyVersion = '2.29.1'
     lzfseVersion = '0.1.0'
     jaxbVersion = '2.3.0'
     javaxActivationVersion = '1.1.1'
@@ -52,8 +52,8 @@ dependencies {
     compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-servlet', version: jerseyVersion
     compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jerseyVersion
 
-    compile group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion
     compile group: 'org.radarbase', name: 'radar-commons', version: radarCommonsVersion
+    compile group: 'org.radarbase', name: 'radar-auth-jersey', version: radarAuthVersion
     compile group: 'org.radarbase', name: 'lzfse-decode', version: lzfseVersion
     compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
 

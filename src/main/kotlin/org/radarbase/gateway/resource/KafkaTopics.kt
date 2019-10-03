@@ -1,9 +1,9 @@
 package org.radarbase.gateway.resource
 
 import com.fasterxml.jackson.databind.JsonNode
-import org.radarbase.gateway.auth.Authenticated
-import org.radarbase.gateway.auth.NeedsPermission
-import org.radarbase.gateway.exception.HttpApplicationException
+import org.radarbase.auth.jersey.Authenticated
+import org.radarbase.auth.jersey.NeedsPermission
+import org.radarbase.auth.jersey.exception.HttpApplicationException
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.BinaryToAvroConverter

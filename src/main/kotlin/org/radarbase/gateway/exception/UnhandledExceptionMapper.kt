@@ -11,10 +11,9 @@ import javax.ws.rs.ext.Provider
 /** Handle exceptions without a specific mapper. */
 @Provider
 @Singleton
-class UnhandledExceptionMapper : ExceptionMapper<Throwable> {
-    @Context
-    private lateinit var uriInfo: UriInfo
-
+class UnhandledExceptionMapper(
+        @Context private val uriInfo: UriInfo
+): ExceptionMapper<Throwable> {
     override fun toResponse(exception: Throwable): Response {
         logger.error("[500] {}", uriInfo.absolutePath, exception)
         return Response.serverError()

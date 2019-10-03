@@ -1,17 +1,19 @@
 package org.radarbase.gateway.io
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.nhaarman.mockitokotlin2.doReturn
+import com.nhaarman.mockitokotlin2.mock
 import okio.Buffer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
+import org.radarbase.auth.jersey.Auth
 import org.radarbase.data.AvroRecordData
 import org.radarbase.producer.rest.BinaryRecordRequest
 import org.radarbase.producer.rest.ParsedSchemaMetadata
 import org.radarbase.producer.rest.SchemaRetriever
 import org.radarbase.topic.AvroTopic
 import org.radarcns.auth.authorization.Permission
-import org.radarbase.gateway.auth.Auth
+import org.radarcns.auth.token.RadarToken
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
 import kotlin.text.Charsets.UTF_8
@@ -33,19 +35,26 @@ class BinaryToAvroConverterTest {
         val requestBuffer = Buffer()
         binaryRequest.writeToSink(requestBuffer)
 
-        val schemaRetriever = mock(SchemaRetriever::class.java)
-        `when`(schemaRetriever.getSchemaMetadata("test", false, 1)).thenReturn(keySchemaMetadata)
-        `when`(schemaRetriever.getSchemaMetadata("test", true, 1)).thenReturn(valueSchemaMetadata)
+        val schemaRetriever = mock<SchemaRetriever> {
+            on { getSchemaMetadata("test", false, 1) } doReturn keySchemaMetadata
+            on { getSchemaMetadata("test", true, 1) } doReturn valueSchemaMetadata
+        }
+
+        val token = mock<RadarToken> {
+            on { hasPermissionOnSource(Permission.MEASUREMENT_CREATE, "p", "u", "s") } doReturn true
+        }
 
         val auth = object : Auth {
+            override val token: RadarToken = token
+
+            override fun getClaim(name: String): JsonNode {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+
             override val defaultProject: String = "p"
             override val userId: String = "u"
 
-            override fun checkPermission(projectId: String?, userId: String?, sourceId: String?) {}
-
             override fun hasRole(projectId: String, role: String) = true
-
-            override fun hasPermission(permission: Permission) = true
         }
         val converter = BinaryToAvroConverter(schemaRetriever, auth)
 

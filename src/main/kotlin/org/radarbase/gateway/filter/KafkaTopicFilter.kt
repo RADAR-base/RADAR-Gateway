@@ -2,9 +2,9 @@ package org.radarbase.gateway.filter
 
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.radarbase.auth.jersey.exception.HttpApplicationException
 import org.radarbase.gateway.Config
 import org.radarbase.gateway.exception.BadGatewayException
-import org.radarbase.gateway.exception.HttpApplicationException
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.gateway.util.CachedSet
 import org.radarbase.gateway.util.Json
@@ -44,9 +44,9 @@ class KafkaTopicFilter constructor(@Context config: Config, @Context private val
         try {
             return client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    throw BadGatewayException("Cannot query rest proxy url: " + response.code())
+                    throw BadGatewayException("Cannot query rest proxy url: " + response.code)
                 }
-                val input = response.body()?.byteStream() ?: throw BadGatewayException(
+                val input = response.body?.byteStream() ?: throw BadGatewayException(
                         "Rest proxy did not return any data")
 
                 stringArrayReader.readValue<Array<String>>(input).toSet()
