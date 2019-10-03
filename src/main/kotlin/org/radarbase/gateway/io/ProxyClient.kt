@@ -6,8 +6,8 @@ import okhttp3.MediaType.Companion.toMediaType
 import okio.BufferedSink
 import okio.sink
 import org.radarbase.gateway.Config
-import org.radarbase.gateway.exception.BadGatewayException
-import org.radarbase.gateway.exception.GatewayTimeoutException
+import org.radarbase.jersey.exception.HttpBadGatewayException
+import org.radarbase.jersey.exception.HttpGatewayTimeoutException
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -47,10 +47,10 @@ class ProxyClient(
         val response = try {
             client.newCall(request).execute()
         } catch (ex: SocketTimeoutException) {
-            throw GatewayTimeoutException("Connection to Kafka REST proxy timed out")
+            throw HttpGatewayTimeoutException("Connection to Kafka REST proxy timed out")
         } catch (ex: IOException) {
             logger.error("Failed to connecto to Kafka REST proxy: {}", ex.toString())
-            throw BadGatewayException("Failed to connect to Kafka REST proxy")
+            throw HttpBadGatewayException("Failed to connect to Kafka REST proxy")
         }
 
         val didStart = AtomicBoolean(false)

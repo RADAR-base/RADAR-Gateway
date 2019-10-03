@@ -2,12 +2,12 @@ package org.radarbase.gateway.filter
 
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.radarbase.auth.jersey.exception.HttpApplicationException
 import org.radarbase.gateway.Config
-import org.radarbase.gateway.exception.BadGatewayException
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.gateway.util.CachedSet
 import org.radarbase.gateway.util.Json
+import org.radarbase.jersey.exception.HttpBadGatewayException
+import org.radarbase.jersey.exception.HttpNotFoundException
 import java.io.IOException
 import java.time.Duration
 import javax.annotation.Priority
@@ -16,7 +16,6 @@ import javax.ws.rs.Priorities
 import javax.ws.rs.container.ContainerRequestContext
 import javax.ws.rs.container.ContainerRequestFilter
 import javax.ws.rs.core.Context
-import javax.ws.rs.core.Response.Status
 import javax.ws.rs.ext.Provider
 
 /**
@@ -36,7 +35,7 @@ class KafkaTopicFilter constructor(@Context config: Config, @Context private val
 
         // topic exists or exists after an update
         if (!cachedTopics.contains(topic)) {
-            throw HttpApplicationException(Status.NOT_FOUND, "not_found", "Topic $topic not present in Kafka.")
+            throw HttpNotFoundException("not_found", "Topic $topic not present in Kafka.")
         }
     }
 
@@ -44,15 +43,15 @@ class KafkaTopicFilter constructor(@Context config: Config, @Context private val
         try {
             return client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    throw BadGatewayException("Cannot query rest proxy url: " + response.code)
+                    throw HttpBadGatewayException("Cannot query rest proxy url: " + response.code)
                 }
-                val input = response.body?.byteStream() ?: throw BadGatewayException(
+                val input = response.body?.byteStream() ?: throw HttpBadGatewayException(
                         "Rest proxy did not return any data")
 
                 stringArrayReader.readValue<Array<String>>(input).toSet()
             }
         } catch (ex: IOException) {
-            throw BadGatewayException(
+            throw HttpBadGatewayException(
                     "Failed to retrieve topics from Kafka REST PROXY: ${ex.message}")
         }
     }

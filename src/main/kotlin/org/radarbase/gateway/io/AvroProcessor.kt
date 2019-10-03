@@ -2,9 +2,9 @@ package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import org.radarbase.auth.jersey.Auth
-import org.radarbase.gateway.exception.InvalidContentException
 import org.radarbase.gateway.util.Json
+import org.radarbase.jersey.auth.Auth
+import org.radarbase.jersey.exception.HttpInvalidContentException
 import org.radarcns.auth.authorization.Permission
 import java.io.IOException
 import java.text.ParseException
@@ -31,16 +31,16 @@ class AvroProcessor(@Context private val auth: Auth) {
     @Throws(ParseException::class, IOException::class)
     fun process(tree: JsonNode): JsonNode {
         if (!tree.isObject) {
-            throw InvalidContentException("Expecting JSON object in payload")
+            throw HttpInvalidContentException("Expecting JSON object in payload")
         }
         if (tree["key_schema_id"].isMissing && tree["key_schema"].isMissing) {
-            throw InvalidContentException("Missing key schema")
+            throw HttpInvalidContentException("Missing key schema")
         }
         if (tree["value_schema_id"].isMissing && tree["value_schema"].isMissing) {
-            throw InvalidContentException("Missing value schema")
+            throw HttpInvalidContentException("Missing value schema")
         }
 
-        val records = tree["records"] ?: throw InvalidContentException("Missing records")
+        val records = tree["records"] ?: throw HttpInvalidContentException("Missing records")
         processRecords(records)
         return tree
     }
@@ -48,14 +48,14 @@ class AvroProcessor(@Context private val auth: Auth) {
     @Throws(IOException::class)
     private fun processRecords(records: JsonNode) {
         if (!records.isArray) {
-            throw InvalidContentException("Records should be an array")
+            throw HttpInvalidContentException("Records should be an array")
         }
 
         records.forEach { record ->
             if (record["value"].isMissing) {
-                throw InvalidContentException("Missing value field in record")
+                throw HttpInvalidContentException("Missing value field in record")
             }
-            val key = record["key"] ?: throw InvalidContentException("Missing key field in record")
+            val key = record["key"] ?: throw HttpInvalidContentException("Missing key field in record")
             processKey(key)
         }
     }
@@ -64,7 +64,7 @@ class AvroProcessor(@Context private val auth: Auth) {
     @Throws(IOException::class)
     private fun processKey(key: JsonNode) {
         if (!key.isObject) {
-            throw InvalidContentException("Field key must be a JSON object")
+            throw HttpInvalidContentException("Field key must be a JSON object")
         }
 
         val projectId = key["projectId"]?.let { project ->
@@ -76,7 +76,7 @@ class AvroProcessor(@Context private val auth: Auth) {
                 auth.defaultProject
             } else {
                 // project ID was provided, it should match one of the validated project IDs.
-                project["string"]?.asText() ?: throw InvalidContentException(
+                project["string"]?.asText() ?: throw HttpInvalidContentException(
                         "Project ID should be wrapped in string union type")
             }
         } ?: auth.defaultProject

@@ -8,10 +8,10 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.io.BinaryDecoder
 import org.apache.avro.io.Decoder
 import org.apache.avro.io.DecoderFactory
-import org.radarbase.auth.jersey.Auth
 import org.radarbase.producer.rest.JsonRecordRequest
 import org.radarbase.producer.rest.SchemaRetriever
-import org.radarbase.gateway.exception.InvalidContentException
+import org.radarbase.jersey.auth.Auth
+import org.radarbase.jersey.exception.HttpInvalidContentException
 import java.io.IOException
 import java.io.InputStream
 import java.lang.IllegalStateException
@@ -61,9 +61,9 @@ class BinaryToAvroConverter(
                 val reader = valueReader ?: throw IllegalStateException("Value reader is not yet set")
                 reader.read(record, valueDecoder)
                         ?.also { record = it }
-                        ?: throw InvalidContentException("No record in data")
+                        ?: throw HttpInvalidContentException("No record in data")
             } catch (ex: IOException) {
-                throw InvalidContentException("Malformed record contents: ${ex.message}")
+                throw HttpInvalidContentException("Malformed record contents: ${ex.message}")
             }
         }
     }

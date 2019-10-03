@@ -17,7 +17,7 @@ ext {
     description = 'RADAR Gateway to handle secured data flow to backend.'
 
     okhttp3Version = '4.2.0'
-    radarAuthVersion = '0.1.0'
+    radarAuthVersion = '0.1.1-SNAPSHOT'
     radarCommonsVersion = '0.12.2'
     radarSchemasVersion = '0.5.2'
     jacksonVersion = '2.9.10'
@@ -40,6 +40,7 @@ repositories {
     maven { url 'https://dl.bintray.com/radar-cns/org.radarcns' }
     maven { url 'https://dl.bintray.com/radar-base/org.radarbase' }
     // For working with dev-branches
+    maven { url 'https://repo.thehyve.nl/content/repositories/snapshots' }
     maven { url 'https://oss.jfrog.org/artifactory/libs-snapshot/' }
 }
 
@@ -53,7 +54,8 @@ dependencies {
     compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jerseyVersion
 
     compile group: 'org.radarbase', name: 'radar-commons', version: radarCommonsVersion
-    compile group: 'org.radarbase', name: 'radar-auth-jersey', version: radarAuthVersion
+    compile group: 'org.radarbase', name: 'radar-jersey-core', version: radarAuthVersion
+    compile group: 'org.radarbase', name: 'radar-jersey-auth', version: radarAuthVersion
     compile group: 'org.radarbase', name: 'lzfse-decode', version: lzfseVersion
     compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
 

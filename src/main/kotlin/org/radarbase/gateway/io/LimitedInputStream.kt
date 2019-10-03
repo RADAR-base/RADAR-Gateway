@@ -1,6 +1,6 @@
 package org.radarbase.gateway.io
 
-import org.radarbase.gateway.exception.RequestEntityTooLarge
+import org.radarbase.jersey.exception.HttpRequestEntityTooLarge
 import java.io.InputStream
 import kotlin.math.max
 import kotlin.math.min
@@ -13,7 +13,7 @@ internal class LimitedInputStream(private val subStream: InputStream, private va
     override fun read(): Int {
         return subStream.read().also {
             if (it != -1) count++
-            if (count > limit) throw RequestEntityTooLarge("Stream size exceeds limit $limit")
+            if (count > limit) throw HttpRequestEntityTooLarge("Stream size exceeds limit $limit")
         }
     }
 
@@ -21,7 +21,7 @@ internal class LimitedInputStream(private val subStream: InputStream, private va
         if (len == 0) return 0
         return subStream.read(b, off, min(max(limit - count, 1L), len.toLong()).toInt()).also {
             if (it != -1) count += it
-            if (count > limit) throw RequestEntityTooLarge("Stream size exceeds limit $limit")
+            if (count > limit) throw HttpRequestEntityTooLarge("Stream size exceeds limit $limit")
         }
     }
 

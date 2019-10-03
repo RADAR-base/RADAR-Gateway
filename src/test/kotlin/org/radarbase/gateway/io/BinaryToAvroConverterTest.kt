@@ -6,8 +6,8 @@ import com.nhaarman.mockitokotlin2.mock
 import okio.Buffer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.radarbase.auth.jersey.Auth
 import org.radarbase.data.AvroRecordData
+import org.radarbase.jersey.auth.Auth
 import org.radarbase.producer.rest.BinaryRecordRequest
 import org.radarbase.producer.rest.ParsedSchemaMetadata
 import org.radarbase.producer.rest.SchemaRetriever
