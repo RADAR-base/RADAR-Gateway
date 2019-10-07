@@ -2,15 +2,12 @@ package org.radarbase.gateway.inject
 
 import org.radarbase.gateway.Config
 import org.radarbase.jersey.auth.AuthConfig
-import org.radarbase.jersey.config.GeneralExceptionResourceEnhancer
-import org.radarbase.jersey.config.HttpExceptionResourceEnhancer
-import org.radarbase.jersey.config.ManagementPortalResourceEnhancer
-import org.radarbase.jersey.config.RadarJerseyResourceEnhancer
+import org.radarbase.jersey.config.*
 
 
 /** This binder needs to register all non-Jersey classes, otherwise initialization fails. */
-class EcdsaJwtEnhancerFactory : EnhancerFactory {
-    override fun createEnhancers(config: Config) = listOf(
+class EcdsaJwtEnhancerFactory(private val config: Config) : EnhancerFactory {
+    override fun createEnhancers() = listOf(
             GatewayResourceEnhancer(config),
             RadarJerseyResourceEnhancer(AuthConfig(
                     managementPortalUrl = config.managementPortalUrl,

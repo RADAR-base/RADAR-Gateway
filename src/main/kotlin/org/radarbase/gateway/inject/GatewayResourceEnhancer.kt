@@ -16,10 +16,6 @@ import org.radarbase.producer.rest.SchemaRetriever
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
-interface EnhancerFactory {
-    fun createEnhancers(config: Config): List<JerseyResourceEnhancer>
-}
-
 class GatewayResourceEnhancer(private val config: Config): JerseyResourceEnhancer {
     override fun enhanceResources(resourceConfig: ResourceConfig) {
         resourceConfig.packages(
