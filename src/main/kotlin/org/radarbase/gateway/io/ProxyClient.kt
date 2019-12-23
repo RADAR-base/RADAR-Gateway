@@ -69,7 +69,7 @@ class ProxyClient(
                 values.forEach { value -> builder.header(name, value) }
             }
 
-            logger.info("[{}] {} {} - {}", response.code, method, request.url.encodedPath, response.header("Content-Length") ?: 0)
+            logger.info("[{}] {} {} - {}", response.code, method, request.url.encodedPath, request.header("Content-Length") ?: 0)
 
             val inputResponse = response.body?.source()
 
