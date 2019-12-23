@@ -1,15 +1,15 @@
 package org.radarbase.gateway.resource
 
 import com.fasterxml.jackson.databind.JsonNode
-import org.radarbase.gateway.auth.Authenticated
-import org.radarbase.gateway.auth.NeedsPermission
-import org.radarbase.gateway.exception.HttpApplicationException
+import org.radarbase.jersey.auth.Authenticated
+import org.radarbase.jersey.auth.NeedsPermission
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.BinaryToAvroConverter
 import org.radarbase.gateway.io.ProxyClient
 import org.radarbase.gateway.io.ProxyClient.Companion.jerseyToOkHttpHeaders
 import org.radarbase.gateway.util.Json
+import org.radarbase.jersey.exception.HttpBadRequestException
 import org.radarcns.auth.authorization.Permission.Entity.MEASUREMENT
 import org.radarcns.auth.authorization.Permission.Operation.CREATE
 import org.slf4j.LoggerFactory
@@ -93,7 +93,7 @@ class KafkaTopics {
             binaryToAvroConverter.process(topic, input)
         } catch (ex: IOException) {
             logger.error("Invalid RecordSet content: {}", ex.toString())
-            throw HttpApplicationException(Response.Status.BAD_REQUEST, "bad_content", "Content is not a valid binary RecordSet")
+            throw HttpBadRequestException("bad_content", "Content is not a valid binary RecordSet")
         }
         return proxyClient.proxyRequest("POST", proxyHeaders, dataProcessor)
     }

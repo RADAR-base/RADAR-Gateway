@@ -2,19 +2,28 @@ package org.radarbase.gateway.resource
 
 import com.fasterxml.jackson.databind.JsonNode
 import okhttp3.*
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.radarbase.config.ServerConfig
+import org.radarbase.gateway.Config
+import org.radarbase.gateway.inject.ManagementPortalEnhancerFactory
+import org.radarbase.gateway.resource.KafkaTopics.Companion.ACCEPT_AVRO_V2_JSON
+import org.radarbase.gateway.util.Json
+import org.radarbase.jersey.GrizzlyServer
+import org.radarbase.jersey.auth.filter.AuthenticationFilter.Companion.BEARER
+import org.radarbase.jersey.config.ConfigLoader
 import org.radarbase.producer.rest.RestClient
 import org.radarbase.producer.rest.RestSender
 import org.radarbase.producer.rest.SchemaRetriever
 import org.radarbase.topic.AvroTopic
-import org.radarbase.gateway.Config
-import org.radarbase.gateway.GrizzlyServer
-import org.radarbase.gateway.auth.AuthenticationFilter.Companion.BEARER
-import org.radarbase.gateway.util.Json
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
 import java.net.URI
@@ -23,17 +32,31 @@ import javax.ws.rs.core.MediaType.APPLICATION_JSON
 import javax.ws.rs.core.Response.Status
 
 class KafkaTopicsTest {
-    @Test
-    fun testListTopics() {
-        val baseUri = "http://localhost:8090/radar-gateway"
-        val config = Config()
+    private lateinit var config: Config
+    private lateinit var baseUri: String
+    private lateinit var server: GrizzlyServer
+
+    @BeforeEach
+    fun setUp() {
+        baseUri = "http://localhost:8090/radar-gateway"
+        config = Config()
         config.managementPortalUrl = "http://localhost:8080"
         config.schemaRegistryUrl = "http://localhost:8081"
         config.restProxyUrl = "http://localhost:8082"
         config.baseUri = URI.create(baseUri)
 
-        val httpClient = OkHttpClient()
+        val resourceConfig = ConfigLoader.loadResources(ManagementPortalEnhancerFactory::class.java, config)
+        server = GrizzlyServer(config.baseUri, resourceConfig)
+        server.start()
+    }
 
+    @AfterEach
+    fun tearDown() {
+        server.shutdown()
+    }
+
+    @Test
+    fun testListTopics() {
         val clientToken = httpClient.call( Status.OK, "access_token") {
             url("${config.managementPortalUrl}/oauth/token")
             addHeader("Authorization", Credentials.basic(MP_CLIENT, ""))
@@ -46,7 +69,7 @@ class KafkaTopicsTest {
 
         val tokenUrl = httpClient.call(Status.OK, "tokenUrl") {
             addHeader("Authorization", BEARER + clientToken)
-            url(HttpUrl.parse(config.managementPortalUrl)!!
+            url(config.managementPortalUrl.toHttpUrl()
                     .newBuilder("api/oauth-clients/pair")!!
                     .addEncodedQueryParameter("clientId", REST_CLIENT)
                     .addEncodedQueryParameter("login", USER)
@@ -97,86 +120,87 @@ class KafkaTopicsTest {
 
         Thread.sleep(2000)
 
-        val server = GrizzlyServer(config)
-        server.start()
+        sender.headers = Headers.Builder()
+                .add("Authorization", BEARER + accessToken)
+                .build()
+        sender.setKafkaConfig(ServerConfig(config.baseUri.toURL()))
 
-        try {
-            sender.headers = Headers.Builder()
-                    .add("Authorization", BEARER + accessToken)
-                    .build()
-            sender.setKafkaConfig(ServerConfig(config.baseUri.toURL()))
+        sender.sender(topic).use {
+            it.send(key, value)
+        }
 
-            sender.sender(topic).use {
-                it.send(key, value)
-            }
+        val gatewayTopicList = httpClient.call(Status.OK) {
+            url(config.restProxyUrl + "/topics")
+            addHeader("Authorization", BEARER + accessToken)
+        }
 
-            val gatewayTopicList = httpClient.call(Status.OK) {
-                url(config.restProxyUrl + "/topics")
-                addHeader("Authorization", BEARER + accessToken)
-            }
+        assertThat(gatewayTopicList, `is`(topicList))
 
-            assertThat(gatewayTopicList, `is`(topicList))
+        httpClient.call(Status.NO_CONTENT) {
+            url("$baseUri/topics")
+            method("OPTIONS", null)
+            addHeader("Authorization", BEARER + accessToken)
+        }
 
-            httpClient.call(Status.NO_CONTENT) {
-                url("$baseUri/topics")
-                method("OPTIONS", null)
-                addHeader("Authorization", BEARER + accessToken)
-            }
+        httpClient.call(Status.NO_CONTENT) {
+            url("$baseUri/topics/test")
+            method("OPTIONS", null)
+            addHeader("Authorization", BEARER + accessToken)
+        }
 
-            httpClient.call(Status.NO_CONTENT) {
-                url("$baseUri/topics/test")
-                method("OPTIONS", null)
-                addHeader("Authorization", BEARER + accessToken)
-            }
+        httpClient.call(Status.OK) {
+            url(config.restProxyUrl + "/topics")
+            head()
+            addHeader("Authorization", BEARER + accessToken)
+        }
 
-            httpClient.call(Status.OK) {
-                url(config.restProxyUrl + "/topics")
-                head()
-                addHeader("Authorization", BEARER + accessToken)
-            }
+        httpClient.call(Status.UNAUTHORIZED) {
+            url("$baseUri/topics")
+        }
 
-            httpClient.call(Status.UNAUTHORIZED) {
-                url("$baseUri/topics")
-            }
+        httpClient.call(Status.UNAUTHORIZED) {
+            url("$baseUri/topics").head()
+        }
 
-            httpClient.call(Status.UNAUTHORIZED) {
-                url("$baseUri/topics").head()
-            }
+        httpClient.call(Status.UNSUPPORTED_MEDIA_TYPE) {
+            url("$baseUri/topics/test")
+            post("{}".toRequestBody(JSON_TYPE))
+            addHeader("Authorization", BEARER + accessToken)
+        }
 
-            httpClient.call(Status.UNSUPPORTED_MEDIA_TYPE) {
-                url("$baseUri/topics/test")
-                post(RequestBody.create(MediaType.parse(APPLICATION_JSON), "{}"))
-                addHeader("Authorization", BEARER + accessToken)
-            }
+        httpClient.call(422) {
+            url("$baseUri/topics/test")
+            post("{}".toRequestBody(KAFKA_JSON_TYPE))
+            addHeader("Authorization", BEARER + accessToken)
+        }
 
-            httpClient.call(422) {
-                url("$baseUri/topics/test")
-                post(RequestBody.create(MediaType.parse("application/vnd.kafka.avro.v2+json"), "{}"))
-                addHeader("Authorization", BEARER + accessToken)
-            }
+        httpClient.call(Status.BAD_REQUEST) {
+            url("$baseUri/topics/test")
+            post("".toRequestBody(KAFKA_JSON_TYPE))
+            addHeader("Authorization", BEARER + accessToken)
+        }
 
-            httpClient.call(Status.BAD_REQUEST) {
-                url("$baseUri/topics/test")
-                post(RequestBody.create(MediaType.parse("application/vnd.kafka.avro.v2+json"), ""))
-                addHeader("Authorization", BEARER + accessToken)
-            }
+        httpClient.call(Status.OK) {
+            url(config.restProxyUrl + "/topics/test")
+            addHeader("Authorization", BEARER + accessToken)
+        }
 
-            httpClient.call(Status.OK) {
-                url(config.restProxyUrl + "/topics/test")
-                addHeader("Authorization", BEARER + accessToken)
-            }
-
-            httpClient.call(Status.OK) {
-                url(config.restProxyUrl + "/topics/test")
-                head()
-                addHeader("Authorization", BEARER + accessToken)
-            }
-        } finally {
-            server.shutdown()
+        httpClient.call(Status.OK) {
+            url(config.restProxyUrl + "/topics/test")
+            head()
+            addHeader("Authorization", BEARER + accessToken)
         }
     }
 
     companion object {
+        private lateinit var httpClient: OkHttpClient
+
+        @BeforeAll
+        @JvmStatic
+        fun setUpClass() {
+            httpClient = OkHttpClient()
+        }
+
         const val MP_CLIENT = "ManagementPortalapp"
         const val REST_CLIENT = "pRMT"
         const val USER = "sub-1"
@@ -184,14 +208,16 @@ class KafkaTopicsTest {
         const val SOURCE = "03d28e5c-e005-46d4-a9b3-279c27fbbc83"
         const val ADMIN_USER = "admin"
         const val ADMIN_PASSWORD = "admin"
+        private val JSON_TYPE = APPLICATION_JSON.toMediaType()
+        private val KAFKA_JSON_TYPE = ACCEPT_AVRO_V2_JSON.toMediaType()
 
         fun OkHttpClient.call(expectedStatus: Int, requestSupplier: Request.Builder.() -> Unit): JsonNode? {
             val request = Request.Builder().apply(requestSupplier).build()
             return newCall(request).execute().use { response ->
-                println("${request.method()} ${request.url()}")
-                assertThat(response.code(), `is`(expectedStatus))
-                println(response.headers())
-                response.body()?.let { responseBody ->
+                println("${request.method} ${request.url}")
+                assertThat(response.code, `is`(expectedStatus))
+                println(response.headers)
+                response.body?.let { responseBody ->
                     val string = responseBody.string()
                     println(string)
                     Json.mapper.readTree(string)

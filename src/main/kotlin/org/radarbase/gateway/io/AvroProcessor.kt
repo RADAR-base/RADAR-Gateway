@@ -2,14 +2,13 @@ package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import org.radarbase.gateway.auth.Auth
-import org.radarbase.gateway.exception.InvalidContentException
 import org.radarbase.gateway.util.Json
+import org.radarbase.jersey.auth.Auth
+import org.radarbase.jersey.exception.HttpInvalidContentException
+import org.radarcns.auth.authorization.Permission
 import java.io.IOException
 import java.text.ParseException
-import javax.inject.Singleton
 import javax.ws.rs.core.Context
-import javax.ws.rs.ext.Provider
 
 /**
  * Reads messages as semantically valid and authenticated Avro for the RADAR platform. Amends
@@ -32,40 +31,40 @@ class AvroProcessor(@Context private val auth: Auth) {
     @Throws(ParseException::class, IOException::class)
     fun process(tree: JsonNode): JsonNode {
         if (!tree.isObject) {
-            throw InvalidContentException("Expecting JSON object in payload")
+            throw HttpInvalidContentException("Expecting JSON object in payload")
         }
-        if (isNullField(tree["key_schema_id"]) && isNullField(tree["key_schema"])) {
-            throw InvalidContentException("Missing key schema")
+        if (tree["key_schema_id"].isMissing && tree["key_schema"].isMissing) {
+            throw HttpInvalidContentException("Missing key schema")
         }
-        if (isNullField(tree["value_schema_id"]) && isNullField(tree["value_schema"])) {
-            throw InvalidContentException("Missing value schema")
+        if (tree["value_schema_id"].isMissing && tree["value_schema"].isMissing) {
+            throw HttpInvalidContentException("Missing value schema")
         }
 
-        val records = tree["records"] ?: throw InvalidContentException("Missing records")
-        processRecords(records, auth)
+        val records = tree["records"] ?: throw HttpInvalidContentException("Missing records")
+        processRecords(records)
         return tree
     }
 
     @Throws(IOException::class)
-    private fun processRecords(records: JsonNode, auth: Auth) {
+    private fun processRecords(records: JsonNode) {
         if (!records.isArray) {
-            throw InvalidContentException("Records should be an array")
+            throw HttpInvalidContentException("Records should be an array")
         }
 
         records.forEach { record ->
-            if (isNullField(record["value"])) {
-                throw InvalidContentException("Missing value field in record")
+            if (record["value"].isMissing) {
+                throw HttpInvalidContentException("Missing value field in record")
             }
-            val key = record["key"] ?: throw InvalidContentException("Missing key field in record")
-            processKey(key, auth)
+            val key = record["key"] ?: throw HttpInvalidContentException("Missing key field in record")
+            processKey(key)
         }
     }
 
     /** Parse single record key.  */
     @Throws(IOException::class)
-    private fun processKey(key: JsonNode, auth: Auth) {
+    private fun processKey(key: JsonNode) {
         if (!key.isObject) {
-            throw InvalidContentException("Field key must be a JSON object")
+            throw HttpInvalidContentException("Field key must be a JSON object")
         }
 
         val projectId = key["projectId"]?.let { project ->
@@ -77,19 +76,17 @@ class AvroProcessor(@Context private val auth: Auth) {
                 auth.defaultProject
             } else {
                 // project ID was provided, it should match one of the validated project IDs.
-                project["string"]?.asText() ?: throw InvalidContentException(
+                project["string"]?.asText() ?: throw HttpInvalidContentException(
                         "Project ID should be wrapped in string union type")
             }
         } ?: auth.defaultProject
 
-        auth.checkPermission(projectId,
-                key["userId"]?.asText(),
-                key["sourceId"]?.asText())
+        auth.checkPermissionOnSource(Permission.MEASUREMENT_CREATE,
+                projectId, key["userId"]?.asText(), key["sourceId"]?.asText())
     }
 
     companion object Util {
-        fun isNullField(field: JsonNode?): Boolean {
-            return field == null || field.isNull
-        }
+        val JsonNode?.isMissing: Boolean
+            get() = this == null || this.isNull
     }
 }

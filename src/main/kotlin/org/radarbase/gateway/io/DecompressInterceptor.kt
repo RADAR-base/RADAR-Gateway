@@ -1,15 +1,13 @@
 package org.radarbase.gateway.io
 
-
-import org.radarbase.gateway.exception.HttpApplicationException
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.io.lzfse.LZFSEInputStream
+import org.radarbase.jersey.exception.HttpBadRequestException
 import java.util.*
 import java.util.zip.GZIPInputStream
 import javax.annotation.Priority
 import javax.inject.Singleton
 import javax.ws.rs.Priorities
-import javax.ws.rs.core.Response
 import javax.ws.rs.ext.Provider
 import javax.ws.rs.ext.ReaderInterceptor
 import javax.ws.rs.ext.ReaderInterceptorContext
@@ -29,7 +27,7 @@ class DecompressInterceptor : ReaderInterceptor {
             "gzip" -> GZIPInputStream(context.inputStream)
             "lzfse" -> LZFSEInputStream(context.inputStream)
             "identity", null -> context.inputStream
-            else -> throw HttpApplicationException(Response.Status.BAD_REQUEST, "unknown_encoding",
+            else -> throw HttpBadRequestException("unknown_encoding",
                             "Encoding $encoding unknown." +
                                     " This server supports gzip, lzfse and identity compression")
         }

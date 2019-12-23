@@ -1,6 +1,6 @@
 plugins {
     id 'application'
-    id "org.jetbrains.kotlin.jvm" version "1.3.31"
+    id "org.jetbrains.kotlin.jvm" version "1.3.61"
 }
 
 group 'org.radarbase'
@@ -16,22 +16,19 @@ ext {
     website = 'http://radar-base.org'
     description = 'RADAR Gateway to handle secured data flow to backend.'
 
-    okhttp3Version = '3.14.2'
-    radarMpVersion = '0.5.6'
-    radarCommonsVersion = '0.12.1'
-    radarSchemasVersion = '0.5.1'
-    jacksonVersion = '2.9.9.2'
-    jacksonYamlVersion = '2.9.9'
-    slf4jVersion = '1.7.26'
+    okhttp3Version = '4.2.2'
+    radarAuthVersion = '0.2.2.4'
+    radarCommonsVersion = '0.12.2'
+    radarSchemasVersion = '0.5.5'
+    jacksonVersion = '2.10.1'
+    jacksonYamlVersion = '2.10.1'
+    slf4jVersion = '1.7.27'
     logbackVersion = '1.2.3'
     grizzlyVersion = '2.4.4'
-    jerseyVersion = '2.28'
+    jerseyVersion = '2.29.1'
     lzfseVersion = '0.1.0'
-    jaxbVersion = '2.3.0'
-    javaxActivationVersion = '1.1.1'
 
-    junitVersion = '5.5.1'
-    mockitoVersion = '2.28.2'
+    junitVersion = '5.5.2'
 }
 
 repositories {
@@ -40,32 +37,19 @@ repositories {
     maven { url 'https://dl.bintray.com/radar-cns/org.radarcns' }
     maven { url 'https://dl.bintray.com/radar-base/org.radarbase' }
     // For working with dev-branches
+    maven { url 'https://repo.thehyve.nl/content/repositories/snapshots' }
     maven { url 'https://oss.jfrog.org/artifactory/libs-snapshot/' }
 }
 
 dependencies {
-    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8'
+    implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8'
 
-    compile group: 'org.glassfish.grizzly', name: 'grizzly-http-server', version: grizzlyVersion
+    implementation group: 'org.radarbase', name: 'radar-commons', version: radarCommonsVersion
+    implementation group: 'org.radarbase', name: 'radar-jersey', version: radarAuthVersion
+    implementation group: 'org.radarbase', name: 'lzfse-decode', version: lzfseVersion
+    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
 
-    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
-    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-servlet', version: jerseyVersion
-    compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jerseyVersion
-
-    compile group: 'org.radarcns', name: 'radar-auth', version: radarMpVersion
-    compile group: 'org.radarbase', name: 'radar-commons', version: radarCommonsVersion
-    compile group: 'org.radarbase', name: 'lzfse-decode', version: lzfseVersion
-    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
-
-    compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
-    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jacksonYamlVersion
-
-    // HK2 dependencies for Java 11+
-    runtimeOnly group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
-    runtimeOnly group: 'com.sun.xml.bind', name: 'jaxb-impl', version: jaxbVersion
-    runtimeOnly group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
-    runtimeOnly group: 'javax.activation', name: 'activation', version: javaxActivationVersion
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
 
     // JMX monitoring
     runtimeOnly group: 'org.glassfish.grizzly', name: 'grizzly-framework-monitoring', version: grizzlyVersion
@@ -98,5 +82,5 @@ if (!hasProperty('profile')) {
 apply from: "gradle/profile.${profile}.gradle"
 
 wrapper {
-    gradleVersion '5.6.2'
+    gradleVersion '6.0.1'
 }

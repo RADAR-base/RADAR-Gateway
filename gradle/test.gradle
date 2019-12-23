@@ -9,38 +9,34 @@ sourceSets {
 }
 
 configurations {
-    integrationTestCompile.extendsFrom testCompile
-    integrationTestRuntime.extendsFrom testRuntime
+    integrationTestImplementation.extendsFrom implementation
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom runtimeOnly
     integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
 }
 
 repositories {
-    maven { url 'http://packages.confluent.io/maven/' }
+    maven { url 'https://packages.confluent.io/maven/' }
 }
 
 dependencies {
-    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
-    testCompile group: 'org.mockito', name: 'mockito-core', version: mockitoVersion
-    testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: okhttp3Version
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
+    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0"
+    testImplementation group: 'com.squareup.okhttp3', name: 'mockwebserver', version: okhttp3Version
     testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
 
     testImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
 
     integrationTestImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
     integrationTestImplementation group: 'org.radarbase', name: 'radar-commons-testing', version: radarCommonsVersion
-    integrationTestImplementation group: 'org.radarcns', name: 'oauth-client-util', version: radarMpVersion
 }
 
 compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }
 
 compileIntegrationTestKotlin {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }
 
 task integrationTest(type: Test) {
