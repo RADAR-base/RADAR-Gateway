@@ -72,7 +72,7 @@ class AvroProcessor(@Context private val auth: Auth) {
                 // no project ID was provided, fill it in for the sender
                 val newProject = Json.mapper.createObjectNode()
                 newProject.put("string", auth.defaultProject)
-                (key as ObjectNode).set("projectId", newProject)
+                (key as ObjectNode).set("projectId", newProject) as JsonNode?
                 auth.defaultProject
             } else {
                 // project ID was provided, it should match one of the validated project IDs.
