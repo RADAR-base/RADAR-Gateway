@@ -4,15 +4,17 @@ version: '2.1'
 networks:
   zookeeper:
     driver: bridge
+    internal: true
   kafka:
     driver: bridge
+    internal: true
 
 services:
   #---------------------------------------------------------------------------#
   # Zookeeper Cluster                                                         #
   #---------------------------------------------------------------------------#
   zookeeper-1:
-    image: confluentinc/cp-zookeeper:5.2.1
+    image: confluentinc/cp-zookeeper:5.5.0
     networks:
       - zookeeper
     environment:
@@ -21,7 +23,7 @@ services:
       ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
 
   zookeeper-2:
-    image: confluentinc/cp-zookeeper:5.2.1
+    image: confluentinc/cp-zookeeper:5.5.0
     networks:
     - zookeeper
     environment:
@@ -30,7 +32,7 @@ services:
       ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
 
   zookeeper-3:
-    image: confluentinc/cp-zookeeper:5.2.1
+    image: confluentinc/cp-zookeeper:5.5.0
     networks:
     - zookeeper
     environment:
@@ -42,7 +44,7 @@ services:
   # Kafka Cluster                                                             #
   #---------------------------------------------------------------------------#
   kafka-1:
-    image: confluentinc/cp-kafka:5.2.1
+    image: confluentinc/cp-kafka:5.5.0
     networks:
       - kafka
       - zookeeper
@@ -59,7 +61,7 @@ services:
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
 
   kafka-2:
-    image: confluentinc/cp-kafka:5.2.1
+    image: confluentinc/cp-kafka:5.5.0
     networks:
       - kafka
       - zookeeper
@@ -76,7 +78,7 @@ services:
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
 
   kafka-3:
-    image: confluentinc/cp-kafka:5.2.1
+    image: confluentinc/cp-kafka:5.5.0
     networks:
       - kafka
       - zookeeper
@@ -96,10 +98,10 @@ services:
   # Schema Registry                                                           #
   #---------------------------------------------------------------------------#
   schema-registry-1:
-    image: confluentinc/cp-schema-registry:5.2.1
+    image: confluentinc/cp-schema-registry:5.5.0
     networks:
       - kafka
-      - zookeeper
+      - default
     depends_on:
       - kafka-1
       - kafka-2
@@ -107,18 +109,19 @@ services:
     ports:
       - "8081:8081"
     environment:
-      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092,PLAINTEXT://kafka-2:9092,PLAINTEXT://kafka-3:9092
       SCHEMA_REGISTRY_HOST_NAME: schema-registry-1
-      SCHEMA_REGISTRY_LISTENERS: http://schema-registry-1:8081
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
 
   #---------------------------------------------------------------------------#
   # REST proxy                                                                #
   #---------------------------------------------------------------------------#
   rest-proxy-1:
-    image: confluentinc/cp-kafka-rest:5.2.1
+    image: confluentinc/cp-kafka-rest:5.5.0
     networks:
       - kafka
       - zookeeper
+      - default
     depends_on:
       - kafka-1
       - kafka-2
@@ -137,9 +140,9 @@ services:
   # Management Portal                                                         #
   #---------------------------------------------------------------------------#
   managementportal-app:
-    image: radarbase/management-portal:0.5.6
+    image: radarbase/management-portal:0.5.8
     networks:
-      - kafka
+      - default
     ports:
       - "8080:8080"
     environment:

@@ -1,3 +1,5 @@
+apply plugin: 'docker-compose'
+
 sourceSets {
     integrationTest {
         kotlin {
@@ -41,6 +43,7 @@ compileIntegrationTestKotlin {
 
 task integrationTest(type: Test) {
     description = "Run integration tests (located in src/integrationTest/...)."
+    group = 'verification'
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
 
@@ -62,4 +65,12 @@ tasks.matching { it instanceof Test }.all {
         showStackTraces = true
         exceptionFormat "full"
     }
+    shouldRunAfter test
+}
+
+dockerCompose.isRequiredBy(integrationTest)
+
+dockerCompose {
+    useComposeFiles = ['src/integrationTest/docker/docker-compose.yml']
+    stopContainers = project.hasProperty("dockerCompose.stopContainers") ? Boolean.parseBoolean(project.property("dockerCompose.stopContainers") as String) : true
 }

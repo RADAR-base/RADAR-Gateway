@@ -1,13 +1,9 @@
 language: java
 jdk:
   - oraclejdk11
-sudo: true
 
 services:
   - docker
-
-env:
-  - DOCKER_COMPOSE_FILE=src/integrationTest/docker/docker-compose.yml
 
 cache:
   directories:
@@ -23,8 +19,7 @@ before_install:
 
 script:
   - ./gradlew check
-  - sudo docker-compose -f $DOCKER_COMPOSE_FILE up -d && sleep 90 && ./gradlew integrationTest
-  - sudo docker-compose -f $DOCKER_COMPOSE_FILE down
+  - ./gradlew integrationTest
 
 deploy:
   - provider: releases
