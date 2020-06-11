@@ -4,6 +4,8 @@ import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okio.BufferedSink
+import okio.BufferedSource
+import okio.Sink
 import okio.sink
 import org.radarbase.gateway.Config
 import org.radarbase.jersey.exception.HttpBadGatewayException
@@ -41,7 +43,13 @@ class ProxyClient(
         "Base URL ${config.restProxyUrl} is invalid"
     }
 
-    fun proxyRequest(method: String, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?): JavaxResponse {
+    private fun BufferedSource.directSink(sink: Sink) = readAll(sink)
+
+    fun proxyRequest(
+            method: String,
+            headers: Headers,
+            sinkWriter: ((BufferedSink) -> Unit)?,
+            valueProcessor: BufferedSource.(Response, Sink) -> Unit): JavaxResponse {
         val request = createProxyRequest(method, uriInfo, headers, sinkWriter)
 
         val response = try {
@@ -82,7 +90,7 @@ class ProxyClient(
                     }
                     compareFuture.cancel(false)
                     response.use {
-                        inputResponse.readAll(outputResponse.sink())
+                        inputResponse.valueProcessor(response, outputResponse.sink())
                         outputResponse?.flush()
                     }
                 })
@@ -98,27 +106,32 @@ class ProxyClient(
         }
     }
 
-    fun proxyRequest(method: String, sinkWriter: ((BufferedSink) -> Unit)? = null): JavaxResponse =
-            proxyRequest(method, jerseyToOkHttpHeaders(headers).build(), sinkWriter)
+    fun proxyRequest(method: String, sinkWriter: ((BufferedSink) -> Unit)? = null, valueProcessor: BufferedSource.(Response, Sink) -> Unit = { _, sink -> directSink(sink) }): JavaxResponse =
+            proxyRequest(method, jerseyToOkHttpHeaders(headers).build(), sinkWriter, valueProcessor)
 
     private fun createProxyRequest(method: String, uriInfo: UriInfo, headers: Headers, sinkWriter: ((BufferedSink) -> Unit)?) : Request {
         val url = baseUrl.newBuilder(uriInfo.path)?.build()
                 ?: throw IllegalArgumentException("Path $baseUrl/${uriInfo.path} is invalid")
 
-        val body = if (sinkWriter != null) object : RequestBody() {
-            override fun writeTo(sink: BufferedSink) {
-                sinkWriter(sink)
-                sink.flush()
-            }
-            override fun isOneShot() = true
-            override fun contentType() = headers["Content-Type"]?.toMediaType()
-        } else null
+        val body = sinkWriter?.let { SinkWriterRequestBody(it, headers["Content-Type"]) }
 
         return Request.Builder()
                 .url(url)
                 .headers(headers)
                 .method(method, body)
                 .build()
+    }
+
+    private class SinkWriterRequestBody(
+            private val sinkWriter: (BufferedSink) -> Unit,
+            private val type: String?
+    ) : RequestBody() {
+        override fun writeTo(sink: BufferedSink) {
+            sinkWriter(sink)
+            sink.flush()
+        }
+        override fun isOneShot() = true
+        override fun contentType() = type?.toMediaType()
     }
 
     companion object {

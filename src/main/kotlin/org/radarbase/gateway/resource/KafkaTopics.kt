@@ -1,6 +1,10 @@
 package org.radarbase.gateway.resource
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
+import okio.Buffer
+import okio.BufferedSource
+import okio.Sink
 import org.radarbase.jersey.auth.Authenticated
 import org.radarbase.jersey.auth.NeedsPermission
 import org.radarbase.gateway.inject.ProcessAvro
@@ -67,10 +71,27 @@ class KafkaTopics {
             @Context avroProcessor: AvroProcessor): Response {
 
         val modifiedTree = avroProcessor.process(tree)
-        return proxyClient.proxyRequest("POST") { sink ->
-            val generator = Json.factory.createGenerator(sink.outputStream())
-            generator.writeTree(modifiedTree)
-            generator.flush()
+        return proxyClient.proxyRequest("POST",
+                { sink ->
+                    val generator = Json.factory.createGenerator(sink.outputStream())
+                    generator.writeTree(modifiedTree)
+                    generator.flush()
+                },
+                { response, sink -> processPostResponse(response, sink) })
+    }
+
+    private fun BufferedSource.processPostResponse(response: okhttp3.Response, sink: Sink) {
+        if (response.isSuccessful) {
+            // remove unnecessary offsets field from response
+            val content = Json.mapper.readTree(inputStream())
+            if (content is ObjectNode) {
+                content.remove("offsets")
+            }
+            val buffer = Buffer()
+            Json.mapper.writeValue(buffer.outputStream(), content)
+            sink.write(buffer, buffer.size)
+        } else {
+            readAll(sink)
         }
     }
 
@@ -95,7 +116,8 @@ class KafkaTopics {
             logger.error("Invalid RecordSet content: {}", ex.toString())
             throw HttpBadRequestException("bad_content", "Content is not a valid binary RecordSet")
         }
-        return proxyClient.proxyRequest("POST", proxyHeaders, dataProcessor)
+        return proxyClient.proxyRequest("POST", proxyHeaders, dataProcessor,
+                { response, sink -> processPostResponse(response, sink) })
     }
 
     companion object {
