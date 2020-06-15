@@ -10,14 +10,14 @@ class EcdsaJwtEnhancerFactory(private val config: Config) : EnhancerFactory {
     override fun createEnhancers() = listOf(
             GatewayResourceEnhancer(config),
             RadarJerseyResourceEnhancer(AuthConfig(
-                    managementPortalUrl = config.managementPortalUrl,
-                    jwtResourceName = config.jwtResourceName,
-                    jwtIssuer = config.jwtIssuer,
-                    jwtECPublicKeys = config.jwtECPublicKeys,
-                    jwtRSAPublicKeys = config.jwtRSAPublicKeys,
-                    jwtKeystoreAlias = config.jwtKeystoreAlias,
-                    jwtKeystorePassword = config.jwtKeystorePassword,
-                    jwtKeystorePath = config.jwtKeystorePath)),
+                    managementPortalUrl = config.auth.managementPortalUrl,
+                    jwtResourceName = config.auth.resourceName,
+                    jwtIssuer = config.auth.issuer,
+                    jwtECPublicKeys = config.auth.publicKeys.ecdsa,
+                    jwtRSAPublicKeys = config.auth.publicKeys.rsa,
+                    jwtKeystoreAlias = config.auth.keyStore.alias,
+                    jwtKeystorePassword = config.auth.keyStore.password,
+                    jwtKeystorePath = config.auth.keyStore.path)),
             ManagementPortalResourceEnhancer(),
             HttpExceptionResourceEnhancer(),
             GeneralExceptionResourceEnhancer())

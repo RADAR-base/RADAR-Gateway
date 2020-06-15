@@ -5,11 +5,20 @@ import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import org.glassfish.jersey.internal.inject.AbstractBinder
 import org.glassfish.jersey.internal.inject.PerThread
-import org.glassfish.jersey.server.ResourceConfig
+import org.glassfish.jersey.message.DeflateEncoder
+import org.glassfish.jersey.message.GZipEncoder
+import org.glassfish.jersey.server.filter.EncodingFilter
 import org.radarbase.gateway.Config
 import org.radarbase.gateway.io.AvroProcessor
+import org.radarbase.gateway.io.AvroProcessorFactory
 import org.radarbase.gateway.io.BinaryToAvroConverter
-import org.radarbase.gateway.io.ProxyClient
+import org.radarbase.gateway.io.LzfseEncoder
+import org.radarbase.gateway.kafka.KafkaAdminService
+import org.radarbase.gateway.kafka.KafkaAdminServiceFactory
+import org.radarbase.gateway.kafka.ProducerPool
+import org.radarbase.gateway.kafka.ProducerPoolFactory
+import org.radarbase.gateway.service.SchedulingService
+import org.radarbase.gateway.service.SchedulingServiceFactory
 import org.radarbase.jersey.auth.ProjectService
 import org.radarbase.jersey.config.JerseyResourceEnhancer
 import org.radarbase.producer.rest.SchemaRetriever
@@ -17,36 +26,23 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 class GatewayResourceEnhancer(private val config: Config): JerseyResourceEnhancer {
-    override fun enhanceResources(resourceConfig: ResourceConfig) {
-        resourceConfig.packages(
-                "org.radarbase.gateway.filter",
-                "org.radarbase.gateway.io",
-                "org.radarbase.gateway.resource")
-    }
+    override val packages: Array<String> = arrayOf(
+            "org.radarbase.gateway.filter",
+            "org.radarbase.gateway.io",
+            "org.radarbase.gateway.resource")
+
+    override val classes: Array<Class<*>> = arrayOf(
+            EncodingFilter::class.java,
+            GZipEncoder::class.java,
+            DeflateEncoder::class.java,
+            LzfseEncoder::class.java)
 
     override fun enhanceBinder(binder: AbstractBinder) {
         binder.apply {
             bind(config)
                     .to(Config::class.java)
 
-            bind(OkHttpClient.Builder()
-                    .readTimeout(1, TimeUnit.MINUTES)
-                    .writeTimeout(1, TimeUnit.MINUTES)
-                    .connectTimeout(10, TimeUnit.SECONDS)
-                    .dispatcher(Dispatcher().apply {
-                        maxRequests = config.maxRequests
-                        maxRequestsPerHost = config.maxRequests
-                    })
-                    .connectionPool(ConnectionPool(config.maxRequests, 5, TimeUnit.MINUTES))
-                    .build())
-                    .to(OkHttpClient::class.java)
-
-            // Bind specific classes. These can use injects.
-            bind(ProxyClient::class.java)
-                    .to(ProxyClient::class.java)
-                    .`in`(Singleton::class.java)
-
-            bind(AvroProcessor::class.java)
+            bindFactory(AvroProcessorFactory::class.java)
                     .to(AvroProcessor::class.java)
                     .`in`(Singleton::class.java)
 
@@ -57,6 +53,18 @@ class GatewayResourceEnhancer(private val config: Config): JerseyResourceEnhance
             // Bind factories.
             bindFactory(SchemaRetrieverFactory::class.java)
                     .to(SchemaRetriever::class.java)
+                    .`in`(Singleton::class.java)
+
+            bindFactory(SchedulingServiceFactory::class.java)
+                    .to(SchedulingService::class.java)
+                    .`in`(Singleton::class.java)
+
+            bindFactory(ProducerPoolFactory::class.java)
+                    .to(ProducerPool::class.java)
+                    .`in`(Singleton::class.java)
+
+            bindFactory(KafkaAdminServiceFactory::class.java)
+                    .to(KafkaAdminService::class.java)
                     .`in`(Singleton::class.java)
 
             val unverifiedProjectService = object : ProjectService {

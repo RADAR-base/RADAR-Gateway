@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import okio.Buffer
+import org.apache.avro.generic.GenericRecordBuilder
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.radarbase.data.AvroRecordData
@@ -16,7 +18,6 @@ import org.radarcns.auth.authorization.Permission
 import org.radarcns.auth.token.RadarToken
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
-import kotlin.text.Charsets.UTF_8
 
 class BinaryToAvroConverterTest {
     @Test
@@ -58,9 +59,22 @@ class BinaryToAvroConverterTest {
         }
         val converter = BinaryToAvroConverter(schemaRetriever, auth)
 
-        val proxyBuffer = Buffer()
-        converter.process("test", requestBuffer.inputStream())(proxyBuffer)
-        assertEquals("{\"key_schema_id\":1,\"value_schema_id\":2,\"records\":[{\"key\":{\"projectId\":{\"string\":\"p\"},\"userId\":\"u\",\"sourceId\":\"s\"},\"value\":{\"time\":1.0,\"timeReceived\":1.1,\"x\":1.2,\"y\":1.3,\"z\":1.4}}]}",
-                proxyBuffer.readString(UTF_8))
+        val genericKey = GenericRecordBuilder(ObservationKey.getClassSchema()).apply {
+            this["projectId"] = "p"
+            this["userId"] = "u"
+            this["sourceId"] = "s"
+        }.build()
+        val genericValue = GenericRecordBuilder(PhoneAcceleration.getClassSchema()).apply {
+            set("time", 1.0)
+            set("timeReceived", 1.1)
+            set("x", 1.2f)
+            set("y", 1.3f)
+            set("z", 1.4f)
+        }.build()
+
+        assertEquals(listOf(
+                ProducerRecord<Any, Any>("test", genericKey, genericValue)
+        ),
+                converter.process("test", requestBuffer.inputStream()))
     }
 }

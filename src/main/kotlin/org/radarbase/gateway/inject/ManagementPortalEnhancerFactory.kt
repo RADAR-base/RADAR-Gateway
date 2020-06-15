@@ -9,9 +9,9 @@ class ManagementPortalEnhancerFactory(private val config: Config) : EnhancerFact
     override fun createEnhancers() = listOf(
             GatewayResourceEnhancer(config),
             RadarJerseyResourceEnhancer(AuthConfig(
-                    managementPortalUrl = config.managementPortalUrl,
-                    jwtResourceName = config.jwtResourceName,
-                    jwtIssuer = config.jwtIssuer)),
+                    managementPortalUrl = config.auth.managementPortalUrl,
+                    jwtResourceName = config.auth.resourceName,
+                    jwtIssuer = config.auth.issuer)),
             ManagementPortalResourceEnhancer(),
             HttpExceptionResourceEnhancer(),
             GeneralExceptionResourceEnhancer())

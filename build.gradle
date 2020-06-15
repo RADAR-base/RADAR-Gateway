@@ -24,6 +24,8 @@ ext {
     logbackVersion = '1.2.3'
     grizzlyVersion = '2.4.4'
     lzfseVersion = '0.1.0'
+    kafkaVersion = "2.5.0"
+    confluentVersion = "5.5.0"
 
     junitVersion = '5.6.2'
 }
@@ -36,6 +38,7 @@ repositories {
     // For working with dev-branches
     maven { url 'https://repo.thehyve.nl/content/repositories/snapshots' }
     maven { url 'https://oss.jfrog.org/artifactory/libs-snapshot/' }
+    maven { url "https://packages.confluent.io/maven/" }
 }
 
 dependencies {
@@ -47,6 +50,9 @@ dependencies {
     implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
+
+    implementation "org.apache.kafka:kafka-clients:$kafkaVersion"
+    implementation "io.confluent:kafka-avro-serializer:$confluentVersion"
 
     // JMX monitoring
     runtimeOnly group: 'org.glassfish.grizzly', name: 'grizzly-framework-monitoring', version: grizzlyVersion

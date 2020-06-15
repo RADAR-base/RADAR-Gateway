@@ -1,18 +1,14 @@
 package org.radarbase.gateway.resource
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-import okio.Buffer
-import okio.BufferedSource
-import okio.Sink
-import org.radarbase.jersey.auth.Authenticated
-import org.radarbase.jersey.auth.NeedsPermission
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.BinaryToAvroConverter
-import org.radarbase.gateway.io.ProxyClient
-import org.radarbase.gateway.io.ProxyClient.Companion.jerseyToOkHttpHeaders
-import org.radarbase.gateway.util.Json
+import org.radarbase.gateway.kafka.KafkaAdminService
+import org.radarbase.gateway.kafka.ProducerPool
+import org.radarbase.jersey.auth.Authenticated
+import org.radarbase.jersey.auth.NeedsPermission
 import org.radarbase.jersey.exception.HttpBadRequestException
 import org.radarcns.auth.authorization.Permission.Entity.MEASUREMENT
 import org.radarcns.auth.authorization.Permission.Operation.CREATE
@@ -22,35 +18,25 @@ import java.io.InputStream
 import javax.inject.Singleton
 import javax.ws.rs.*
 import javax.ws.rs.core.Context
-import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.Response
 
 /** Topics submission and listing. Requests need authentication. */
 @Path("/topics")
 @Singleton
 @Authenticated
-class KafkaTopics {
-    @Context
-    private lateinit var proxyClient: ProxyClient
-
+class KafkaTopics(
+        @Context private val kafkaAdminService: KafkaAdminService,
+        @Context private val producerPool: ProducerPool
+) {
     @GET
-    fun topics() = proxyClient.proxyRequest("GET")
-
-    @HEAD
-    fun topicsHead() = proxyClient.proxyRequest("HEAD")
-
-    @OPTIONS
-    fun topicsOptions(): Response = Response.noContent()
-            .header("Allow", "HEAD,GET,OPTIONS")
-            .build()
+    @Produces(PRODUCE_AVRO_V1_JSON)
+    fun topics() = kafkaAdminService.listTopics()
 
     @Path("/{topic_name}")
     @GET
-    fun topic() = proxyClient.proxyRequest("GET")
-
-    @Path("/{topic_name}")
-    @HEAD
-    fun topicHead() = proxyClient.proxyRequest("HEAD")
+    fun topic(
+            @PathParam("topic_name") topic: String
+    ) = kafkaAdminService.topicInfo(topic)
 
     @OPTIONS
     @Path("/{topic_name}")
@@ -64,66 +50,54 @@ class KafkaTopics {
     @Path("/{topic_name}")
     @POST
     @Consumes(ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON)
+    @Produces(PRODUCE_AVRO_V1_JSON, PRODUCE_JSON)
     @NeedsPermission(MEASUREMENT, CREATE)
     @ProcessAvro
     fun postToTopic(
             tree: JsonNode,
-            @Context avroProcessor: AvroProcessor): Response {
+            @PathParam("topic_name") topic: String,
+            @Context avroProcessor: AvroProcessor): TopicPostResponse {
 
-        val modifiedTree = avroProcessor.process(tree)
-        return proxyClient.proxyRequest("POST",
-                { sink ->
-                    val generator = Json.factory.createGenerator(sink.outputStream())
-                    generator.writeTree(modifiedTree)
-                    generator.flush()
-                },
-                { response, sink -> processPostResponse(response, sink) })
-    }
-
-    private fun BufferedSource.processPostResponse(response: okhttp3.Response, sink: Sink) {
-        if (response.isSuccessful) {
-            // remove unnecessary offsets field from response
-            val content = Json.mapper.readTree(inputStream())
-            if (content is ObjectNode) {
-                content.remove("offsets")
-            }
-            val buffer = Buffer()
-            Json.mapper.writeValue(buffer.outputStream(), content)
-            sink.write(buffer, buffer.size)
-        } else {
-            readAll(sink)
-        }
+        val processingResult = avroProcessor.process(topic, tree)
+        producerPool.produce(topic, processingResult.records)
+        return TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
     }
 
     @Path("/{topic_name}")
     @POST
     @ProcessAvro
     @Consumes(ACCEPT_BINARY_V1)
+    @Produces(PRODUCE_AVRO_V1_JSON, PRODUCE_JSON)
     @NeedsPermission(MEASUREMENT, CREATE)
     fun postToTopicBinary(
             input: InputStream,
-            @Context headers: HttpHeaders,
             @Context binaryToAvroConverter: BinaryToAvroConverter,
-            @PathParam("topic_name") topic: String): Response {
+            @PathParam("topic_name") topic: String): TopicPostResponse {
 
-        val proxyHeaders = jerseyToOkHttpHeaders(headers)
-                .set("Content-Type", "application/vnd.kafka.avro.v2+json")
-                .build()
-
-        val dataProcessor = try {
+        val processingResult = try {
             binaryToAvroConverter.process(topic, input)
         } catch (ex: IOException) {
             logger.error("Invalid RecordSet content: {}", ex.toString())
             throw HttpBadRequestException("bad_content", "Content is not a valid binary RecordSet")
         }
-        return proxyClient.proxyRequest("POST", proxyHeaders, dataProcessor,
-                { response, sink -> processPostResponse(response, sink) })
+
+        producerPool.produce(topic, processingResult.records)
+
+        return TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
     }
+
+    data class TopicPostResponse(
+            @JsonProperty("key_schema_id")
+            val keySchemaId: Int,
+            @JsonProperty("value_schema_id")
+            val valueSchemaId: Int)
 
     companion object {
         private val logger = LoggerFactory.getLogger(KafkaTopics::class.java)
         const val ACCEPT_AVRO_V1_JSON = "application/vnd.kafka.avro.v1+json"
         const val ACCEPT_AVRO_V2_JSON = "application/vnd.kafka.avro.v2+json"
         const val ACCEPT_BINARY_V1 = "application/vnd.radarbase.avro.v1+binary"
+        const val PRODUCE_AVRO_V1_JSON = "application/vnd.kafka.v1+json"
+        const val PRODUCE_JSON = "application/json"
     }
 }

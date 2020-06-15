@@ -1,20 +1,17 @@
 package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream
-import okio.BufferedSink
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.io.BinaryDecoder
 import org.apache.avro.io.Decoder
 import org.apache.avro.io.DecoderFactory
-import org.radarbase.producer.rest.JsonRecordRequest
-import org.radarbase.producer.rest.SchemaRetriever
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.jersey.exception.HttpInvalidContentException
+import org.radarbase.producer.rest.SchemaRetriever
 import java.io.IOException
 import java.io.InputStream
-import java.lang.IllegalStateException
 import java.nio.ByteBuffer
 import javax.ws.rs.core.Context
 
@@ -26,20 +23,19 @@ class BinaryToAvroConverter(
     private var binaryDecoder: BinaryDecoder? = null
     private val readContext = ReadContext()
 
-    fun process(topic: String, input: InputStream): (BufferedSink) -> Unit {
+    fun process(topic: String, input: InputStream): AvroProcessingResult {
         val decoder = DecoderFactory.get().binaryDecoder(input, binaryDecoder)
 
         binaryDecoder = decoder
 
         val recordData = DecodedRecordData(topic, decoder, schemaRetriever, auth, readContext)
 
-        val recordRequest = JsonRecordRequest(recordData.topic)
-        recordRequest.prepare(
-                recordData.keySchemaMetadata,
-                recordData.valueSchemaMetadata,
-                recordData)
-
-        return recordRequest::writeToSink
+        return AvroProcessingResult(
+                recordData.keySchemaMetadata.id,
+                recordData.valueSchemaMetadata.id,
+                recordData.map {  value ->
+                    Pair(recordData.key, value)
+                })
     }
 
     class ReadContext {

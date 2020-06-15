@@ -5,7 +5,10 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.radarbase.gateway.AuthConfig
 import org.radarbase.gateway.Config
+import org.radarbase.gateway.GatewayServerConfig
+import org.radarbase.gateway.KafkaConfig
 import org.radarbase.gateway.inject.ManagementPortalEnhancerFactory
 import org.radarbase.gateway.resource.KafkaTopicsTest.Companion.call
 import org.radarbase.jersey.GrizzlyServer
@@ -14,19 +17,14 @@ import java.net.URI
 import javax.ws.rs.core.Response.Status
 
 class KafkaRootTest {
-    private lateinit var baseUri: String
     private lateinit var server: GrizzlyServer
 
     @BeforeEach
     fun setUp() {
-        baseUri = "http://localhost:8090/radar-gateway"
-        val config = Config()
-        config.restProxyUrl = "http://localhost:8082"
-        config.schemaRegistryUrl = "http://localhost:8081"
-        config.baseUri = URI.create(baseUri)
+        val config = baseConfig
 
         val resourceConfig = ConfigLoader.loadResources(ManagementPortalEnhancerFactory::class.java, config)
-        server = GrizzlyServer(config.baseUri, resourceConfig)
+        server = GrizzlyServer(config.server.baseUri, resourceConfig)
         server.start()
     }
 
@@ -38,15 +36,11 @@ class KafkaRootTest {
     @Test
     fun queryRoot() {
         httpClient.call(Status.OK) {
-            url(baseUri)
+            url(BASE_URI)
         }
         httpClient.call(Status.OK) {
-            url(baseUri)
+            url(BASE_URI)
             head()
-        }
-        httpClient.call(Status.NO_CONTENT) {
-            url(baseUri)
-            method("OPTIONS", null)
         }
     }
 
@@ -58,5 +52,28 @@ class KafkaRootTest {
         fun setUpClass() {
             httpClient = OkHttpClient()
         }
+
+        const val BASE_URI = "http://localhost:8090/radar-gateway"
+
+        val baseConfig: Config
+            get() = Config(
+                    kafka = KafkaConfig(
+                            producer = mapOf(
+                                    "bootstrap.servers" to "kafka-1:9092,kafka-2:9093,kafka-3:9094",
+                                    "max.block.ms" to "6000",
+                                    "timeout.ms" to "3000",
+                                    "linger.ms" to "10",
+                                    "retries" to "5",
+                                    "acks" to "all",
+                                    "delivery.timeout.ms" to "6000",
+                                    "request.timeout.ms" to "3000"),
+                            admin = mapOf(
+                                    "zookeeper.connect" to "zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183",
+                                    "default.api.timeout.ms" to "6000"),
+                            schemaRegistryUrl = "http://localhost:8081"),
+                    auth = AuthConfig(
+                            managementPortalUrl = "http://localhost:8080"),
+                    server = GatewayServerConfig(
+                            baseUri = URI.create(BASE_URI)))
     }
 }

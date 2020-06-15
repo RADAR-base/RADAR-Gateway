@@ -42,6 +42,7 @@ compileIntegrationTestKotlin {
 }
 
 task integrationTest(type: Test) {
+    useJUnitPlatform()
     description = "Run integration tests (located in src/integrationTest/...)."
     group = 'verification'
     testClassesDirs = sourceSets.integrationTest.output.classesDirs

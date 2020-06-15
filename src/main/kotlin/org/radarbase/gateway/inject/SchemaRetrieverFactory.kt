@@ -1,8 +1,8 @@
 package org.radarbase.gateway.inject
 
 import org.radarbase.config.ServerConfig
-import org.radarbase.producer.rest.SchemaRetriever
 import org.radarbase.gateway.Config
+import org.radarbase.producer.rest.SchemaRetriever
 import java.util.function.Supplier
 import javax.ws.rs.core.Context
 
@@ -12,6 +12,6 @@ class SchemaRetrieverFactory: Supplier<SchemaRetriever> {
     private lateinit var config: Config
 
     override fun get(): SchemaRetriever {
-        return SchemaRetriever(ServerConfig(config.schemaRegistryUrl), 30)
+        return SchemaRetriever(ServerConfig(config.kafka.schemaRegistryUrl), 30)
     }
 }
