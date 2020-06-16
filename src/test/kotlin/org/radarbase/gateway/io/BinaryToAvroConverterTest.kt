@@ -72,9 +72,8 @@ class BinaryToAvroConverterTest {
             set("z", 1.4f)
         }.build()
 
-        assertEquals(listOf(
-                ProducerRecord<Any, Any>("test", genericKey, genericValue)
-        ),
+        assertEquals(
+                AvroProcessingResult(1, 2, listOf(Pair(genericKey, genericValue))),
                 converter.process("test", requestBuffer.inputStream()))
     }
 }

@@ -16,10 +16,9 @@ ext {
 
     okhttp3Version = '4.7.2'
     radarAuthVersion = '0.2.3'
-    radarCommonsVersion = '0.12.2'
-    radarSchemasVersion = '0.5.7'
+    radarCommonsVersion = '0.12.4-SNAPSHOT'
+    radarSchemasVersion = '0.5.10'
     jacksonVersion = '2.11.0'
-    jacksonYamlVersion = '2.11.0'
     slf4jVersion = '1.7.30'
     logbackVersion = '1.2.3'
     grizzlyVersion = '2.4.4'
@@ -47,9 +46,9 @@ dependencies {
     implementation group: 'org.radarbase', name: 'radar-commons', version: radarCommonsVersion
     implementation group: 'org.radarbase', name: 'radar-jersey', version: radarAuthVersion
     implementation group: 'org.radarbase', name: 'lzfse-decode', version: lzfseVersion
-    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
 
     implementation "org.apache.kafka:kafka-clients:$kafkaVersion"
     implementation "io.confluent:kafka-avro-serializer:$confluentVersion"

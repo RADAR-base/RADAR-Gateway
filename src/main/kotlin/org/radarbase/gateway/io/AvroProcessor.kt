@@ -3,10 +3,6 @@ package org.radarbase.gateway.io
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import io.confluent.kafka.schemaregistry.avro.AvroSchema
-import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
-import io.confluent.kafka.schemaregistry.client.SchemaMetadata
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericFixed
@@ -19,9 +15,12 @@ import org.radarbase.gateway.util.CachedValue
 import org.radarbase.gateway.util.Json
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.jersey.exception.HttpApplicationException
+import org.radarbase.jersey.exception.HttpBadGatewayException
 import org.radarbase.jersey.exception.HttpInvalidContentException
 import org.radarbase.producer.rest.AvroDataMapper
 import org.radarbase.producer.rest.AvroDataMapperFactory
+import org.radarbase.producer.rest.RestException
+import org.radarbase.producer.rest.SchemaRetriever
 import org.radarcns.auth.authorization.Permission
 import java.io.Closeable
 import java.io.IOException
@@ -40,14 +39,11 @@ import javax.ws.rs.core.Context
 class AvroProcessor(
         @Context private val config: Config,
         @Context private val auth: Auth,
+        @Context private val schemaRetriever: SchemaRetriever,
         @Context schedulingService: SchedulingService
 ): Closeable {
-    private val client = CachedSchemaRegistryClient(config.kafka.schemaRegistryUrl, 5000)
     private val idMapping: ConcurrentMap<Pair<String, Int>, CachedValue<JsonToObjectMapping>> = ConcurrentHashMap()
     private val schemaMapping: ConcurrentMap<Pair<String, String>, CachedValue<JsonToObjectMapping>> = ConcurrentHashMap()
-    private val avroSchemaProvider = LocalAvroSchemaProvider().apply {
-        configure(mapOf("schemaVersionFetcher" to client))
-    }
     private val cleanReference: SchedulingService.RepeatReference
 
     init {
@@ -142,11 +138,10 @@ class AvroProcessor(
         return valueMapping.jsonToAvro(value)
     }
 
-    private fun createMapping(subject: String, sourceSchema: Schema): JsonToObjectMapping {
-        val latestSchema = client.getLatestSchemaMetadata(subject)
-        val latestParsedSchema = avroSchemaProvider.parseSchemaMetadata(latestSchema)
-        val schemaMapper = AvroDataMapperFactory.get().createMapper(sourceSchema, latestParsedSchema.rawSchema(), null)
-        return JsonToObjectMapping(sourceSchema, latestParsedSchema.rawSchema(), latestSchema.id, schemaMapper)
+    private fun createMapping(topic: String, ofValue: Boolean, sourceSchema: Schema): JsonToObjectMapping {
+        val latestSchema = schemaRetriever.getSchemaMetadata(topic, ofValue, -1)
+        val schemaMapper = AvroDataMapperFactory.get().createMapper(sourceSchema, latestSchema.schema, null)
+        return JsonToObjectMapping(sourceSchema, latestSchema.schema, latestSchema.id, schemaMapper)
     }
 
     private fun schemaMapping(topic: String, ofValue: Boolean, id: JsonNode?, schema: JsonNode?): JsonToObjectMapping {
@@ -155,19 +150,28 @@ class AvroProcessor(
             id?.isNumber == true -> {
                 idMapping.computeIfAbsent(Pair(subject, id.asInt())) {
                     CachedValue(SCHEMA_REFRESH, SCHEMA_RETRY) {
-                        val parsedSchema = client.getSchemaById(id.asInt()) as AvroSchema
-                        if (client.getVersion(subject, parsedSchema) <= 0) {
-                            throw HttpApplicationException(422, "schema_not_found", "Schema ID not found in subject")
+                        val parsedSchema = try {
+                            schemaRetriever.getBySubjectAndId(topic, ofValue, id.asInt())
+                        } catch (ex: RestException) {
+                            if (ex.statusCode == 404) {
+                                throw HttpApplicationException(422, "schema_not_found", "Schema ID not found in subject")
+                            } else {
+                                throw HttpBadGatewayException("cannot get data from schema registry: ${ex.javaClass.simpleName}")
+                            }
                         }
-                        createMapping(subject, parsedSchema.rawSchema())
+                        createMapping(topic, ofValue, parsedSchema.schema)
                     }
                 }.retrieve()
             }
             schema?.isTextual == true -> {
                 schemaMapping.computeIfAbsent(Pair(subject, schema.asText())) {
                     CachedValue(SCHEMA_REFRESH, SCHEMA_RETRY) {
-                        val parsedSchema = Schema.Parser().parse(schema.textValue())
-                        createMapping(subject, parsedSchema)
+                        try {
+                            val parsedSchema = Schema.Parser().parse(schema.textValue())
+                            createMapping(topic, ofValue, parsedSchema)
+                        } catch (ex: Exception) {
+                            throw throw HttpApplicationException(422, "schema_not_found", "Schema ID not found in subject")
+                        }
                     }
                 }.retrieve()
             }
@@ -366,13 +370,5 @@ class AvroProcessor(
     private fun JsonToObjectMapping.jsonToAvro(node: JsonNode): GenericRecord {
         val originalRecord = node.toAvroObject(sourceSchema)
         return mapper.convertAvro(originalRecord) as GenericRecord
-    }
-
-    class LocalAvroSchemaProvider : AvroSchemaProvider() {
-        fun parseSchemaMetadata(schemaMetadata: SchemaMetadata): AvroSchema = try {
-            AvroSchema(schemaMetadata.schema, schemaMetadata.references, this.resolveReferences(schemaMetadata.references), schemaMetadata.version)
-        } catch (ex: Exception) {
-            throw HttpApplicationException(502, "schema_failure", "Cannot parse schema from schema registry: ${ex.message}")
-        }
     }
 }

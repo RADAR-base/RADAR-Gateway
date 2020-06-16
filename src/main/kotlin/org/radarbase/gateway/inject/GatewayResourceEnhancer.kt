@@ -1,8 +1,5 @@
 package org.radarbase.gateway.inject
 
-import okhttp3.ConnectionPool
-import okhttp3.Dispatcher
-import okhttp3.OkHttpClient
 import org.glassfish.jersey.internal.inject.AbstractBinder
 import org.glassfish.jersey.internal.inject.PerThread
 import org.glassfish.jersey.message.DeflateEncoder
@@ -22,7 +19,6 @@ import org.radarbase.gateway.service.SchedulingServiceFactory
 import org.radarbase.jersey.auth.ProjectService
 import org.radarbase.jersey.config.JerseyResourceEnhancer
 import org.radarbase.producer.rest.SchemaRetriever
-import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 class GatewayResourceEnhancer(private val config: Config): JerseyResourceEnhancer {

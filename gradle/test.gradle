@@ -29,6 +29,7 @@ dependencies {
 
     testImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
 
+    integrationTestImplementation group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
     integrationTestImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
     integrationTestImplementation group: 'org.radarbase', name: 'radar-commons-testing', version: radarCommonsVersion
 }

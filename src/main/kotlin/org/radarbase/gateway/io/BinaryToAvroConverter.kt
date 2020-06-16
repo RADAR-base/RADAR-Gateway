@@ -2,6 +2,7 @@ package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream
 import org.apache.avro.Schema
+import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.io.BinaryDecoder
@@ -39,6 +40,9 @@ class BinaryToAvroConverter(
     }
 
     class ReadContext {
+        private val genericData = GenericData().apply {
+            isFastReaderEnabled = true
+        }
         private var buffer: ByteBuffer? = null
         private var record: GenericRecord? = null
         private var valueDecoder : BinaryDecoder? = null
@@ -46,7 +50,8 @@ class BinaryToAvroConverter(
 
         fun init(schema: Schema) {
             if (valueReader?.schema != schema) {
-                valueReader = GenericDatumReader(schema)
+                @Suppress("UNCHECKED_CAST")
+                valueReader = genericData.createDatumReader(schema) as GenericDatumReader<GenericRecord>
             }
         }
 
