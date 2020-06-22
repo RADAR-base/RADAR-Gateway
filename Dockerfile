@@ -27,8 +27,8 @@ COPY ./src/ /code/src
 
 RUN ./gradlew -Dkotlin.compiler.execution.strategy="in-process" -Dorg.gradle.parallel=false -Pkotlin.incremental=false distTar \
     && cd build/distributions \
-    && tar xf *.tar \
-    && rm *.tar radar-gateway-*/lib/radar-gateway-*.jar
+    && tar xzf *.tar.gz \
+    && rm *.tar.gz radar-gateway-*/lib/radar-gateway-*.jar
 
 FROM openjdk:11-jdk-oraclelinux7
 
