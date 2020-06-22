@@ -14,6 +14,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.runners.model.MultipleFailureException
 import org.radarbase.config.ServerConfig
 import org.radarbase.data.AvroRecordData
 import org.radarbase.gateway.Config
@@ -25,6 +26,7 @@ import org.radarbase.gateway.util.Json
 import org.radarbase.jersey.GrizzlyServer
 import org.radarbase.jersey.auth.filter.AuthenticationFilter.Companion.BEARER
 import org.radarbase.jersey.config.ConfigLoader
+import org.radarbase.producer.AuthenticationException
 import org.radarbase.producer.rest.RestClient
 import org.radarbase.producer.rest.RestSender
 import org.radarbase.producer.rest.SchemaRetriever
@@ -57,8 +59,7 @@ class KafkaTopicsTest {
         server.shutdown()
     }
 
-    @Test
-    fun testListTopics() {
+    private fun requestAccessToken(): String {
         val clientToken = httpClient.call( Status.OK, "access_token") {
             url("${config.auth.managementPortalUrl}/oauth/token")
             addHeader("Authorization", Credentials.basic(MP_CLIENT, ""))
@@ -82,7 +83,7 @@ class KafkaTopicsTest {
             url(tokenUrl)
         }
 
-        val accessToken = httpClient.call(Status.OK, "access_token") {
+        return httpClient.call(Status.OK, "access_token") {
             url("${config.auth.managementPortalUrl}/oauth/token")
             addHeader("Authorization", Credentials.basic(REST_CLIENT, ""))
             post(FormBody.Builder()
@@ -90,6 +91,11 @@ class KafkaTopicsTest {
                     .add("refresh_token", refreshToken)
                     .build())
         }
+    }
+
+    @Test
+    fun testListTopics() {
+        val accessToken = requestAccessToken()
 
         val retriever = SchemaRetriever(ServerConfig(URL("http://localhost:8081/")), 10)
 
@@ -115,7 +121,15 @@ class KafkaTopicsTest {
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = true, gzip = false)
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = true)
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = false)
-        sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = true, gzip = true)
+        try {
+            sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = true, gzip = true)
+        } catch (ex: MultipleFailureException) {
+            if (ex.failures.first() is AuthenticationException) {
+                println("Ignoring first authentication failure")
+            } else {
+                throw ex
+            }
+        }
         results += sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = true, gzip = true)
         results += sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = true, gzip = false)
         results += sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = false, gzip = true)
@@ -209,11 +223,9 @@ class KafkaTopicsTest {
         }
         senders.forEach { it.start() }
         senders.forEach { it.join() }
-        assertThat(senders.mapNotNull { it.exception }
-                .onEach {
-                    println("Failed to send: ${it.stackTraceToString()}")
-                }
-                .count(), `is`(0))
+        senders.mapNotNull { it.exception }
+                .takeIf { it.isNotEmpty() }
+                ?.let { throw MultipleFailureException(it) }
 
         val timeEnd = System.nanoTime()
 
@@ -237,7 +249,7 @@ class KafkaTopicsTest {
         private const val OLD_GATEWAY_URL = "http://localhost:8091/radar-gateway"
         private const val REST_PROXY_URL = "http://localhost:8082/"
         private const val NUM_THREADS = 15
-        private const val NUM_SENDS = 5
+        private const val NUM_SENDS = 1
         const val MP_CLIENT = "ManagementPortalapp"
         const val REST_CLIENT = "pRMT"
         const val USER = "sub-1"

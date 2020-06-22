@@ -15,7 +15,7 @@ import javax.ws.rs.core.Context
 import javax.ws.rs.core.Response
 
 class KafkaAdminService(@Context private val config: Config): Closeable {
-    private val adminClient: AdminClient = AdminClient.create(config.kafka.producer + config.kafka.admin)
+    private val adminClient: AdminClient = AdminClient.create(config.kafka.admin)
 
     private val listCache = CachedValue<Set<String>>(LIST_REFRESH_DURATION, LIST_RETRY_DURATION) {
         try {

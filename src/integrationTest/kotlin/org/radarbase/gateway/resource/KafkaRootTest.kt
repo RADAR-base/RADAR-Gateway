@@ -59,7 +59,7 @@ class KafkaRootTest {
             get() = Config(
                     kafka = KafkaConfig(
                             producer = mapOf(
-                                    "bootstrap.servers" to "kafka-1:9092,kafka-2:9093,kafka-3:9094",
+                                    "bootstrap.servers" to "kafka-1:9092",
                                     "max.block.ms" to "6000",
                                     "timeout.ms" to "3000",
                                     "linger.ms" to "10",
@@ -68,7 +68,9 @@ class KafkaRootTest {
                                     "delivery.timeout.ms" to "6000",
                                     "request.timeout.ms" to "3000"),
                             admin = mapOf(
-                                    "zookeeper.connect" to "zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183",
+                                    "bootstrap.servers" to "kafka-1:9092",
+                                    "request.timeout.ms" to "3000",
+                                    "retries" to "5",
                                     "default.api.timeout.ms" to "6000"),
                             schemaRegistryUrl = "http://localhost:8081"),
                     auth = AuthConfig(

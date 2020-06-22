@@ -12,25 +12,7 @@ services:
     environment:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
-
-  zookeeper-2:
-    image: confluentinc/cp-zookeeper:5.5.0
-    ports:
-      - "2182:2182"
-    environment:
-      ZOOKEEPER_SERVER_ID: 2
-      ZOOKEEPER_CLIENT_PORT: 2182
-      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
-
-  zookeeper-3:
-    image: confluentinc/cp-zookeeper:5.5.0
-    ports:
-      - "2183:2183"
-    environment:
-      ZOOKEEPER_SERVER_ID: 3
-      ZOOKEEPER_CLIENT_PORT: 2183
-      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
+      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888
 
   #---------------------------------------------------------------------------#
   # Kafka Cluster                                                             #
@@ -41,47 +23,16 @@ services:
       - "9092:9092"
     depends_on:
       - zookeeper-1
-      - zookeeper-2
-      - zookeeper-3
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_COMPRESSION_TYPE: lz4
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
-
-  kafka-2:
-    image: confluentinc/cp-kafka:5.5.0
-    depends_on:
-      - zookeeper-1
-      - zookeeper-2
-      - zookeeper-3
-    ports:
-    - "9093:9093"
-    environment:
-      KAFKA_BROKER_ID: 2
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9093
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_COMPRESSION_TYPE: lz4
-      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
-
-  kafka-3:
-    image: confluentinc/cp-kafka:5.5.0
-    depends_on:
-      - zookeeper-1
-      - zookeeper-2
-      - zookeeper-3
-    ports:
-        - "9094:9094"
-    environment:
-      KAFKA_BROKER_ID: 3
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:9094
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_COMPRESSION_TYPE: lz4
-      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
+      KAFKA_TRANSITION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSITION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   #---------------------------------------------------------------------------#
   # Schema Registry                                                           #
@@ -90,14 +41,13 @@ services:
     image: confluentinc/cp-schema-registry:5.5.0
     depends_on:
       - kafka-1
-      - kafka-2
-      - kafka-3
     ports:
       - "8081:8081"
     environment:
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092,PLAINTEXT://kafka-2:9092,PLAINTEXT://kafka-3:9092
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092
       SCHEMA_REGISTRY_HOST_NAME: schema-registry-1
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: 1
 
   #---------------------------------------------------------------------------#
   # REST proxy                                                                #
@@ -106,13 +56,11 @@ services:
     image: confluentinc/cp-kafka-rest:5.5.0
     depends_on:
       - kafka-1
-      - kafka-2
-      - kafka-3
       - schema-registry-1
     ports:
       - "8082:8082"
     environment:
-      KAFKA_REST_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183
+      KAFKA_REST_ZOOKEEPER_CONNECT: zookeeper-1:2181
       KAFKA_REST_LISTENERS: http://0.0.0.0:8082
       KAFKA_REST_SCHEMA_REGISTRY_URL: http://schema-registry-1:8081
       KAFKA_REST_HOST_NAME: rest-proxy-1

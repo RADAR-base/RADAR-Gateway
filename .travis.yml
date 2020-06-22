@@ -5,6 +5,11 @@ jdk:
 services:
   - docker
 
+addons:
+  hosts:
+    - kafka-1
+    - zookeeper-1
+
 cache:
   directories:
     - $HOME/.gradle/caches/jars-1
