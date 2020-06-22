@@ -22,7 +22,7 @@ jobs:
               uses: actions/cache@v2.0.0
               with:
                   # A list of files, directories, and wildcard patterns to cache and restore
-                  path:|
+                  path: |
                       ~/.gradle/caches/jars-3
                       ~/.gradle/caches/modules-2/files-2.1/
                       ~/.gradle/caches/modules-2/metadata-2.96/
