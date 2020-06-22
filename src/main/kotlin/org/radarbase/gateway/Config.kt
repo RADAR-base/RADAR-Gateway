@@ -1,7 +1,5 @@
 package org.radarbase.gateway
 
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerConfig
 import org.radarbase.gateway.inject.ManagementPortalEnhancerFactory
 import org.radarbase.jersey.config.EnhancerFactory
 import java.net.URI
