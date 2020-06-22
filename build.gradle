@@ -65,6 +65,11 @@ compileKotlin {
     kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }
 
+tasks.withType(Tar){
+    compression = Compression.GZIP
+    archiveExtension.set('tar.gz')
+}
+
 application {
     mainClassName = 'org.radarbase.gateway.MainKt'
 
