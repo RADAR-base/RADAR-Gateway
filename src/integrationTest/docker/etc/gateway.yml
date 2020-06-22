@@ -6,7 +6,6 @@ kafka:
         bootstrap.servers: kafka-1:9092
         request.timeout.ms: 3000
         max.block.ms: 6000
-        timeout.ms: 3000
         linger.ms: 10
         retries: 5
         acks: all
@@ -16,7 +15,8 @@ kafka:
         default.api.timeout.ms: 6000
         request.timeout.ms: 3000
         retries: 5
-    schemaRegistryUrl: http://schema-registry-1:8081
+    serialization:
+        schema.registry.url: http://schema-registry-1:8081
 
 auth:
     managementPortalUrl: http://managementportal-app:8080

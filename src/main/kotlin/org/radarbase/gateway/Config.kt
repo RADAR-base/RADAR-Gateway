@@ -19,9 +19,9 @@ data class GatewayServerConfig(
 data class KafkaConfig(
         val poolSize: Int = 20,
         val maxProducers: Int = 200,
-        val schemaRegistryUrl: String? = null,
         val producer: Map<String, String> = mapOf(),
-        val admin: Map<String, String> = mapOf())
+        val admin: Map<String, String> = mapOf(),
+        val serialization: Map<String, String> = mapOf())
 
 data class AuthConfig(
         val resourceName: String = "res_gateway",

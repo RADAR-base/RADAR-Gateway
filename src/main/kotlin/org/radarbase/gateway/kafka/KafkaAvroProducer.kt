@@ -1,6 +1,8 @@
 package org.radarbase.gateway.kafka
 
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG
 import io.confluent.kafka.serializers.KafkaAvroSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -19,15 +21,15 @@ class KafkaAvroProducer(
 
     init {
         logger.info("Creating Kafka producer")
-        val props = HashMap<String, Any?>(config.kafka.producer).apply {
-            this["schema.registry.url"] = config.kafka.schemaRegistryUrl
+
+        val schemaRegistryClient = CachedSchemaRegistryClient(config.kafka.serialization[SCHEMA_REGISTRY_URL_CONFIG], 10_000)
+        val keySerializer = KafkaAvroSerializer(schemaRegistryClient).apply {
+            configure(config.kafka.serialization, true)
         }
-        val schemaRegistryClient = CachedSchemaRegistryClient(config.kafka.schemaRegistryUrl, 10_000)
-        val keySerializer = KafkaAvroSerializer(schemaRegistryClient)
-        keySerializer.configure(props, true)
-        val valueSerializer = KafkaAvroSerializer(schemaRegistryClient)
-        valueSerializer.configure(props, false)
-        producer = KafkaProducer(props, keySerializer, valueSerializer)
+        val valueSerializer = KafkaAvroSerializer(schemaRegistryClient).apply {
+            configure(config.kafka.serialization, false)
+        }
+        producer = KafkaProducer(config.kafka.producer, keySerializer, valueSerializer)
         logger.info("Created Kafka producer")
     }
 

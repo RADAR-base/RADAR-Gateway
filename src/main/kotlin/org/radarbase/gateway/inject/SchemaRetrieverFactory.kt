@@ -1,5 +1,6 @@
 package org.radarbase.gateway.inject
 
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG
 import org.radarbase.config.ServerConfig
 import org.radarbase.gateway.Config
 import org.radarbase.producer.rest.SchemaRetriever
@@ -12,6 +13,6 @@ class SchemaRetrieverFactory: Supplier<SchemaRetriever> {
     private lateinit var config: Config
 
     override fun get(): SchemaRetriever {
-        return SchemaRetriever(ServerConfig(config.kafka.schemaRegistryUrl), 30)
+        return SchemaRetriever(ServerConfig(config.kafka.serialization[SCHEMA_REGISTRY_URL_CONFIG]), 30)
     }
 }
