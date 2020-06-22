@@ -1,0 +1,22 @@
+server:
+    baseUri: http://0.0.0.0:8092/radar-gateway/
+
+kafka:
+    producer:
+        bootstrap.servers: kafka-1:9092
+        request.timeout.ms: 3000
+        max.block.ms: 6000
+        timeout.ms: 3000
+        linger.ms: 10
+        retries: 5
+        acks: all
+        delivery.timeout.ms: 6000
+    admin:
+        bootstrap.servers: kafka-1:9092
+        default.api.timeout.ms: 6000
+        request.timeout.ms: 3000
+        retries: 5
+    schemaRegistryUrl: http://schema-registry-1:8081
+
+auth:
+    managementPortalUrl: http://managementportal-app:8080

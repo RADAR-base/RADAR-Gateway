@@ -8,24 +8,19 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.MatcherAssert.assertThat
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.runners.model.MultipleFailureException
 import org.radarbase.config.ServerConfig
 import org.radarbase.data.AvroRecordData
-import org.radarbase.gateway.Config
-import org.radarbase.gateway.inject.ManagementPortalEnhancerFactory
 import org.radarbase.gateway.resource.KafkaRootTest.Companion.BASE_URI
-import org.radarbase.gateway.resource.KafkaRootTest.Companion.baseConfig
 import org.radarbase.gateway.resource.KafkaTopics.Companion.ACCEPT_AVRO_V2_JSON
 import org.radarbase.gateway.util.Json
-import org.radarbase.jersey.GrizzlyServer
 import org.radarbase.jersey.auth.filter.AuthenticationFilter.Companion.BEARER
-import org.radarbase.jersey.config.ConfigLoader
 import org.radarbase.producer.AuthenticationException
 import org.radarbase.producer.rest.RestClient
 import org.radarbase.producer.rest.RestSender
@@ -33,8 +28,6 @@ import org.radarbase.producer.rest.SchemaRetriever
 import org.radarbase.topic.AvroTopic
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
@@ -42,26 +35,9 @@ import javax.ws.rs.core.MediaType.APPLICATION_JSON
 import javax.ws.rs.core.Response.Status
 
 class KafkaTopicsTest {
-    private lateinit var config: Config
-    private lateinit var server: GrizzlyServer
-
-    @BeforeEach
-    fun setUp() {
-        config = baseConfig
-
-        val resourceConfig = ConfigLoader.loadResources(ManagementPortalEnhancerFactory::class.java, config)
-        server = GrizzlyServer(config.server.baseUri, resourceConfig)
-        server.start()
-    }
-
-    @AfterEach
-    fun tearDown() {
-        server.shutdown()
-    }
-
     private fun requestAccessToken(): String {
         val clientToken = httpClient.call( Status.OK, "access_token") {
-            url("${config.auth.managementPortalUrl}/oauth/token")
+            url("${MANAGEMENTPORTAL_URL}/oauth/token")
             addHeader("Authorization", Credentials.basic(MP_CLIENT, ""))
             post(FormBody.Builder()
                     .add("username", ADMIN_USER)
@@ -72,7 +48,7 @@ class KafkaTopicsTest {
 
         val tokenUrl = httpClient.call(Status.OK, "tokenUrl") {
             addHeader("Authorization", BEARER + clientToken)
-            url(config.auth.managementPortalUrl!!.toHttpUrl()
+            url(MANAGEMENTPORTAL_URL.toHttpUrl()
                     .newBuilder("api/oauth-clients/pair")!!
                     .addEncodedQueryParameter("clientId", REST_CLIENT)
                     .addEncodedQueryParameter("login", USER)
@@ -84,7 +60,7 @@ class KafkaTopicsTest {
         }
 
         return httpClient.call(Status.OK, "access_token") {
-            url("${config.auth.managementPortalUrl}/oauth/token")
+            url("${MANAGEMENTPORTAL_URL}/oauth/token")
             addHeader("Authorization", Credentials.basic(REST_CLIENT, ""))
             post(FormBody.Builder()
                     .add("grant_type", "refresh_token")
@@ -97,7 +73,7 @@ class KafkaTopicsTest {
     fun testListTopics() {
         val accessToken = requestAccessToken()
 
-        val retriever = SchemaRetriever(ServerConfig(URL("http://localhost:8081/")), 10)
+        val retriever = SchemaRetriever(ServerConfig(URL(SCHEMA_REGISTRY_URL)), 10)
 
         val topic = AvroTopic("test",
                 ObservationKey.getClassSchema(), PhoneAcceleration.getClassSchema(),
@@ -112,36 +88,29 @@ class KafkaTopicsTest {
 
         println("Initialized kafka brokers")
 
-        val topicList = listOf("test")
         Thread.sleep(2000)
 
+        try {
+            testTopicList(BASE_URI, accessToken)
+        } catch (ex: AuthenticationException) {
+            // try again
+            testTopicList(BASE_URI, accessToken)
+        }
         val results = mutableListOf<String>()
         sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = true, gzip = true)
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = true, gzip = true)
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = true, gzip = false)
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = true)
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = false)
-        try {
-            sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = true, gzip = true)
-        } catch (ex: MultipleFailureException) {
-            if (ex.failures.first() is AuthenticationException) {
-                println("Ignoring first authentication failure")
-            } else {
-                throw ex
-            }
-        }
+
+        testTopicList(OLD_GATEWAY_URL, accessToken)
+        sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = true, gzip = true)
         results += sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = true, gzip = true)
         results += sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = true, gzip = false)
         results += sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = false, gzip = true)
         results += sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = false, gzip = false)
         results.forEach { println(it) }
 
-        val gatewayTopicList = httpClient.call(Status.OK) {
-            url("$BASE_URI/topics")
-            addHeader("Authorization", BEARER + accessToken)
-        }!!.elements().asSequence().map { it.asText() }.toList()
-
-        assertThat(gatewayTopicList, `is`(topicList))
 
         httpClient.call(Status.OK) {
             url("$BASE_URI/topics")
@@ -174,6 +143,15 @@ class KafkaTopicsTest {
             post("".toRequestBody(KAFKA_JSON_TYPE))
             addHeader("Authorization", BEARER + accessToken)
         }
+    }
+
+    private fun testTopicList(baseUri: String, accessToken: String) {
+        val gatewayTopicList = httpClient.call(Status.OK) {
+            url("$baseUri/topics")
+            addHeader("Authorization", BEARER + accessToken)
+        }!!.elements().asSequence().map { it.asText() }.toList()
+
+        assertThat(gatewayTopicList, hasItem("test"))
     }
 
     private class CallableThread(runnable: () -> Unit): Thread(runnable) {
@@ -246,6 +224,8 @@ class KafkaTopicsTest {
             httpClient = OkHttpClient()
         }
 
+        private const val MANAGEMENTPORTAL_URL = "http://localhost:8080"
+        private const val SCHEMA_REGISTRY_URL = "http://localhost:8081/"
         private const val OLD_GATEWAY_URL = "http://localhost:8091/radar-gateway"
         private const val REST_PROXY_URL = "http://localhost:8082/"
         private const val NUM_THREADS = 15
@@ -284,9 +264,3 @@ class KafkaTopicsTest {
         }
     }
 }
-
-fun Exception.stackTraceToString(): String = StringWriter().also { sw ->
-    PrintWriter(sw).use { pw ->
-        printStackTrace(pw)
-    }
-}.toString()

@@ -88,8 +88,22 @@ services:
     image: radarbase/radar-gateway:0.4.0
     depends_on:
       - rest-proxy-1
+      - managementportal-app
     ports:
       - "8091:8091"
     volumes:
       - ./etc/old-gateway.yml:/etc/radar-gateway/gateway.yml
     command: ["radar-gateway", "/etc/radar-gateway/gateway.yml"]
+
+  gateway:
+      build:
+        context: ../../..
+      image: radarbase/radar-gateway:SNAPSHOT
+      depends_on:
+        - kafka-1
+        - schema-registry-1
+        - managementportal-app
+      ports:
+        - "8092:8092"
+      volumes:
+        - ./etc/gateway.yml:/etc/radar-gateway/gateway.yml

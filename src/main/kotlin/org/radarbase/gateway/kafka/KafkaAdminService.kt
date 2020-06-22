@@ -19,7 +19,10 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
 
     private val listCache = CachedValue<Set<String>>(LIST_REFRESH_DURATION, LIST_RETRY_DURATION) {
         try {
-            adminClient.listTopics().names().get(3L, TimeUnit.SECONDS).toSet()
+            adminClient.listTopics()
+                    .names()
+                    .get(3L, TimeUnit.SECONDS)
+                    .toSet()
         } catch (ex: Exception) {
             throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "zookeeper_unavailable", ex.message ?: ex.cause?.message)
         }
@@ -42,7 +45,6 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
                             .values
                             .first()
                             .get(3L, TimeUnit.SECONDS)
-
                 } catch (ex: Exception) {
                     logger.error("Failed to describe topics", ex)
                     throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "zookeeper_unavailable", ex.message ?: ex.cause?.message)
@@ -53,9 +55,7 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
         }.retrieve()
     }
 
-    override fun close() {
-        adminClient.close()
-    }
+    override fun close() = adminClient.close()
 
     companion object {
         private val logger = LoggerFactory.getLogger(KafkaAdminService::class.java)
