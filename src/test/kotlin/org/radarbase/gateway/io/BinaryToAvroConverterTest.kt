@@ -37,8 +37,8 @@ class BinaryToAvroConverterTest {
         binaryRequest.writeToSink(requestBuffer)
 
         val schemaRetriever = mock<SchemaRetriever> {
-            on { getSchemaMetadata("test", false, 1) } doReturn keySchemaMetadata
-            on { getSchemaMetadata("test", true, 1) } doReturn valueSchemaMetadata
+            on { getBySubjectAndVersion("test", false, 1) } doReturn keySchemaMetadata
+            on { getBySubjectAndVersion("test", true, 1) } doReturn valueSchemaMetadata
         }
 
         val token = mock<RadarToken> {
