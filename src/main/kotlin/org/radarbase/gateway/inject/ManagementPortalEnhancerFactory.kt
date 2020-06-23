@@ -8,11 +8,11 @@ import org.radarbase.jersey.config.*
 class ManagementPortalEnhancerFactory(private val config: Config) : EnhancerFactory {
     override fun createEnhancers() = listOf(
             GatewayResourceEnhancer(config),
-            RadarJerseyResourceEnhancer(AuthConfig(
+            ConfigLoader.Enhancers.radar(AuthConfig(
                     managementPortalUrl = config.auth.managementPortalUrl,
                     jwtResourceName = config.auth.resourceName,
                     jwtIssuer = config.auth.issuer)),
-            ManagementPortalResourceEnhancer(),
-            HttpExceptionResourceEnhancer(),
-            GeneralExceptionResourceEnhancer())
+            ConfigLoader.Enhancers.managementPortal,
+            ConfigLoader.Enhancers.httpException,
+            ConfigLoader.Enhancers.generalException)
 }

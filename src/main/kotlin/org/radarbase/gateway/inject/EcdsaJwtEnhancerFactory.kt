@@ -9,7 +9,7 @@ import org.radarbase.jersey.config.*
 class EcdsaJwtEnhancerFactory(private val config: Config) : EnhancerFactory {
     override fun createEnhancers() = listOf(
             GatewayResourceEnhancer(config),
-            RadarJerseyResourceEnhancer(AuthConfig(
+            ConfigLoader.Enhancers.radar(AuthConfig(
                     managementPortalUrl = config.auth.managementPortalUrl,
                     jwtResourceName = config.auth.resourceName,
                     jwtIssuer = config.auth.issuer,
@@ -18,7 +18,7 @@ class EcdsaJwtEnhancerFactory(private val config: Config) : EnhancerFactory {
                     jwtKeystoreAlias = config.auth.keyStore.alias,
                     jwtKeystorePassword = config.auth.keyStore.password,
                     jwtKeystorePath = config.auth.keyStore.path)),
-            ManagementPortalResourceEnhancer(),
-            HttpExceptionResourceEnhancer(),
-            GeneralExceptionResourceEnhancer())
+            ConfigLoader.Enhancers.ecdsa,
+            ConfigLoader.Enhancers.httpException,
+            ConfigLoader.Enhancers.generalException)
 }

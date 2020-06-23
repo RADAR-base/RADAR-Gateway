@@ -15,7 +15,9 @@ import java.util.concurrent.Semaphore
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.Response
 
-class ProducerPool(@Context private val config: Config): Closeable {
+class ProducerPool(
+        @Context private val config: Config
+): Closeable {
     private val semaphore = Semaphore(config.server.maxRequests)
     private val pool = ArrayBlockingQueue<KafkaAvroProducer>(config.kafka.poolSize)
 
