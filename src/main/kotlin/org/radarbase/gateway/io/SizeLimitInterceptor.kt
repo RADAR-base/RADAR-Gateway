@@ -19,7 +19,7 @@ import javax.ws.rs.ext.ReaderInterceptorContext
 @Priority(Priorities.ENTITY_CODER + 100)
 class SizeLimitInterceptor(@Context private val config: Config) : ReaderInterceptor {
     override fun aroundReadFrom(context: ReaderInterceptorContext): Any {
-        context.inputStream = LimitedInputStream(context.inputStream, config.maxRequestSize)
+        context.inputStream = LimitedInputStream(context.inputStream, config.server.maxRequestSize)
         return context.proceed()
     }
 }

@@ -29,6 +29,7 @@ dependencies {
 
     testImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
 
+    integrationTestImplementation group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp3Version
     integrationTestImplementation group: 'org.radarcns', name: 'radar-schemas-commons', version: radarSchemasVersion
     integrationTestImplementation group: 'org.radarbase', name: 'radar-commons-testing', version: radarCommonsVersion
 }
@@ -42,6 +43,7 @@ compileIntegrationTestKotlin {
 }
 
 task integrationTest(type: Test) {
+    useJUnitPlatform()
     description = "Run integration tests (located in src/integrationTest/...)."
     group = 'verification'
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
@@ -73,4 +75,6 @@ dockerCompose.isRequiredBy(integrationTest)
 dockerCompose {
     useComposeFiles = ['src/integrationTest/docker/docker-compose.yml']
     stopContainers = project.hasProperty("dockerCompose.stopContainers") ? Boolean.parseBoolean(project.property("dockerCompose.stopContainers") as String) : true
+    waitForTcpPortsTimeout = Duration.ofMinutes(3)
+    environment.put('SERVICES_HOST', 'localhost')
 }

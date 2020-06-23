@@ -1,21 +1,18 @@
 package org.radarbase.gateway.filter
 
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.radarbase.gateway.Config
 import org.radarbase.gateway.inject.ProcessAvro
-import org.radarbase.gateway.util.CachedSet
-import org.radarbase.gateway.util.Json
-import org.radarbase.jersey.exception.HttpBadGatewayException
+import org.radarbase.gateway.kafka.KafkaAdminService
+import org.radarbase.jersey.exception.HttpApplicationException
 import org.radarbase.jersey.exception.HttpNotFoundException
-import java.io.IOException
-import java.time.Duration
+import org.slf4j.LoggerFactory
+import java.util.concurrent.ExecutionException
 import javax.annotation.Priority
 import javax.inject.Singleton
 import javax.ws.rs.Priorities
 import javax.ws.rs.container.ContainerRequestContext
 import javax.ws.rs.container.ContainerRequestFilter
 import javax.ws.rs.core.Context
+import javax.ws.rs.core.Response
 import javax.ws.rs.ext.Provider
 
 /**
@@ -25,39 +22,24 @@ import javax.ws.rs.ext.Provider
 @ProcessAvro
 @Priority(Priorities.USER)
 @Singleton
-class KafkaTopicFilter constructor(@Context config: Config, @Context private val client: OkHttpClient) : ContainerRequestFilter {
-    private val cachedTopics = CachedSet(SUCCESS_TIMEOUT, FAILURE_TIMEOUT, this::getSubjects)
-    private val stringArrayReader = Json.mapper.readerFor(Array<String>::class.java)
-    private val request = Request.Builder().url("${config.restProxyUrl}/topics").build()
-
+class KafkaTopicFilter constructor(
+        @Context private val kafkaAdmin: KafkaAdminService
+) : ContainerRequestFilter {
     override fun filter(requestContext: ContainerRequestContext) {
         val topic = requestContext.uriInfo.pathParameters.getFirst("topic_name")
 
-        // topic exists or exists after an update
-        if (!cachedTopics.contains(topic)) {
-            throw HttpNotFoundException("not_found", "Topic $topic not present in Kafka.")
-        }
-    }
-
-    private fun getSubjects(): Set<String> {
         try {
-            return client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    throw HttpBadGatewayException("Cannot query rest proxy url: " + response.code)
-                }
-                val input = response.body?.byteStream() ?: throw HttpBadGatewayException(
-                        "Rest proxy did not return any data")
-
-                stringArrayReader.readValue<Array<String>>(input).toSet()
+            // topic exists or exists after an update
+            if (!kafkaAdmin.containsTopic(topic)) {
+                throw HttpNotFoundException("not_found", "Topic $topic not present in Kafka.")
             }
-        } catch (ex: IOException) {
-            throw HttpBadGatewayException(
-                    "Failed to retrieve topics from Kafka REST PROXY: ${ex.message}")
+        } catch (ex: ExecutionException) {
+            logger.error("Failed to list topics", ex)
+            throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "Cannot complete topic list operation")
         }
     }
 
-    companion object Constants {
-        private val SUCCESS_TIMEOUT = Duration.ofHours(1)
-        private val FAILURE_TIMEOUT = Duration.ofMinutes(1)
+    companion object {
+        private val logger = LoggerFactory.getLogger(KafkaTopicFilter::class.java)
     }
 }
