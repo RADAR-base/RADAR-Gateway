@@ -13,6 +13,7 @@ class SchemaRetrieverFactory: Supplier<SchemaRetriever> {
     private lateinit var config: Config
 
     override fun get(): SchemaRetriever {
-        return SchemaRetriever(ServerConfig(config.kafka.serialization[SCHEMA_REGISTRY_URL_CONFIG]), 30)
+        val server = ServerConfig(config.kafka.serialization[SCHEMA_REGISTRY_URL_CONFIG])
+        return SchemaRetriever(server, 30, 300)
     }
 }

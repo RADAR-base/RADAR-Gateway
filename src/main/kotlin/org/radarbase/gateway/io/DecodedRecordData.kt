@@ -38,8 +38,8 @@ class DecodedRecordData(
         remaining = decoder.readArrayStart().toInt()
         size = remaining
 
-        keySchemaMetadata = schemaRetriever.getSchemaMetadata(topicName, false, keyVersion)
-        valueSchemaMetadata = schemaRetriever.getSchemaMetadata(topicName, true, valueVersion)
+        keySchemaMetadata = schemaRetriever.getBySubjectAndVersion(topicName, false, keyVersion)
+        valueSchemaMetadata = schemaRetriever.getBySubjectAndVersion(topicName, true, valueVersion)
 
         topic = AvroTopic(topicName, keySchemaMetadata.schema, valueSchemaMetadata.schema,
                 GenericRecord::class.java, GenericRecord::class.java)

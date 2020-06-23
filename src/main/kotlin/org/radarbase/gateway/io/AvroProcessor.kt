@@ -139,7 +139,7 @@ class AvroProcessor(
     }
 
     private fun createMapping(topic: String, ofValue: Boolean, sourceSchema: Schema): JsonToObjectMapping {
-        val latestSchema = schemaRetriever.getSchemaMetadata(topic, ofValue, -1)
+        val latestSchema = schemaRetriever.getBySubjectAndVersion(topic, ofValue, -1)
         val schemaMapper = AvroDataMapperFactory.get().createMapper(sourceSchema, latestSchema.schema, null)
         return JsonToObjectMapping(sourceSchema, latestSchema.schema, latestSchema.id, schemaMapper)
     }
