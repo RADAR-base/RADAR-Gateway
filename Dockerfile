@@ -18,8 +18,12 @@ WORKDIR /code
 ENV GRADLE_OPTS -Dorg.gradle.daemon=false -Dorg.gradle.project.profile=prod
 
 COPY ./gradle/wrapper/ /code/gradle/wrapper
+COPY ./gradlew /code/
+
+RUN ./gradlew --version
+
 COPY ./gradle/profile.prod.gradle /code/gradle/
-COPY ./build.gradle ./gradle.properties ./gradlew ./settings.gradle /code/
+COPY ./build.gradle ./gradle.properties ./settings.gradle /code/
 
 RUN ./gradlew downloadDependencies
 
