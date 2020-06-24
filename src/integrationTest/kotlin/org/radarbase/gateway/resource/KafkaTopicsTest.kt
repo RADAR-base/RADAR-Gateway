@@ -225,12 +225,16 @@ class KafkaTopicsTest {
 
         val timeEnd = System.nanoTime()
 
+        val dataSize = if (SHOW_DATA_SIZE) (totalSize.sum() / (NUM_SENDS * NUM_THREADS)).toString() else "not measured"
+        val timePerRequest = numTime.sum() / (numRequests.sum() * 1_000_000)
+        val totalTime = (timeEnd - timeStart) / 1_000_000_000.0
+
         return """
             =============================================
             url: $url, binary: $binary, gzip: $gzip
-            Time per request ${(numTime.sum() / numRequests.sum()) / 1_000_000} milliseconds
-            Time to send data: ${(timeEnd - timeStart) / 1_000_000L / 1000.0} seconds
-            Data size: ${if (SHOW_DATA_SIZE) totalSize.sum() / (NUM_SENDS * NUM_THREADS) else "not measured"}
+            Time per request $timePerRequest milliseconds
+            Time to send data: $totalTime seconds
+            Data size: $dataSize
         """.trimIndent()
     }
 
