@@ -74,6 +74,7 @@ dockerCompose.isRequiredBy(integrationTest)
 
 dockerCompose {
     useComposeFiles = ['src/integrationTest/docker/docker-compose.yml']
+    buildAdditionalArgs = []
     stopContainers = project.hasProperty("dockerCompose.stopContainers") ? Boolean.parseBoolean(project.property("dockerCompose.stopContainers") as String) : true
     waitForTcpPortsTimeout = Duration.ofMinutes(3)
     environment.put('SERVICES_HOST', 'localhost')
