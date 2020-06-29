@@ -73,6 +73,8 @@ class DecodedRecordData(
             override fun hasNext() = remaining > 0
 
             override fun next(): GenericRecord {
+                if (!hasNext()) throw NoSuchElementException()
+
                 val result = readContext.decodeValue(decoder)
                 remaining--
                 if (remaining == 0) {

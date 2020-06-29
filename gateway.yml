@@ -20,3 +20,6 @@ kafka:
 
 auth:
     managementPortalUrl: http://localhost:8080
+    # Whether to check that the user that submits data has the reported source ID registered
+    # in the ManagementPortal.
+    #checkSourceId: true
