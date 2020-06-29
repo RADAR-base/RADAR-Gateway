@@ -25,6 +25,7 @@ data class KafkaConfig(
 
 data class AuthConfig(
         val resourceName: String = "res_gateway",
+        val checkSourceId: Boolean = true,
         val issuer: String? = null,
         val keyStore: KeyStoreConfig = KeyStoreConfig(),
         val publicKeys: KeyConfig = KeyConfig(),
