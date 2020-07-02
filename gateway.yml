@@ -19,7 +19,9 @@ kafka:
     producer:
         bootstrap.servers: kafka-1:9092
     # Kafka Admin Client settings. Read from https://kafka.apache.org/documentation/#adminclientconfigs.
-    # admin: {}
+    #admin:
+        # bootstrap server property is copied from the producer settings if none is provided.
+        #bootstrap.servers: kafka-1:9092
     # Kafka serialization settings, used in KafkaAvroSerializer. Read from [io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig].
     serialization:
         schema.registry.url: http://schema-registry-1:8081
@@ -37,7 +39,13 @@ auth:
     #keyStore:
         # Path to the p12 key store.
         #path: null
-        # Path to the p12 key store.
-        #path: null
-        # Path to the p12 key store.
-        #path: null
+        # Alias in the key store to use
+        #alias: null
+        # Password of the key store
+        #password: null
+    # Plain-text PEM public keys
+    #publicKeys:
+        # ECDSA public keys
+        #ecdsa: []
+        # RSA public keys
+        #rsa: []
