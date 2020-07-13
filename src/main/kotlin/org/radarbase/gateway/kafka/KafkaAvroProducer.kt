@@ -1,7 +1,6 @@
 package org.radarbase.gateway.kafka
 
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
-import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient
 import io.confluent.kafka.serializers.KafkaAvroSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -14,14 +13,14 @@ import java.io.Closeable
 import java.util.concurrent.ExecutionException
 
 class KafkaAvroProducer(
-        config: Config
+        config: Config,
+        schemaRegistryClient: SchemaRegistryClient
 ): Closeable {
     private val producer: Producer<Any, Any>
 
     init {
         logger.info("Creating Kafka producer")
 
-        val schemaRegistryClient = CachedSchemaRegistryClient(config.kafka.serialization[SCHEMA_REGISTRY_URL_CONFIG], 10_000)
         val keySerializer = KafkaAvroSerializer(schemaRegistryClient).apply {
             configure(config.kafka.serialization, true)
         }

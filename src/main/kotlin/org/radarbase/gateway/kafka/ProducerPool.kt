@@ -1,5 +1,10 @@
 package org.radarbase.gateway.kafka
 
+import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient
+import io.confluent.kafka.schemaregistry.client.rest.RestService
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.MAX_SCHEMAS_PER_SUBJECT_CONFIG
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.common.KafkaException
 import org.apache.kafka.common.errors.*
@@ -20,11 +25,24 @@ class ProducerPool(
 ): Closeable {
     private val semaphore = Semaphore(config.server.maxRequests)
     private val pool = ArrayBlockingQueue<KafkaAvroProducer>(config.kafka.poolSize)
+    private val schemaRegistryClient: SchemaRegistryClient
+
+    init {
+        val schemaRegistryUrl = config.kafka.serialization[AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG]
+        val restService = if (schemaRegistryUrl is List<*>) {
+            @Suppress("UNCHECKED_CAST")
+            RestService(schemaRegistryUrl as List<String>)
+        } else {
+            RestService(schemaRegistryUrl as String)
+        }
+        restService.configure(config.kafka.serialization)
+        schemaRegistryClient = CachedSchemaRegistryClient(restService, config.kafka.serialization[MAX_SCHEMAS_PER_SUBJECT_CONFIG] as Int, null, config.kafka.serialization, null)
+    }
 
     fun produce(topic: String, records: List<Pair<GenericRecord, GenericRecord>>) {
         if (!semaphore.tryAcquire()) throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "Too many open Kafka requests")
         try {
-            val producer = pool.poll() ?: KafkaAvroProducer(config)
+            val producer = pool.poll() ?: KafkaAvroProducer(config, schemaRegistryClient)
             var reuse = true
             try {
                 producer.produce(topic, records)

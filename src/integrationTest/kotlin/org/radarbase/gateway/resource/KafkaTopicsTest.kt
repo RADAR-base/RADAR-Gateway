@@ -8,6 +8,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okio.Buffer
 import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.hasItem
@@ -22,6 +23,7 @@ import org.radarbase.gateway.resource.KafkaTopics.Companion.ACCEPT_AVRO_V2_JSON
 import org.radarbase.gateway.util.Json
 import org.radarbase.jersey.auth.filter.AuthenticationFilter.Companion.BEARER
 import org.radarbase.producer.AuthenticationException
+import org.radarbase.producer.rest.GzipRequestInterceptor
 import org.radarbase.producer.rest.RestClient
 import org.radarbase.producer.rest.RestSender
 import org.radarbase.producer.rest.SchemaRetriever
@@ -168,7 +170,23 @@ class KafkaTopicsTest {
     }
 
     private fun sendData(url: String, retriever: SchemaRetriever, topic: AvroTopic<ObservationKey, PhoneAcceleration>, accessToken: String, key: ObservationKey, value: PhoneAcceleration, binary: Boolean, gzip: Boolean): String {
-        val restClient = RestClient.global()
+        val totalSize = LongAdder()
+
+        val restClient = RestClient.newClient()
+                .also { client ->
+                    if (SHOW_DATA_SIZE) {
+                        client.httpClientBuilder()
+                                .addNetworkInterceptor { chain ->
+                                    val request = chain.request()
+                                    request.body?.let { body ->
+                                        val sink = Buffer()
+                                        body.writeTo(sink)
+                                        totalSize.add(sink.size)
+                                    }
+                                    chain.proceed(request)
+                                }
+                    }
+                }
                 .server(ServerConfig(url))
                 .timeout(10, TimeUnit.SECONDS)
                 .gzipCompression(gzip)
@@ -207,11 +225,16 @@ class KafkaTopicsTest {
 
         val timeEnd = System.nanoTime()
 
+        val dataSize = if (SHOW_DATA_SIZE) (totalSize.sum() / (NUM_SENDS * NUM_THREADS)).toString() else "not measured"
+        val timePerRequest = numTime.sum() / (numRequests.sum() * 1_000_000)
+        val totalTime = (timeEnd - timeStart) / 1_000_000_000.0
+
         return """
             =============================================
             url: $url, binary: $binary, gzip: $gzip
-            Time per request ${(numTime.sum() / numRequests.sum()) / 1_000_000} milliseconds
-            Time to send data: ${(timeEnd - timeStart) / 1_000_000L / 1000.0} seconds
+            Time per request $timePerRequest milliseconds
+            Time to send data: $totalTime seconds
+            Data size: $dataSize
         """.trimIndent()
     }
 
@@ -230,6 +253,7 @@ class KafkaTopicsTest {
         private const val REST_PROXY_URL = "http://localhost:8082/"
         private const val NUM_THREADS = 15
         private const val NUM_SENDS = 1
+        private const val SHOW_DATA_SIZE = false
         const val MP_CLIENT = "ManagementPortalapp"
         const val REST_CLIENT = "pRMT"
         const val USER = "sub-1"
