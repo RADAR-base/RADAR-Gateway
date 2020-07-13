@@ -9,6 +9,8 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.radarbase.data.AvroRecordData
+import org.radarbase.gateway.AuthConfig
+import org.radarbase.gateway.Config
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.producer.rest.BinaryRecordRequest
 import org.radarbase.producer.rest.ParsedSchemaMetadata
@@ -57,7 +59,7 @@ class BinaryToAvroConverterTest {
 
             override fun hasRole(projectId: String, role: String) = true
         }
-        val converter = BinaryToAvroConverter(schemaRetriever, auth)
+        val converter = BinaryToAvroConverter(schemaRetriever, auth, Config())
 
         val genericKey = GenericRecordBuilder(ObservationKey.getClassSchema()).apply {
             this["projectId"] = "p"

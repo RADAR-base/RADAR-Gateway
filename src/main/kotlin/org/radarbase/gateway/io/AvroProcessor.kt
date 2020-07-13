@@ -121,8 +121,13 @@ class AvroProcessor(
             }
         } ?: auth.defaultProject
 
-        auth.checkPermissionOnSource(Permission.MEASUREMENT_CREATE,
-                projectId, key["userId"]?.asText(), key["sourceId"]?.asText())
+        if (config.auth.checkSourceId) {
+            auth.checkPermissionOnSource(Permission.MEASUREMENT_CREATE,
+                    projectId, key["userId"]?.asText(), key["sourceId"]?.asText())
+        } else {
+            auth.checkPermissionOnSubject(Permission.MEASUREMENT_CREATE,
+                    projectId, key["userId"]?.asText())
+        }
 
         return keyMapping.jsonToAvro(key)
     }

@@ -8,6 +8,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.io.BinaryDecoder
 import org.apache.avro.io.Decoder
 import org.apache.avro.io.DecoderFactory
+import org.radarbase.gateway.Config
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.jersey.exception.HttpInvalidContentException
 import org.radarbase.producer.rest.SchemaRetriever
@@ -19,7 +20,8 @@ import javax.ws.rs.core.Context
 /** Converts binary input from a RecordSet to Kafka JSON. */
 class BinaryToAvroConverter(
         @Context private val schemaRetriever: SchemaRetriever,
-        @Context private val auth: Auth) {
+        @Context private val auth: Auth,
+        @Context private val config: Config) {
 
     private var binaryDecoder: BinaryDecoder? = null
     private val readContext = ReadContext()
@@ -29,7 +31,7 @@ class BinaryToAvroConverter(
 
         binaryDecoder = decoder
 
-        val recordData = DecodedRecordData(topic, decoder, schemaRetriever, auth, readContext)
+        val recordData = DecodedRecordData(topic, decoder, schemaRetriever, auth, readContext, config.auth.checkSourceId)
 
         return AvroProcessingResult(
                 recordData.keySchemaMetadata.id,

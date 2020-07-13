@@ -16,7 +16,8 @@ class DecodedRecordData(
         private val decoder: BinaryDecoder,
         schemaRetriever: SchemaRetriever,
         auth: Auth,
-        private val readContext: BinaryToAvroConverter.ReadContext) : RecordData<GenericRecord, GenericRecord> {
+        private val readContext: BinaryToAvroConverter.ReadContext,
+        checkSources: Boolean) : RecordData<GenericRecord, GenericRecord> {
 
     private val key: GenericRecord
     private var size: Int
@@ -33,7 +34,11 @@ class DecodedRecordData(
         val userId = if (decoder.readIndex() == 1) decoder.readString() else auth.userId
         val sourceId = decoder.readString()
 
-        auth.checkPermissionOnSource(Permission.MEASUREMENT_CREATE, projectId, userId, sourceId)
+        if (checkSources) {
+            auth.checkPermissionOnSource(Permission.MEASUREMENT_CREATE, projectId, userId, sourceId)
+        } else {
+            auth.checkPermissionOnSubject(Permission.MEASUREMENT_CREATE, projectId, userId)
+        }
 
         remaining = decoder.readArrayStart().toInt()
         size = remaining
@@ -68,6 +73,8 @@ class DecodedRecordData(
             override fun hasNext() = remaining > 0
 
             override fun next(): GenericRecord {
+                if (!hasNext()) throw NoSuchElementException()
+
                 val result = readContext.decodeValue(decoder)
                 remaining--
                 if (remaining == 0) {
