@@ -1,20 +1,23 @@
 package org.radarbase.gateway.io
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.nhaarman.mockitokotlin2.doReturn
+import com.nhaarman.mockitokotlin2.mock
 import okio.Buffer
+import org.apache.avro.generic.GenericRecordBuilder
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
 import org.radarbase.data.AvroRecordData
+import org.radarbase.jersey.auth.Auth
 import org.radarbase.producer.rest.BinaryRecordRequest
 import org.radarbase.producer.rest.ParsedSchemaMetadata
 import org.radarbase.producer.rest.SchemaRetriever
 import org.radarbase.topic.AvroTopic
 import org.radarcns.auth.authorization.Permission
-import org.radarbase.gateway.auth.Auth
+import org.radarcns.auth.token.RadarToken
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
-import kotlin.text.Charsets.UTF_8
 
 class BinaryToAvroConverterTest {
     @Test
@@ -33,25 +36,44 @@ class BinaryToAvroConverterTest {
         val requestBuffer = Buffer()
         binaryRequest.writeToSink(requestBuffer)
 
-        val schemaRetriever = mock(SchemaRetriever::class.java)
-        `when`(schemaRetriever.getSchemaMetadata("test", false, 1)).thenReturn(keySchemaMetadata)
-        `when`(schemaRetriever.getSchemaMetadata("test", true, 1)).thenReturn(valueSchemaMetadata)
+        val schemaRetriever = mock<SchemaRetriever> {
+            on { getBySubjectAndVersion("test", false, 1) } doReturn keySchemaMetadata
+            on { getBySubjectAndVersion("test", true, 1) } doReturn valueSchemaMetadata
+        }
+
+        val token = mock<RadarToken> {
+            on { hasPermissionOnSource(Permission.MEASUREMENT_CREATE, "p", "u", "s") } doReturn true
+        }
 
         val auth = object : Auth {
+            override val token: RadarToken = token
+
+            override fun getClaim(name: String): JsonNode {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+
             override val defaultProject: String = "p"
             override val userId: String = "u"
 
-            override fun checkPermission(projectId: String?, userId: String?, sourceId: String?) {}
-
             override fun hasRole(projectId: String, role: String) = true
-
-            override fun hasPermission(permission: Permission) = true
         }
         val converter = BinaryToAvroConverter(schemaRetriever, auth)
 
-        val proxyBuffer = Buffer()
-        converter.process("test", requestBuffer.inputStream())(proxyBuffer)
-        assertEquals("{\"key_schema_id\":1,\"value_schema_id\":2,\"records\":[{\"key\":{\"projectId\":{\"string\":\"p\"},\"userId\":\"u\",\"sourceId\":\"s\"},\"value\":{\"time\":1.0,\"timeReceived\":1.1,\"x\":1.2,\"y\":1.3,\"z\":1.4}}]}",
-                proxyBuffer.readString(UTF_8))
+        val genericKey = GenericRecordBuilder(ObservationKey.getClassSchema()).apply {
+            this["projectId"] = "p"
+            this["userId"] = "u"
+            this["sourceId"] = "s"
+        }.build()
+        val genericValue = GenericRecordBuilder(PhoneAcceleration.getClassSchema()).apply {
+            set("time", 1.0)
+            set("timeReceived", 1.1)
+            set("x", 1.2f)
+            set("y", 1.3f)
+            set("z", 1.4f)
+        }.build()
+
+        assertEquals(
+                AvroProcessingResult(1, 2, listOf(Pair(genericKey, genericValue))),
+                converter.process("test", requestBuffer.inputStream()))
     }
 }

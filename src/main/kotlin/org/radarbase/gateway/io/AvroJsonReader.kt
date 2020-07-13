@@ -2,14 +2,13 @@ package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonNode
-import org.radarbase.gateway.exception.HttpApplicationException
 import org.radarbase.gateway.util.Json
+import org.radarbase.jersey.exception.HttpBadRequestException
 import java.io.InputStream
 import java.lang.reflect.Type
 import javax.ws.rs.Consumes
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
-import javax.ws.rs.core.Response
 import javax.ws.rs.ext.MessageBodyReader
 import javax.ws.rs.ext.Provider
 
@@ -25,8 +24,8 @@ class AvroJsonReader : MessageBodyReader<JsonNode> {
         return try {
             parser.readValueAsTree<JsonNode?>()
         } catch (ex: JsonParseException) {
-            throw HttpApplicationException(Response.Status.BAD_REQUEST, "malformed_json", ex.message)
-        } ?: throw HttpApplicationException(Response.Status.BAD_REQUEST, "malformed_json", "No content given")
+            throw HttpBadRequestException("malformed_json", ex.message ?: ex.toString())
+        } ?: throw HttpBadRequestException("malformed_json", "No content given")
     }
 
     override fun isReadable(type: Class<*>?, genericType: Type?,

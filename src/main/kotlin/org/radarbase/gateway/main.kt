@@ -1,55 +1,33 @@
 package org.radarbase.gateway
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import org.slf4j.Logger
+import org.radarbase.jersey.GrizzlyServer
+import org.radarbase.jersey.config.ConfigLoader
 import org.slf4j.LoggerFactory
-import java.io.File
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Paths
+import java.lang.IllegalStateException
 import kotlin.system.exitProcess
 
-val logger: Logger = LoggerFactory.getLogger("org.radarbase.gateway")
-
-fun loadConfig(args: Array<String>): Config {
-    val configFileName = when {
-        args.size == 1 -> args[0]
-        Files.exists(Paths.get("gateway.yml")) -> "gateway.yml"
-        else -> null
-    }
-    return if (configFileName != null) {
-        val configFile = File(configFileName)
-        logger.info("Reading configuration from ${configFile.absolutePath}")
-        try {
-            val mapper = ObjectMapper(YAMLFactory())
-            mapper.readValue(configFile, Config::class.java)
-        } catch (ex: IOException) {
-            logger.error("Usage: radar-gateway [config.yml]")
-            logger.error("Failed to read config file $configFile: ${ex.message}")
-            exitProcess(1)
-        }
-    } else Config()
-}
-
 fun main(args: Array<String>) {
-    val config = loadConfig(args)
-
-    val server = GrizzlyServer(config)
-
-    // register shutdown hook
-    Runtime.getRuntime().addShutdownHook(Thread(Runnable {
-        logger.info("Stopping server..")
-        server.shutdown()
-    }, "shutdownHook"))
+    val config = try {
+        ConfigLoader.loadConfig<Config>(listOf(
+                "gateway.yml",
+                "/etc/radar-gateway/gateway.yml"), args)
+                .withDefaults()
+    } catch (ex: IllegalArgumentException) {
+        logger.error("No configuration file was found.")
+        logger.error("Usage: radar-gateway <config-file>")
+        exitProcess(1)
+    }
 
     try {
-        server.start()
-
-        logger.info(String.format("Jersey app started on %s.\nPress Ctrl+C to exit...",
-                config.baseUri))
-        Thread.currentThread().join()
-    } catch (e: Exception) {
-        logger.error("Error starting server: $e")
+        config.validate()
+    } catch (ex: IllegalStateException) {
+        logger.error("Configuration incomplete: {}", ex.message)
+        exitProcess(1)
     }
+
+    val resources = ConfigLoader.loadResources(config.resourceConfig, config)
+    val server = GrizzlyServer(config.server.baseUri, resources, config.server.isJmxEnabled)
+    server.listen()
 }
+
+private val logger = LoggerFactory.getLogger("org.radarbase.gateway.MainKt")

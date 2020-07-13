@@ -1,29 +1,17 @@
 package org.radarbase.gateway.resource
 
-import org.radarbase.gateway.io.ProxyClient
+import org.radarbase.gateway.resource.KafkaTopics.Companion.PRODUCE_AVRO_V1_JSON
+import org.radarbase.gateway.resource.KafkaTopics.Companion.PRODUCE_JSON
 import javax.inject.Singleton
 import javax.ws.rs.GET
-import javax.ws.rs.HEAD
-import javax.ws.rs.OPTIONS
 import javax.ws.rs.Path
-import javax.ws.rs.core.Context
-import javax.ws.rs.core.Response
+import javax.ws.rs.Produces
 
 /** Root path, just forward requests without authentication. */
 @Path("/")
 @Singleton
 class KafkaRoot {
-    @Context
-    private lateinit var proxyClient: ProxyClient
-
-    @OPTIONS
-    fun rootOptions(): Response = Response.noContent()
-            .header("Allow", "HEAD,GET,OPTIONS")
-            .build()
-
     @GET
-    fun root() = proxyClient.proxyRequest("GET")
-
-    @HEAD
-    fun rootHead() = proxyClient.proxyRequest("HEAD")
+    @Produces(PRODUCE_AVRO_V1_JSON, PRODUCE_JSON)
+    fun root() = mapOf<String, String>()
 }

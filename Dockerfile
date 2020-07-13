@@ -18,8 +18,12 @@ WORKDIR /code
 ENV GRADLE_OPTS -Dorg.gradle.daemon=false -Dorg.gradle.project.profile=prod
 
 COPY ./gradle/wrapper/ /code/gradle/wrapper
+COPY ./gradlew /code/
+
+RUN ./gradlew --version
+
 COPY ./gradle/profile.prod.gradle /code/gradle/
-COPY ./build.gradle ./gradle.properties ./gradlew ./settings.gradle /code/
+COPY ./build.gradle ./gradle.properties ./settings.gradle /code/
 
 RUN ./gradlew downloadDependencies
 
@@ -27,18 +31,14 @@ COPY ./src/ /code/src
 
 RUN ./gradlew -Dkotlin.compiler.execution.strategy="in-process" -Dorg.gradle.parallel=false -Pkotlin.incremental=false distTar \
     && cd build/distributions \
-    && tar xf *.tar \
-    && rm *.tar radar-gateway-*/lib/radar-gateway-*.jar
+    && tar xzf *.tar.gz \
+    && rm *.tar.gz radar-gateway-*/lib/radar-gateway-*.jar
 
 FROM openjdk:11-jdk-oraclelinux7
 
 MAINTAINER @blootsvoets
 
 LABEL description="RADAR-base Gateway docker container"
-
-RUN apt-get update && \
-        apt-get install -y curl && \
-        rm -rf /var/lib/apt/lists/* # remove the cached files.
 
 COPY --from=builder /code/build/distributions/radar-gateway-*/bin/* /usr/bin/
 COPY --from=builder /code/build/distributions/radar-gateway-*/lib/* /usr/lib/

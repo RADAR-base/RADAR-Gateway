@@ -5,10 +5,11 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.io.BinaryDecoder
 import org.radarbase.data.RecordData
+import org.radarbase.jersey.auth.Auth
 import org.radarbase.producer.rest.ParsedSchemaMetadata
 import org.radarbase.producer.rest.SchemaRetriever
 import org.radarbase.topic.AvroTopic
-import org.radarbase.gateway.auth.Auth
+import org.radarcns.auth.authorization.Permission
 
 class DecodedRecordData(
         topicName: String,
@@ -32,13 +33,13 @@ class DecodedRecordData(
         val userId = if (decoder.readIndex() == 1) decoder.readString() else auth.userId
         val sourceId = decoder.readString()
 
-        auth.checkPermission(projectId, userId, sourceId)
+        auth.checkPermissionOnSource(Permission.MEASUREMENT_CREATE, projectId, userId, sourceId)
 
         remaining = decoder.readArrayStart().toInt()
         size = remaining
 
-        keySchemaMetadata = schemaRetriever.getSchemaMetadata(topicName, false, keyVersion)
-        valueSchemaMetadata = schemaRetriever.getSchemaMetadata(topicName, true, valueVersion)
+        keySchemaMetadata = schemaRetriever.getBySubjectAndVersion(topicName, false, keyVersion)
+        valueSchemaMetadata = schemaRetriever.getBySubjectAndVersion(topicName, true, valueVersion)
 
         topic = AvroTopic(topicName, keySchemaMetadata.schema, valueSchemaMetadata.schema,
                 GenericRecord::class.java, GenericRecord::class.java)
@@ -61,8 +62,7 @@ class DecodedRecordData(
     override fun isEmpty() = size == 0
 
     override fun iterator(): MutableIterator<GenericRecord> {
-        if (remaining == 0)
-            throw IllegalStateException("Cannot read decoded record data twice.")
+        check(remaining != 0) { "Cannot read decoded record data twice." }
 
         return object : MutableIterator<GenericRecord> {
             override fun hasNext() = remaining > 0
