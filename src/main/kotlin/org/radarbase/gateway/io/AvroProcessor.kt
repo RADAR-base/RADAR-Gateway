@@ -47,6 +47,7 @@ class AvroProcessor(
     private val cleanReference: SchedulingService.RepeatReference
 
     init {
+        // Clean stale caches regularly. This reduces memory use for caches that aren't being used.
         cleanReference = schedulingService.repeat(SCHEMA_CLEAN, SCHEMA_CLEAN) {
             idMapping.values.removeIf { it.isStale }
             schemaMapping.values.removeIf { it.isStale }
