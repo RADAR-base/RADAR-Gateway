@@ -3,6 +3,7 @@ package org.radarbase.gateway.inject
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig.USER_INFO_CONFIG
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_USER_INFO_CONFIG
+import okhttp3.Credentials
 import okhttp3.Headers.Companion.headersOf
 import org.radarbase.config.ServerConfig
 import org.radarbase.gateway.Config
@@ -26,8 +27,9 @@ class SchemaRetrieverFactory(
         val basicCredentials = (config.kafka.serialization[SCHEMA_REGISTRY_USER_INFO_CONFIG]
                 ?: config.kafka.serialization[USER_INFO_CONFIG]) as? String
 
-        val headers = if (basicCredentials != null) {
-            headersOf("Authorization", basicCredentials)
+        val headers = if (basicCredentials != null && basicCredentials.contains(':')) {
+            val (username, password) = basicCredentials.split(':', limit = 1)
+            headersOf("Authorization", Credentials.basic(username, password))
         } else headersOf()
 
         return SchemaRetriever(RestClient.global()
