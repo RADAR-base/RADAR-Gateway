@@ -24,11 +24,11 @@ class SchemaRetrieverFactory(
             else -> throw IllegalStateException("Configuration does not contain valid schema.registry.url")
         }
         @Suppress("DEPRECATION")
-        val basicCredentials = (config.kafka.serialization[SCHEMA_REGISTRY_USER_INFO_CONFIG]
-                ?: config.kafka.serialization[USER_INFO_CONFIG]) as? String
+        val basicCredentials = (config.kafka.serialization[SCHEMA_REGISTRY_USER_INFO_CONFIG].takeIf { it is String && it.isNotEmpty() }
+                ?: config.kafka.serialization[USER_INFO_CONFIG]).takeIf { it is String && it.isNotEmpty() } as String?
 
         val headers = if (basicCredentials != null && basicCredentials.contains(':')) {
-            val (username, password) = basicCredentials.split(':', limit = 1)
+            val (username, password) = basicCredentials.split(':', limit = 2)
             headersOf("Authorization", Credentials.basic(username, password))
         } else headersOf()
 
