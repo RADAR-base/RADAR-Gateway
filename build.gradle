@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'org.radarbase'
-version '0.5.1-SNAPSHOT'
+version '0.5.1'
 
 ext {
     githubRepoName = 'RADAR-Base/RADAR-Gateway'
