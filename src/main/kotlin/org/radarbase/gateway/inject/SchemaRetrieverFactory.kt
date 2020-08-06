@@ -3,6 +3,7 @@ package org.radarbase.gateway.inject
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig.USER_INFO_CONFIG
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_USER_INFO_CONFIG
+import okhttp3.Credentials
 import okhttp3.Headers.Companion.headersOf
 import org.radarbase.config.ServerConfig
 import org.radarbase.gateway.Config
@@ -23,11 +24,12 @@ class SchemaRetrieverFactory(
             else -> throw IllegalStateException("Configuration does not contain valid schema.registry.url")
         }
         @Suppress("DEPRECATION")
-        val basicCredentials = (config.kafka.serialization[SCHEMA_REGISTRY_USER_INFO_CONFIG]
-                ?: config.kafka.serialization[USER_INFO_CONFIG]) as? String
+        val basicCredentials = (config.kafka.serialization[SCHEMA_REGISTRY_USER_INFO_CONFIG].takeIf { it is String && it.isNotEmpty() }
+                ?: config.kafka.serialization[USER_INFO_CONFIG]).takeIf { it is String && it.isNotEmpty() } as String?
 
-        val headers = if (basicCredentials != null) {
-            headersOf("Authorization", basicCredentials)
+        val headers = if (basicCredentials != null && basicCredentials.contains(':')) {
+            val (username, password) = basicCredentials.split(':', limit = 2)
+            headersOf("Authorization", Credentials.basic(username, password))
         } else headersOf()
 
         return SchemaRetriever(RestClient.global()

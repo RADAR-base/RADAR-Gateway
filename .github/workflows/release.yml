@@ -34,9 +34,6 @@ jobs:
             # Compile code
             - name: Compile code
               run: ./gradlew assemble
-            # Upload it to JFrog Bintray
-            - name: Upload to Bintray
-              run: ./gradlew bintrayUpload
             # Upload it to GitHub
             - name: Upload to GitHub
               uses: AButler/upload-release-assets@v2.0

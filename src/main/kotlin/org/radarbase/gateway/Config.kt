@@ -96,6 +96,11 @@ data class KafkaConfig(
 data class AuthConfig(
         /** OAuth 2.0 resource name. */
         val resourceName: String = "res_gateway",
+        /**
+         * Whether to check that the user that submits data has the reported source ID registered
+         * in the ManagementPortal.
+         */
+        val checkSourceId: Boolean = true,
         /** OAuth 2.0 token issuer. If null, this is not checked. */
         val issuer: String? = null,
         /**
