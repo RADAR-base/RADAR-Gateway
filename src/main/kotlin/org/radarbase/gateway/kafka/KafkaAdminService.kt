@@ -24,7 +24,7 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
                     .get(3L, TimeUnit.SECONDS)
                     .toSet()
         } catch (ex: Exception) {
-            throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "zookeeper_unavailable", ex.message ?: ex.cause?.message)
+            throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "kafka_unavailable", ex.message ?: ex.cause?.message)
         }
     }
     private val topicInfo: ConcurrentMap<String, CachedValue<TopicInfo>> = ConcurrentHashMap()
@@ -47,7 +47,7 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
                             .get(3L, TimeUnit.SECONDS)
                 } catch (ex: Exception) {
                     logger.error("Failed to describe topics", ex)
-                    throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "zookeeper_unavailable", ex.message ?: ex.cause?.message)
+                    throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "kafka_unavailable", ex.message ?: ex.cause?.message)
                 }
 
                 TopicInfo(topic, topicDescription.partitions().map { TopicPartitionInfo(it.partition()) })

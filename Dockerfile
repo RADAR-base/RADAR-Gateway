@@ -10,31 +10,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:11-jdk-oraclelinux7 as builder
+FROM gradle:6.6.1-jdk11 as builder
 
 RUN mkdir /code
 WORKDIR /code
 
-ENV GRADLE_OPTS -Dorg.gradle.daemon=false -Dorg.gradle.project.profile=prod
+ENV GRADLE_USER_HOME=/code/.gradlecache
 
-COPY ./gradle/wrapper/ /code/gradle/wrapper
-COPY ./gradlew /code/
+COPY ./build.gradle.kts ./gradle.properties ./settings.gradle.kts /code/
 
-RUN ./gradlew --version
-
-COPY ./gradle/profile.prod.gradle /code/gradle/
-COPY ./build.gradle ./gradle.properties ./settings.gradle /code/
-
-RUN ./gradlew downloadDependencies
+RUN gradle downloadDockerDependencies
 
 COPY ./src/ /code/src
 
-RUN ./gradlew -Dkotlin.compiler.execution.strategy="in-process" -Dorg.gradle.parallel=false -Pkotlin.incremental=false distTar \
+RUN gradle distTar \
     && cd build/distributions \
     && tar xzf *.tar.gz \
     && rm *.tar.gz radar-gateway-*/lib/radar-gateway-*.jar
 
-FROM openjdk:11-jdk-oraclelinux7
+FROM openjdk:11-jre-slim
 
 MAINTAINER @blootsvoets
 
