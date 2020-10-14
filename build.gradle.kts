@@ -14,13 +14,6 @@ group = "org.radarbase"
 version = "0.5.2-SNAPSHOT"
 description = "RADAR Gateway to handle secured data flow to backend."
 
-extra.apply {
-    set("githubRepoName", "RADAR-Base/RADAR-Gateway")
-    set("githubUrl", "https://github.com/" + get("githubRepoName") + ".git")
-    set("issueUrl", "https://github.com/" + get("githubRepoName") + "/issues")
-    set("website", "http://radar-base.org")
-}
-
 repositories {
     jcenter()
     // Non-jcenter radar releases
@@ -36,8 +29,10 @@ val integrationTest = testSets.create("integrationTest")
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("reflect"))
 
-    implementation("org.radarbase:radar-commons:${project.property("radarCommonsVersion")}")
+    val radarCommonsVersion: String by project
+    implementation("org.radarbase:radar-commons:$radarCommonsVersion")
     implementation("org.radarbase:radar-jersey:${project.property("radarJerseyVersion")}")
     implementation("org.radarbase:lzfse-decode:${project.property("lzfseVersion")}")
 
@@ -56,8 +51,6 @@ dependencies {
     val junitVersion: String by project
     val okhttp3Version: String by project
     val radarSchemasVersion: String by project
-    val radarCommonsVersion: String by project
-
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
     testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version")
@@ -114,22 +107,28 @@ idea {
 
 
 tasks.register("downloadDockerDependencies") {
-    configurations["compileClasspath"].files
-    configurations["runtimeClasspath"].files
-    println("Downloaded all dependencies")
+    doFirst {
+        configurations["compileClasspath"].files
+        configurations["runtimeClasspath"].files
+        println("Downloaded all dependencies")
+    }
+    outputs.upToDateWhen { false }
 }
 
 tasks.register("downloadDependencies") {
-    configurations.asMap
-            .filterValues { it.isCanBeResolved }
-            .forEach { (name, config) ->
-                try {
-                    config.files
-                } catch (ex: Exception) {
-                    project.logger.warn("Cannot find dependency for configuration {}", name, ex)
+    doFirst {
+        configurations.asMap
+                .filterValues { it.isCanBeResolved }
+                .forEach { (name, config) ->
+                    try {
+                        config.files
+                    } catch (ex: Exception) {
+                        project.logger.warn("Cannot find dependency for configuration {}", name, ex)
+                    }
                 }
-            }
-    println("Downloaded all dependencies")
+        println("Downloaded all dependencies")
+    }
+    outputs.upToDateWhen { false }
 }
 
 tasks.wrapper {
