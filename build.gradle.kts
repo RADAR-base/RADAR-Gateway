@@ -72,6 +72,13 @@ tasks.withType<KotlinCompile> {
     }
 }
 
+tasks.withType<Test> {
+    testLogging {
+        showStandardStreams = true
+    }
+    useJUnitPlatform()
+}
+
 tasks.withType<Tar> {
     compression = Compression.GZIP
     archiveExtension.set("tar.gz")

@@ -1,6 +1,7 @@
 package org.radarbase.gateway.kafka
 
 import org.apache.kafka.clients.admin.AdminClient
+import org.apache.kafka.clients.admin.TopicDescription
 import org.radarbase.gateway.Config
 import org.radarbase.gateway.util.CachedValue
 import org.radarbase.jersey.exception.HttpApplicationException
@@ -24,7 +25,8 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
                     .get(3L, TimeUnit.SECONDS)
                     .toSet()
         } catch (ex: Exception) {
-            throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "kafka_unavailable", ex.message ?: ex.cause?.message)
+            logger.error("Failed to list Kafka topics", ex)
+            throw KafkaUnavailableException(ex)
         }
     }
     private val topicInfo: ConcurrentMap<String, CachedValue<TopicInfo>> = ConcurrentHashMap()
@@ -47,10 +49,10 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
                             .get(3L, TimeUnit.SECONDS)
                 } catch (ex: Exception) {
                     logger.error("Failed to describe topics", ex)
-                    throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "kafka_unavailable", ex.message ?: ex.cause?.message)
+                    throw KafkaUnavailableException(ex)
                 }
 
-                TopicInfo(topic, topicDescription.partitions().map { TopicPartitionInfo(it.partition()) })
+                topicDescription.toTopicInfo()
             }
         }.retrieve()
     }
@@ -64,6 +66,19 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
         private val DESCRIBE_RETRY_DURATION = Duration.ofSeconds(2)
         private val LIST_REFRESH_DURATION = Duration.ofSeconds(10)
         private val LIST_RETRY_DURATION = Duration.ofSeconds(2)
+
+        private fun org.apache.kafka.common.TopicPartitionInfo.toTopicPartitionInfo(): TopicPartitionInfo {
+            return TopicPartitionInfo(partition = partition())
+        }
+
+        private fun TopicDescription.toTopicInfo() = TopicInfo(name(), partitions()
+                .map { it.toTopicPartitionInfo() })
+
+        class KafkaUnavailableException(ex: Exception)
+            : HttpApplicationException(
+                Response.Status.SERVICE_UNAVAILABLE,
+                "kafka_unavailable",
+                ex.message ?: ex.cause?.message ?: ex.javaClass.name)
     }
 
     data class TopicInfo(
