@@ -1,6 +1,7 @@
 package org.radarbase.gateway.resource
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.Credentials
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -9,7 +10,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
-import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.MatcherAssert.assertThat
@@ -20,10 +20,8 @@ import org.radarbase.config.ServerConfig
 import org.radarbase.data.AvroRecordData
 import org.radarbase.gateway.resource.KafkaRootTest.Companion.BASE_URI
 import org.radarbase.gateway.resource.KafkaTopics.Companion.ACCEPT_AVRO_V2_JSON
-import org.radarbase.gateway.util.Json
 import org.radarbase.jersey.auth.filter.AuthenticationFilter.Companion.BEARER
 import org.radarbase.producer.AuthenticationException
-import org.radarbase.producer.rest.GzipRequestInterceptor
 import org.radarbase.producer.rest.RestClient
 import org.radarbase.producer.rest.RestSender
 import org.radarbase.producer.rest.SchemaRetriever
@@ -54,6 +52,7 @@ class KafkaTopicsTest {
                     .newBuilder("api/oauth-clients/pair")!!
                     .addEncodedQueryParameter("clientId", REST_CLIENT)
                     .addEncodedQueryParameter("login", USER)
+                    .addEncodedQueryParameter("persistent", "false")
                     .build())
         }
 
@@ -93,10 +92,10 @@ class KafkaTopicsTest {
         Thread.sleep(2000)
 
         try {
-            testTopicList(BASE_URI, accessToken)
+            testTopicList(accessToken)
         } catch (ex: AuthenticationException) {
             // try again
-            testTopicList(BASE_URI, accessToken)
+            testTopicList(accessToken)
         }
         val results = mutableListOf<String>()
         sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = true, gzip = true)
@@ -104,13 +103,6 @@ class KafkaTopicsTest {
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = true, gzip = false)
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = true)
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = false)
-
-        testTopicList(OLD_GATEWAY_URL, accessToken)
-        sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = true, gzip = true)
-        results += sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = true, gzip = true)
-        results += sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = true, gzip = false)
-        results += sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = false, gzip = true)
-        results += sendData(OLD_GATEWAY_URL, retriever, topic, accessToken, key, value, binary = false, gzip = false)
         results.forEach { println(it) }
 
 
@@ -147,11 +139,11 @@ class KafkaTopicsTest {
         }
     }
 
-    private fun testTopicList(baseUri: String, accessToken: String) {
+    private fun testTopicList(accessToken: String) {
         val gatewayTopicList = httpClient.call(Status.OK) {
-            url("$baseUri/topics")
+            url("$BASE_URI/topics")
             addHeader("Authorization", BEARER + accessToken)
-        }!!.elements().asSequence().map { it.asText() }.toList()
+        }!!.elements().asSequence().mapTo(ArrayList()) { it.asText() }
 
         assertThat(gatewayTopicList, hasItem("test"))
     }
@@ -249,7 +241,6 @@ class KafkaTopicsTest {
 
         private const val MANAGEMENTPORTAL_URL = "http://localhost:8080"
         private const val SCHEMA_REGISTRY_URL = "http://localhost:8081/"
-        private const val OLD_GATEWAY_URL = "http://localhost:8091/radar-gateway"
         private const val REST_PROXY_URL = "http://localhost:8082/"
         private const val NUM_THREADS = 15
         private const val NUM_SENDS = 1
@@ -273,10 +264,12 @@ class KafkaTopicsTest {
                 response.body?.let { responseBody ->
                     val string = responseBody.string()
                     println(string)
-                    Json.mapper.readTree(string)
+                    mapper.readTree(string)
                 }
             }
         }
+
+        private val mapper = ObjectMapper()
 
         fun OkHttpClient.call(expectedStatus: Status, requestSupplier: Request.Builder.() -> Unit): JsonNode? {
             return call(expectedStatus.statusCode, requestSupplier)

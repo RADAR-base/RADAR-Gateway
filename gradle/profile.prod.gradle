@@ -1,5 +1,0 @@
-task downloadDependencies(type: Exec) {
-    configurations.compileClasspath.files
-    configurations.runtimeClasspath.files
-    commandLine 'echo', 'Downloaded all dependencies'
-}

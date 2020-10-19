@@ -10,15 +10,13 @@ import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.AvroProcessorFactory
 import org.radarbase.gateway.io.BinaryToAvroConverter
 import org.radarbase.gateway.io.LzfseEncoder
-import org.radarbase.gateway.kafka.KafkaAdminService
-import org.radarbase.gateway.kafka.KafkaAdminServiceFactory
-import org.radarbase.gateway.kafka.ProducerPool
-import org.radarbase.gateway.kafka.ProducerPoolFactory
+import org.radarbase.gateway.kafka.*
 import org.radarbase.gateway.service.SchedulingService
 import org.radarbase.gateway.service.SchedulingServiceFactory
-import org.radarbase.jersey.auth.ProjectService
 import org.radarbase.jersey.config.ConfigLoader
 import org.radarbase.jersey.config.JerseyResourceEnhancer
+import org.radarbase.jersey.service.HealthService
+import org.radarbase.jersey.service.ProjectService
 import org.radarbase.producer.rest.SchemaRetriever
 import javax.inject.Singleton
 
@@ -64,11 +62,18 @@ class GatewayResourceEnhancer(private val config: Config): JerseyResourceEnhance
                 .to(KafkaAdminService::class.java)
                 .`in`(Singleton::class.java)
 
-        val unverifiedProjectService = object : ProjectService {
-            // no validation done
-            override fun ensureProject(projectId: String) = Unit
-        }
-        bind(unverifiedProjectService)
+        bind(UnverifiedProjectService::class.java)
                 .to(ProjectService::class.java)
+                .`in`(Singleton::class.java)
+
+        bind(KafkaHealthMetric::class.java)
+                .named("kafka")
+                .to(HealthService.Metric::class.java)
+                .`in`(Singleton::class.java)
+    }
+
+    /** Project service without validation of the project's existence. */
+    class UnverifiedProjectService: ProjectService {
+        override fun ensureProject(projectId: String) = Unit
     }
 }
