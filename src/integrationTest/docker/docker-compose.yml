@@ -56,7 +56,7 @@ services:
     ports:
       - "127.0.0.1:8082:8082"
     environment:
-      KAFKA_REST_ZOOKEEPER_CONNECT: zookeeper-1:2181
+      KAFKA_REST_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092
       KAFKA_REST_LISTENERS: http://0.0.0.0:8082
       KAFKA_REST_SCHEMA_REGISTRY_URL: http://schema-registry-1:8081
       KAFKA_REST_HOST_NAME: rest-proxy-1
@@ -66,7 +66,7 @@ services:
   # Management Portal                                                         #
   #---------------------------------------------------------------------------#
   managementportal-app:
-    image: radarbase/management-portal:0.5.8
+    image: radarbase/management-portal:0.6.0
     ports:
       - "127.0.0.1:8080:8080"
     environment:
@@ -79,17 +79,6 @@ services:
       JAVA_OPTS: -Xmx256m  # maximum heap size for the JVM running ManagementPortal, increase this as necessary
     volumes:
       - ./etc/:/mp-includes/
-
-  old-gateway:
-    image: radarbase/radar-gateway:0.4.0
-    depends_on:
-      - rest-proxy-1
-      - managementportal-app
-    ports:
-      - "127.0.0.1:8091:8091"
-    volumes:
-      - ./etc/old-gateway.yml:/etc/radar-gateway/gateway.yml
-    command: ["radar-gateway", "/etc/radar-gateway/gateway.yml"]
 
   gateway:
       build:
