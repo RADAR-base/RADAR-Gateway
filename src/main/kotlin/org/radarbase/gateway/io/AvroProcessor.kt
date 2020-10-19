@@ -1,6 +1,7 @@
 package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import org.apache.avro.Schema
@@ -11,12 +12,12 @@ import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.jsonDefaultValue
 import org.radarbase.gateway.Config
 import org.radarbase.gateway.service.SchedulingService
-import org.radarbase.gateway.util.CachedValue
-import org.radarbase.gateway.util.Json
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.jersey.exception.HttpApplicationException
 import org.radarbase.jersey.exception.HttpBadGatewayException
 import org.radarbase.jersey.exception.HttpInvalidContentException
+import org.radarbase.jersey.util.CacheConfig
+import org.radarbase.jersey.util.CachedValue
 import org.radarbase.producer.rest.AvroDataMapper
 import org.radarbase.producer.rest.AvroDataMapperFactory
 import org.radarbase.producer.rest.RestException
@@ -30,17 +31,17 @@ import java.text.ParseException
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
-import javax.ws.rs.core.Context
 
 /**
  * Reads messages as semantically valid and authenticated Avro for the RADAR platform. Amends
  * unfilled security metadata as necessary.
  */
 class AvroProcessor(
-        @Context private val config: Config,
-        @Context private val auth: Auth,
-        @Context private val schemaRetriever: SchemaRetriever,
-        @Context schedulingService: SchedulingService
+        private val config: Config,
+        private val auth: Auth,
+        private val schemaRetriever: SchemaRetriever,
+        private val objectMapper: ObjectMapper,
+        schedulingService: SchedulingService
 ): Closeable {
     private val idMapping: ConcurrentMap<Pair<String, Int>, CachedValue<JsonToObjectMapping>> = ConcurrentHashMap()
     private val schemaMapping: ConcurrentMap<Pair<String, String>, CachedValue<JsonToObjectMapping>> = ConcurrentHashMap()
@@ -111,7 +112,7 @@ class AvroProcessor(
         val projectId = key["projectId"]?.let { project ->
             if (project.isNull) {
                 // no project ID was provided, fill it in for the sender
-                val newProject = Json.mapper.createObjectNode()
+                val newProject = objectMapper.createObjectNode()
                 newProject.put("string", auth.defaultProject)
                 (key as ObjectNode).set("projectId", newProject) as JsonNode?
                 auth.defaultProject
@@ -155,7 +156,7 @@ class AvroProcessor(
         return when {
             id?.isNumber == true -> {
                 idMapping.computeIfAbsent(Pair(subject, id.asInt())) {
-                    CachedValue(SCHEMA_REFRESH, SCHEMA_RETRY) {
+                    CachedValue(cacheConfig, {
                         val parsedSchema = try {
                             schemaRetriever.getBySubjectAndId(topic, ofValue, id.asInt())
                         } catch (ex: RestException) {
@@ -166,20 +167,20 @@ class AvroProcessor(
                             }
                         }
                         createMapping(topic, ofValue, parsedSchema.schema)
-                    }
-                }.retrieve()
+                    })
+                }.get()
             }
             schema?.isTextual == true -> {
                 schemaMapping.computeIfAbsent(Pair(subject, schema.asText())) {
-                    CachedValue(SCHEMA_REFRESH, SCHEMA_RETRY) {
+                    CachedValue(cacheConfig, {
                         try {
                             val parsedSchema = Schema.Parser().parse(schema.textValue())
                             createMapping(topic, ofValue, parsedSchema)
                         } catch (ex: Exception) {
                             throw throw HttpApplicationException(422, "schema_not_found", "Schema ID not found in subject")
                         }
-                    }
-                }.retrieve()
+                    })
+                }.get()
             }
             else -> throw HttpInvalidContentException("No schema provided")
         }
@@ -358,9 +359,14 @@ class AvroProcessor(
     }
 
     companion object {
-        private val SCHEMA_REFRESH = Duration.ofHours(1)
-        private val SCHEMA_RETRY = Duration.ofMinutes(2)
         private val SCHEMA_CLEAN = Duration.ofHours(2)
+
+        private val cacheConfig = CacheConfig(
+                refreshDuration = Duration.ofHours(1),
+                retryDuration = Duration.ofMinutes(2),
+                staleThresholdDuration = Duration.ofMinutes(30),
+                maxSimultaneousCompute = 3,
+        )
 
         val JsonNode?.isMissing: Boolean
             get() = this == null || this.isNull

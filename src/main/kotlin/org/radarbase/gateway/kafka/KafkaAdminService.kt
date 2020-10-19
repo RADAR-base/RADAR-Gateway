@@ -3,9 +3,11 @@ package org.radarbase.gateway.kafka
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.TopicDescription
 import org.radarbase.gateway.Config
-import org.radarbase.gateway.util.CachedValue
 import org.radarbase.jersey.exception.HttpApplicationException
 import org.radarbase.jersey.exception.HttpNotFoundException
+import org.radarbase.jersey.util.CacheConfig
+import org.radarbase.jersey.util.CachedSet
+import org.radarbase.jersey.util.CachedValue
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.time.Duration
@@ -18,12 +20,12 @@ import javax.ws.rs.core.Response
 class KafkaAdminService(@Context private val config: Config): Closeable {
     private val adminClient: AdminClient = AdminClient.create(config.kafka.admin)
 
-    private val listCache = CachedValue<Set<String>>(LIST_REFRESH_DURATION, LIST_RETRY_DURATION) {
+    private val listCache = CachedSet<String>(listCacheConfig) {
         try {
             adminClient.listTopics()
                     .names()
                     .get(3L, TimeUnit.SECONDS)
-                    .toSet()
+                    .filterTo(LinkedHashSet()) { !it.startsWith('_') }
         } catch (ex: Exception) {
             logger.error("Failed to list Kafka topics", ex)
             throw KafkaUnavailableException(ex)
@@ -31,16 +33,16 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
     }
     private val topicInfo: ConcurrentMap<String, CachedValue<TopicInfo>> = ConcurrentHashMap()
 
-    fun containsTopic(topic: String): Boolean = listCache.compute({ it.contains(topic) }, { it })
+    fun containsTopic(topic: String): Boolean = topic in listCache
 
-    fun listTopics(): List<String> = listCache.retrieve().filter { !it.startsWith('_') }
+    fun listTopics(): Collection<String> = listCache.get()
 
     fun topicInfo(topic: String): TopicInfo {
         if (!containsTopic(topic)) {
             throw HttpNotFoundException("topic_not_found", "Topic $topic does not exist")
         }
-        return topicInfo.computeIfAbsent(topic) { _ ->
-            CachedValue(DESCRIBE_REFRESH_DURATION, DESCRIBE_RETRY_DURATION) {
+        return topicInfo.computeIfAbsent(topic) {
+            CachedValue(describeCacheConfig, {
                 val topicDescription = try {
                     adminClient.describeTopics(listOf(topic))
                             .values()
@@ -53,8 +55,8 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
                 }
 
                 topicDescription.toTopicInfo()
-            }
-        }.retrieve()
+            })
+        }.get()
     }
 
     override fun close() = adminClient.close()
@@ -62,10 +64,16 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
     companion object {
         private val logger = LoggerFactory.getLogger(KafkaAdminService::class.java)
 
-        private val DESCRIBE_REFRESH_DURATION = Duration.ofMinutes(30)
-        private val DESCRIBE_RETRY_DURATION = Duration.ofSeconds(2)
-        private val LIST_REFRESH_DURATION = Duration.ofSeconds(10)
-        private val LIST_RETRY_DURATION = Duration.ofSeconds(2)
+        private val listCacheConfig = CacheConfig(
+                refreshDuration = Duration.ofSeconds(10),
+                retryDuration = Duration.ofSeconds(2),
+                maxSimultaneousCompute = 3,
+        )
+        private val describeCacheConfig = CacheConfig(
+                refreshDuration = Duration.ofMinutes(30),
+                retryDuration = Duration.ofSeconds(2),
+                maxSimultaneousCompute = 2,
+        )
 
         private fun org.apache.kafka.common.TopicPartitionInfo.toTopicPartitionInfo(): TopicPartitionInfo {
             return TopicPartitionInfo(partition = partition())
@@ -83,10 +91,10 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
 
     data class TopicInfo(
             val name: String,
-            val partitions: List<TopicPartitionInfo>
+            val partitions: List<TopicPartitionInfo>,
     )
 
     data class TopicPartitionInfo(
-            val partition: Int
+            val partition: Int,
     )
 }

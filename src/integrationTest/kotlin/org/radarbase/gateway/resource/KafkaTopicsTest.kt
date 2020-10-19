@@ -1,6 +1,7 @@
 package org.radarbase.gateway.resource
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.Credentials
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
