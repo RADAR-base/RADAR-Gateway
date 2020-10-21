@@ -1,4 +1,0 @@
-baseUri: http://0.0.0.0:8091/radar-gateway/
-managementPortalUrl: http://managementportal-app:8080
-restProxyUrl: http://rest-proxy-1:8082
-schemaRegistryUrl: http://schema-registry-1:8081
