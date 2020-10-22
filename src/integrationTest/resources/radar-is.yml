@@ -1,3 +1,0 @@
-resourceName: res_gateway
-publicKeyEndpoints:
-    - http://localhost:8080/oauth/token_key

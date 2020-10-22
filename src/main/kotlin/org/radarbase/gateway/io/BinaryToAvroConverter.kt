@@ -46,7 +46,6 @@ class BinaryToAvroConverter(
             isFastReaderEnabled = true
         }
         private var buffer: ByteBuffer? = null
-        private var record: GenericRecord? = null
         private var valueDecoder : BinaryDecoder? = null
         private var valueReader : GenericDatumReader<GenericRecord>? = null
 
@@ -62,8 +61,7 @@ class BinaryToAvroConverter(
                 buffer = decoder.readBytes(buffer)
                 valueDecoder = DecoderFactory.get().binaryDecoder(ByteBufferBackedInputStream(buffer), valueDecoder)
                 val reader = valueReader ?: throw IllegalStateException("Value reader is not yet set")
-                reader.read(record, valueDecoder)
-                        ?.also { record = it }
+                reader.read(null, valueDecoder)
                         ?: throw HttpInvalidContentException("No record in data")
             } catch (ex: IOException) {
                 throw HttpInvalidContentException("Malformed record contents: ${ex.message}")

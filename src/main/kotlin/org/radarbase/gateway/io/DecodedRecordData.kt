@@ -85,7 +85,7 @@ class DecodedRecordData(
             }
 
             override fun remove() {
-                throw UnsupportedOperationException()
+                throw NotImplementedError()
             }
         }
     }

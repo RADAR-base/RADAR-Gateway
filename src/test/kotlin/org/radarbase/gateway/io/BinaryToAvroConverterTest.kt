@@ -32,7 +32,12 @@ class BinaryToAvroConverterTest {
         val keySchemaMetadata = ParsedSchemaMetadata(1, 1, topic.keySchema)
         val valueSchemaMetadata = ParsedSchemaMetadata(2, 1, topic.valueSchema)
 
-        val requestRecordData = AvroRecordData(topic, ObservationKey("p", "u", "s"), listOf(PhoneAcceleration(1.0, 1.1, 1.2f, 1.3f, 1.4f)))
+        val requestRecordData = AvroRecordData(topic,
+                ObservationKey("p", "u", "s"),
+                listOf(
+                        PhoneAcceleration(1.0, 1.1, 1.2f, 1.3f, 1.4f),
+                        PhoneAcceleration(2.0, 2.1, 2.2f, 2.3f, 2.4f),
+                ))
         val binaryRequest = BinaryRecordRequest(topic)
         binaryRequest.prepare(keySchemaMetadata, valueSchemaMetadata, requestRecordData)
         val requestBuffer = Buffer()
@@ -66,16 +71,26 @@ class BinaryToAvroConverterTest {
             this["userId"] = "u"
             this["sourceId"] = "s"
         }.build()
-        val genericValue = GenericRecordBuilder(PhoneAcceleration.getClassSchema()).apply {
+        val genericValue1 = GenericRecordBuilder(PhoneAcceleration.getClassSchema()).apply {
             set("time", 1.0)
             set("timeReceived", 1.1)
             set("x", 1.2f)
             set("y", 1.3f)
             set("z", 1.4f)
         }.build()
+        val genericValue2 = GenericRecordBuilder(PhoneAcceleration.getClassSchema()).apply {
+            set("time", 2.0)
+            set("timeReceived", 2.1)
+            set("x", 2.2f)
+            set("y", 2.3f)
+            set("z", 2.4f)
+        }.build()
 
         assertEquals(
-                AvroProcessingResult(1, 2, listOf(Pair(genericKey, genericValue))),
+                AvroProcessingResult(1, 2, listOf(
+                        Pair(genericKey, genericValue1),
+                        Pair(genericKey, genericValue2),
+                )),
                 converter.process("test", requestBuffer.inputStream()))
     }
 }
