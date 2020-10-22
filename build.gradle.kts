@@ -14,6 +14,10 @@ group = "org.radarbase"
 version = "0.5.4-SNAPSHOT"
 description = "RADAR Gateway to handle secured data flow to backend."
 
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 repositories {
     jcenter()
     // Non-jcenter radar releases
@@ -52,7 +56,7 @@ dependencies {
     val okhttp3Version: String by project
     val radarSchemasVersion: String by project
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
+    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:[2.2,3.0)")
     testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
@@ -67,8 +71,8 @@ val kotlinApiVersion: String by project
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         jvmTarget = "11"
-        apiVersion = kotlinApiVersion
-        languageVersion = kotlinApiVersion
+        apiVersion = "1.4"
+        languageVersion = "1.4"
     }
 }
 
