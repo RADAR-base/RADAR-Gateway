@@ -56,15 +56,16 @@ data class KafkaConfig(
         /** Kafka serialization settings, used in KafkaAvroSerializer. Read from [io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig]. */
         val serialization: Map<String, Any> = mapOf()) {
     fun withDefaults(): KafkaConfig = copy(
-            producer = producerDefaults + producer,
+            producer = producerDefaults + producer + propertiesFromEnv(KAFKA_PRODUCER_PREFIX),
             admin = mutableMapOf<String, Any>().apply {
                 producer[BOOTSTRAP_SERVERS_CONFIG]?.let {
                     this[BOOTSTRAP_SERVERS_CONFIG] = it
                 }
                 this += adminDefaults
                 this += admin
+                this += propertiesFromEnv(KAFKA_ADMIN_PREFIX)
             },
-            serialization = serializationDefaults + serialization)
+            serialization = serializationDefaults + serialization + propertiesFromEnv(KAFKA_SERIALIZATION_PREFIX))
 
     fun validate() {
         check(producer[BOOTSTRAP_SERVERS_CONFIG] is String) { "$BOOTSTRAP_SERVERS_CONFIG missing in kafka: producer: {} configuration" }
@@ -87,6 +88,20 @@ data class KafkaConfig(
                 "default.api.timeout.ms" to 6000,
                 "request.timeout.ms" to 3000,
                 "retries" to 5)
+
+        private const val KAFKA_PRODUCER_PREFIX = "KAFKA_PRODUCER_"
+        private const val KAFKA_ADMIN_PREFIX = "KAFKA_ADMIN_"
+        private const val KAFKA_SERIALIZATION_PREFIX = "KAFKA_SERIALIZATION_"
+
+        private fun propertiesFromEnv(prefix: String): Map<String, String>  = System.getenv()
+            .filterKeys { it.startsWith(prefix) }
+            .map { (k, v) -> Pair(
+                k.removePrefix(prefix)
+                    .toLowerCase(Locale.US)
+                    .replace('_', '.'),
+                v)
+            }
+            .toMap()
 
         private val serializationDefaults = mapOf<String, Any>(
                 MAX_SCHEMAS_PER_SUBJECT_CONFIG to 10_000)
