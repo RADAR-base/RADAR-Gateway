@@ -1,8 +1,8 @@
-import java.time.Duration
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelectorScheme
 import org.gradle.kotlin.dsl.support.serviceOf
 import org.jetbrains.kotlin.cli.common.toBooleanLenient
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.time.Duration
 
 plugins {
     id("idea")
@@ -26,10 +26,10 @@ configurations {
         val versionSelectorScheme = serviceOf<VersionSelectorScheme>()
         resolutionStrategy.componentSelection.all {
             if (candidate.version.contains("-SNAPSHOT")
-                    || candidate.version.contains("-rc", ignoreCase = true)
-                    || candidate.version.contains(".Draft", ignoreCase = true)
-                    || candidate.version.contains("-alpha", ignoreCase = true)
-                    || candidate.version.contains("-beta", ignoreCase = true)) {
+                || candidate.version.contains("-rc", ignoreCase = true)
+                || candidate.version.contains(".Draft", ignoreCase = true)
+                || candidate.version.contains("-alpha", ignoreCase = true)
+                || candidate.version.contains("-beta", ignoreCase = true)) {
                 val dependency = allDependencies.find { it.group == candidate.group && it.name == candidate.module }
                 if (dependency != null && !versionSelectorScheme.parseSelector(dependency.version).matchesUniqueVersion()) {
                     reject("only releases are allowed for $dependency")
@@ -114,11 +114,11 @@ application {
     mainClassName = "org.radarbase.gateway.MainKt"
 
     applicationDefaultJvmArgs = listOf(
-            "-Dcom.sun.management.jmxremote",
-            "-Dcom.sun.management.jmxremote.local.only=false",
-            "-Dcom.sun.management.jmxremote.port=9010",
-            "-Dcom.sun.management.jmxremote.authenticate=false",
-            "-Dcom.sun.management.jmxremote.ssl=false"
+        "-Dcom.sun.management.jmxremote",
+        "-Dcom.sun.management.jmxremote.local.only=false",
+        "-Dcom.sun.management.jmxremote.port=9010",
+        "-Dcom.sun.management.jmxremote.authenticate=false",
+        "-Dcom.sun.management.jmxremote.ssl=false"
     )
 }
 
@@ -151,14 +151,14 @@ tasks.register("downloadDockerDependencies") {
 tasks.register("downloadDependencies") {
     doFirst {
         configurations.asMap
-                .filterValues { it.isCanBeResolved }
-                .forEach { (name, config) ->
-                    try {
-                        config.files
-                    } catch (ex: Exception) {
-                        project.logger.warn("Cannot find dependency for configuration {}", name, ex)
-                    }
+            .filterValues { it.isCanBeResolved }
+            .forEach { (name, config) ->
+                try {
+                    config.files
+                } catch (ex: Exception) {
+                    project.logger.warn("Cannot find dependency for configuration {}", name, ex)
                 }
+            }
         println("Downloaded all dependencies")
     }
     outputs.upToDateWhen { false }
