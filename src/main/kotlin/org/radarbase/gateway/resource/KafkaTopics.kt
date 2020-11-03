@@ -25,8 +25,8 @@ import javax.ws.rs.core.Response
 @Singleton
 @Authenticated
 class KafkaTopics(
-        @Context private val kafkaAdminService: KafkaAdminService,
-        @Context private val producerPool: ProducerPool
+    @Context private val kafkaAdminService: KafkaAdminService,
+    @Context private val producerPool: ProducerPool,
 ) {
     @GET
     @Produces(PRODUCE_AVRO_V1_JSON)
@@ -35,17 +35,17 @@ class KafkaTopics(
     @Path("/{topic_name}")
     @GET
     fun topic(
-            @PathParam("topic_name") topic: String
+        @PathParam("topic_name") topic: String,
     ) = kafkaAdminService.topicInfo(topic)
 
     @OPTIONS
     @Path("/{topic_name}")
     fun topicOptions(): Response = Response.noContent()
-            .header("Accept", "$ACCEPT_BINARY_V1,$ACCEPT_AVRO_V2_JSON,$ACCEPT_AVRO_V1_JSON")
-            .header("Accept-Encoding", "gzip,lzfse")
-            .header("Accept-Charset", "utf-8")
-            .header("Allow", "HEAD,GET,POST,OPTIONS")
-            .build()
+        .header("Accept", "$ACCEPT_BINARY_V1,$ACCEPT_AVRO_V2_JSON,$ACCEPT_AVRO_V1_JSON")
+        .header("Accept-Encoding", "gzip,lzfse")
+        .header("Accept-Charset", "utf-8")
+        .header("Allow", "HEAD,GET,POST,OPTIONS")
+        .build()
 
     @Path("/{topic_name}")
     @POST
@@ -54,9 +54,10 @@ class KafkaTopics(
     @NeedsPermission(MEASUREMENT, CREATE)
     @ProcessAvro
     fun postToTopic(
-            tree: JsonNode,
-            @PathParam("topic_name") topic: String,
-            @Context avroProcessor: AvroProcessor): TopicPostResponse {
+        tree: JsonNode,
+        @PathParam("topic_name") topic: String,
+        @Context avroProcessor: AvroProcessor,
+    ): TopicPostResponse {
 
         val processingResult = avroProcessor.process(topic, tree)
         producerPool.produce(topic, processingResult.records)
@@ -70,9 +71,10 @@ class KafkaTopics(
     @Produces(PRODUCE_AVRO_V1_JSON, PRODUCE_JSON)
     @NeedsPermission(MEASUREMENT, CREATE)
     fun postToTopicBinary(
-            input: InputStream,
-            @Context binaryToAvroConverter: BinaryToAvroConverter,
-            @PathParam("topic_name") topic: String): TopicPostResponse {
+        input: InputStream,
+        @Context binaryToAvroConverter: BinaryToAvroConverter,
+        @PathParam("topic_name") topic: String,
+    ): TopicPostResponse {
 
         val processingResult = try {
             binaryToAvroConverter.process(topic, input)
@@ -87,10 +89,11 @@ class KafkaTopics(
     }
 
     data class TopicPostResponse(
-            @JsonProperty("key_schema_id")
-            val keySchemaId: Int,
-            @JsonProperty("value_schema_id")
-            val valueSchemaId: Int)
+        @JsonProperty("key_schema_id")
+        val keySchemaId: Int,
+        @JsonProperty("value_schema_id")
+        val valueSchemaId: Int,
+    )
 
     companion object {
         private val logger = LoggerFactory.getLogger(KafkaTopics::class.java)

@@ -17,15 +17,15 @@ import java.util.concurrent.TimeUnit
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.Response
 
-class KafkaAdminService(@Context private val config: Config): Closeable {
+class KafkaAdminService(@Context private val config: Config) : Closeable {
     private val adminClient: AdminClient = AdminClient.create(config.kafka.admin)
 
     private val listCache = CachedSet<String>(listCacheConfig) {
         try {
             adminClient.listTopics()
-                    .names()
-                    .get(3L, TimeUnit.SECONDS)
-                    .filterTo(LinkedHashSet()) { !it.startsWith('_') }
+                .names()
+                .get(3L, TimeUnit.SECONDS)
+                .filterTo(LinkedHashSet()) { !it.startsWith('_') }
         } catch (ex: Exception) {
             logger.error("Failed to list Kafka topics", ex)
             throw KafkaUnavailableException(ex)
@@ -45,10 +45,10 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
             CachedValue(describeCacheConfig, {
                 val topicDescription = try {
                     adminClient.describeTopics(listOf(topic))
-                            .values()
-                            .values
-                            .first()
-                            .get(3L, TimeUnit.SECONDS)
+                        .values()
+                        .values
+                        .first()
+                        .get(3L, TimeUnit.SECONDS)
                 } catch (ex: Exception) {
                     logger.error("Failed to describe topics", ex)
                     throw KafkaUnavailableException(ex)
@@ -65,14 +65,14 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
         private val logger = LoggerFactory.getLogger(KafkaAdminService::class.java)
 
         private val listCacheConfig = CacheConfig(
-                refreshDuration = Duration.ofSeconds(10),
-                retryDuration = Duration.ofSeconds(2),
-                maxSimultaneousCompute = 3,
+            refreshDuration = Duration.ofSeconds(10),
+            retryDuration = Duration.ofSeconds(2),
+            maxSimultaneousCompute = 3,
         )
         private val describeCacheConfig = CacheConfig(
-                refreshDuration = Duration.ofMinutes(30),
-                retryDuration = Duration.ofSeconds(2),
-                maxSimultaneousCompute = 2,
+            refreshDuration = Duration.ofMinutes(30),
+            retryDuration = Duration.ofSeconds(2),
+            maxSimultaneousCompute = 2,
         )
 
         private fun org.apache.kafka.common.TopicPartitionInfo.toTopicPartitionInfo(): TopicPartitionInfo {
@@ -80,21 +80,21 @@ class KafkaAdminService(@Context private val config: Config): Closeable {
         }
 
         private fun TopicDescription.toTopicInfo() = TopicInfo(name(), partitions()
-                .map { it.toTopicPartitionInfo() })
+            .map { it.toTopicPartitionInfo() })
 
-        class KafkaUnavailableException(ex: Exception)
-            : HttpApplicationException(
-                Response.Status.SERVICE_UNAVAILABLE,
-                "kafka_unavailable",
-                ex.message ?: ex.cause?.message ?: ex.javaClass.name)
+        class KafkaUnavailableException(ex: Exception) : HttpApplicationException(
+            Response.Status.SERVICE_UNAVAILABLE,
+            "kafka_unavailable",
+            ex.message ?: ex.cause?.message ?: ex.javaClass.name
+        )
     }
 
     data class TopicInfo(
-            val name: String,
-            val partitions: List<TopicPartitionInfo>,
+        val name: String,
+        val partitions: List<TopicPartitionInfo>,
     )
 
     data class TopicPartitionInfo(
-            val partition: Int,
+        val partition: Int,
     )
 }

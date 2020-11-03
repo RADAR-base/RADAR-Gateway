@@ -21,8 +21,8 @@ import javax.ws.rs.core.Context
 import javax.ws.rs.core.Response
 
 class ProducerPool(
-        @Context private val config: Config
-): Closeable {
+    @Context private val config: Config,
+) : Closeable {
     private val semaphore = Semaphore(config.server.maxRequests)
     private val pool = ArrayBlockingQueue<KafkaAvroProducer>(config.kafka.poolSize)
     private val schemaRegistryClient: SchemaRegistryClient
@@ -36,11 +36,20 @@ class ProducerPool(
             RestService(schemaRegistryUrl as String)
         }
         restService.configure(config.kafka.serialization)
-        schemaRegistryClient = CachedSchemaRegistryClient(restService, config.kafka.serialization[MAX_SCHEMAS_PER_SUBJECT_CONFIG] as Int, null, config.kafka.serialization, null)
+        schemaRegistryClient = CachedSchemaRegistryClient(
+            restService,
+            config.kafka.serialization[MAX_SCHEMAS_PER_SUBJECT_CONFIG] as Int,
+            null,
+            config.kafka.serialization,
+            null
+        )
     }
 
     fun produce(topic: String, records: List<Pair<GenericRecord, GenericRecord>>) {
-        if (!semaphore.tryAcquire()) throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "Too many open Kafka requests")
+        if (!semaphore.tryAcquire()) throw HttpApplicationException(
+            Response.Status.SERVICE_UNAVAILABLE,
+            "Too many open Kafka requests"
+        )
         try {
             val producer = pool.poll() ?: KafkaAvroProducer(config, schemaRegistryClient)
             var reuse = true
@@ -51,14 +60,19 @@ class ProducerPool(
                     is ProducerFencedException,
                     is OutOfOrderSequenceException,
                     is AuthorizationException,
-                    is AuthenticationException -> {
+                    is AuthenticationException,
+                    -> {
                         logger.error("Unrecoverable failure to send data: {}", ex.toString())
                         reuse = false
                         throw HttpBadGatewayException("Kafka cannot be reached: ${ex.javaClass}")
                     }
                     is TimeoutException -> {
                         logger.error("Cannot reach Kafka within time: {}", ex.toString())
-                        throw HttpApplicationException(Response.Status.GATEWAY_TIMEOUT, "kafka_timeout", "Cannot reach Kafka to send data")
+                        throw HttpApplicationException(
+                            Response.Status.GATEWAY_TIMEOUT,
+                            "kafka_timeout",
+                            "Cannot reach Kafka to send data"
+                        )
                     }
                     is SerializationException -> {
                         logger.error("Cannot serialize message: {}", ex.toString())
@@ -66,7 +80,10 @@ class ProducerPool(
                     }
                     else -> {
                         logger.error("Retryable failure to send data", ex)
-                        throw HttpInternalServerException("kafka_send_failure", "Failed to send data to kafka: ${ex.javaClass}")
+                        throw HttpInternalServerException(
+                            "kafka_send_failure",
+                            "Failed to send data to kafka: ${ex.javaClass}"
+                        )
                     }
                 }
             } finally {
@@ -83,7 +100,7 @@ class ProducerPool(
 
     override fun close() {
         generateSequence { pool.poll() }
-                .forEach { it.close() }
+            .forEach { it.close() }
     }
 
     companion object {

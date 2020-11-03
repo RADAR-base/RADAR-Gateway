@@ -81,14 +81,14 @@ services:
       - ./etc/:/mp-includes/
 
   gateway:
-      build:
-        context: ../../..
-      image: radarbase/radar-gateway:SNAPSHOT
-      depends_on:
-        - kafka-1
-        - schema-registry-1
-        - managementportal-app
-      ports:
-        - "127.0.0.1:8092:8092"
-      volumes:
-        - ./etc/gateway.yml:/etc/radar-gateway/gateway.yml
+    build:
+      context: ../../..
+    image: radarbase/radar-gateway:SNAPSHOT
+    depends_on:
+      - kafka-1
+      - schema-registry-1
+      - managementportal-app
+    ports:
+      - "127.0.0.1:8092:8092"
+    volumes:
+      - ./etc/gateway.yml:/etc/radar-gateway/gateway.yml

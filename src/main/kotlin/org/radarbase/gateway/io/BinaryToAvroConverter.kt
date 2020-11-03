@@ -19,9 +19,10 @@ import javax.ws.rs.core.Context
 
 /** Converts binary input from a RecordSet to Kafka JSON. */
 class BinaryToAvroConverter(
-        @Context private val schemaRetriever: SchemaRetriever,
-        @Context private val auth: Auth,
-        @Context private val config: Config) {
+    @Context private val schemaRetriever: SchemaRetriever,
+    @Context private val auth: Auth,
+    @Context private val config: Config,
+) {
 
     private var binaryDecoder: BinaryDecoder? = null
     private val readContext = ReadContext()
@@ -31,14 +32,15 @@ class BinaryToAvroConverter(
 
         binaryDecoder = decoder
 
-        val recordData = DecodedRecordData(topic, decoder, schemaRetriever, auth, readContext, config.auth.checkSourceId)
+        val recordData =
+            DecodedRecordData(topic, decoder, schemaRetriever, auth, readContext, config.auth.checkSourceId)
 
         return AvroProcessingResult(
-                recordData.keySchemaMetadata.id,
-                recordData.valueSchemaMetadata.id,
-                recordData.map {  value ->
-                    Pair(recordData.key, value)
-                })
+            recordData.keySchemaMetadata.id,
+            recordData.valueSchemaMetadata.id,
+            recordData.map { value ->
+                Pair(recordData.key, value)
+            })
     }
 
     class ReadContext {
@@ -46,8 +48,8 @@ class BinaryToAvroConverter(
             isFastReaderEnabled = true
         }
         private var buffer: ByteBuffer? = null
-        private var valueDecoder : BinaryDecoder? = null
-        private var valueReader : GenericDatumReader<GenericRecord>? = null
+        private var valueDecoder: BinaryDecoder? = null
+        private var valueReader: GenericDatumReader<GenericRecord>? = null
 
         fun init(schema: Schema) {
             if (valueReader?.schema != schema) {
@@ -60,9 +62,10 @@ class BinaryToAvroConverter(
             return try {
                 buffer = decoder.readBytes(buffer)
                 valueDecoder = DecoderFactory.get().binaryDecoder(ByteBufferBackedInputStream(buffer), valueDecoder)
-                val reader = valueReader ?: throw IllegalStateException("Value reader is not yet set")
+                val reader = valueReader
+                    ?: throw IllegalStateException("Value reader is not yet set")
                 reader.read(null, valueDecoder)
-                        ?: throw HttpInvalidContentException("No record in data")
+                    ?: throw HttpInvalidContentException("No record in data")
             } catch (ex: IOException) {
                 throw HttpInvalidContentException("Malformed record contents: ${ex.message}")
             }
