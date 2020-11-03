@@ -37,14 +37,15 @@ import java.util.concurrent.ConcurrentMap
  * unfilled security metadata as necessary.
  */
 class AvroProcessor(
-        private val config: Config,
-        private val auth: Auth,
-        private val schemaRetriever: SchemaRetriever,
-        private val objectMapper: ObjectMapper,
-        schedulingService: SchedulingService
-): Closeable {
+    private val config: Config,
+    private val auth: Auth,
+    private val schemaRetriever: SchemaRetriever,
+    private val objectMapper: ObjectMapper,
+    schedulingService: SchedulingService,
+) : Closeable {
     private val idMapping: ConcurrentMap<Pair<String, Int>, CachedValue<JsonToObjectMapping>> = ConcurrentHashMap()
-    private val schemaMapping: ConcurrentMap<Pair<String, String>, CachedValue<JsonToObjectMapping>> = ConcurrentHashMap()
+    private val schemaMapping: ConcurrentMap<Pair<String, String>, CachedValue<JsonToObjectMapping>> =
+        ConcurrentHashMap()
     private val cleanReference: SchedulingService.RepeatReference
 
     init {
@@ -83,21 +84,28 @@ class AvroProcessor(
 
         val records = root["records"] ?: throw HttpInvalidContentException("Missing records")
         return AvroProcessingResult(
-                keyMapping.targetSchemaId,
-                valueMapping.targetSchemaId,
-                processRecords(records, keyMapping, valueMapping))
+            keyMapping.targetSchemaId,
+            valueMapping.targetSchemaId,
+            processRecords(records, keyMapping, valueMapping)
+        )
     }
 
 
     @Throws(IOException::class)
-    private fun processRecords(records: JsonNode, keyMapping: JsonToObjectMapping, valueMapping: JsonToObjectMapping): List<Pair<GenericRecord, GenericRecord>> {
+    private fun processRecords(
+        records: JsonNode,
+        keyMapping: JsonToObjectMapping,
+        valueMapping: JsonToObjectMapping,
+    ): List<Pair<GenericRecord, GenericRecord>> {
         if (!records.isArray) {
             throw HttpInvalidContentException("Records should be an array")
         }
 
         return records.map { record ->
-            val key = record["key"] ?: throw HttpInvalidContentException("Missing key field in record")
-            val value = record["value"] ?: throw HttpInvalidContentException("Missing value field in record")
+            val key = record["key"]
+                ?: throw HttpInvalidContentException("Missing key field in record")
+            val value = record["value"]
+                ?: throw HttpInvalidContentException("Missing value field in record")
             Pair(processKey(key, keyMapping), processValue(value, valueMapping))
         }
     }
@@ -119,16 +127,21 @@ class AvroProcessor(
             } else {
                 // project ID was provided, it should match one of the validated project IDs.
                 project["string"]?.asText() ?: throw HttpInvalidContentException(
-                        "Project ID should be wrapped in string union type")
+                    "Project ID should be wrapped in string union type"
+                )
             }
         } ?: auth.defaultProject
 
         if (config.auth.checkSourceId) {
-            auth.checkPermissionOnSource(Permission.MEASUREMENT_CREATE,
-                    projectId, key["userId"]?.asText(), key["sourceId"]?.asText())
+            auth.checkPermissionOnSource(
+                Permission.MEASUREMENT_CREATE,
+                projectId, key["userId"]?.asText(), key["sourceId"]?.asText()
+            )
         } else {
-            auth.checkPermissionOnSubject(Permission.MEASUREMENT_CREATE,
-                    projectId, key["userId"]?.asText())
+            auth.checkPermissionOnSubject(
+                Permission.MEASUREMENT_CREATE,
+                projectId, key["userId"]?.asText()
+            )
         }
 
         return keyMapping.jsonToAvro(key)
@@ -161,7 +174,11 @@ class AvroProcessor(
                             schemaRetriever.getBySubjectAndId(topic, ofValue, id.asInt())
                         } catch (ex: RestException) {
                             if (ex.statusCode == 404) {
-                                throw HttpApplicationException(422, "schema_not_found", "Schema ID not found in subject")
+                                throw HttpApplicationException(
+                                    422,
+                                    "schema_not_found",
+                                    "Schema ID not found in subject"
+                                )
                             } else {
                                 throw HttpBadGatewayException("cannot get data from schema registry: ${ex.javaClass.simpleName}")
                             }
@@ -177,7 +194,11 @@ class AvroProcessor(
                             val parsedSchema = Schema.Parser().parse(schema.textValue())
                             createMapping(topic, ofValue, parsedSchema)
                         } catch (ex: Exception) {
-                            throw throw HttpApplicationException(422, "schema_not_found", "Schema ID not found in subject")
+                            throw throw HttpApplicationException(
+                                422,
+                                "schema_not_found",
+                                "Schema ID not found in subject"
+                            )
                         }
                     })
                 }.get()
@@ -217,7 +238,7 @@ class AvroProcessor(
         return when {
             this is ObjectNode -> {
                 val fieldName = fieldNames().asSequence().firstOrNull()
-                        ?: throw HttpInvalidContentException("Cannot union without a value")
+                    ?: throw HttpInvalidContentException("Cannot union without a value")
                 val type = to.types.firstOrNull { unionType ->
                     fieldName == unionType.name || unionType.fullName == fieldName
                 } ?: throw HttpInvalidContentException("Cannot find any matching union types")
@@ -227,18 +248,18 @@ class AvroProcessor(
             isNumber -> {
                 val type = to.types.firstOrNull { unionType ->
                     unionType.type == Schema.Type.LONG
-                            || unionType.type == Schema.Type.INT
-                            || unionType.type == Schema.Type.FLOAT
-                            || unionType.type == Schema.Type.DOUBLE
+                        || unionType.type == Schema.Type.INT
+                        || unionType.type == Schema.Type.FLOAT
+                        || unionType.type == Schema.Type.DOUBLE
                 } ?: throw HttpInvalidContentException("Cannot map number to non-number union")
                 toAvroNumber(type.type)
             }
             isTextual -> {
                 val type = to.types.firstOrNull { unionType ->
                     unionType.type == Schema.Type.STRING
-                            || unionType.type == Schema.Type.FIXED
-                            || unionType.type == Schema.Type.BYTES
-                            || unionType.type == Schema.Type.ENUM
+                        || unionType.type == Schema.Type.FIXED
+                        || unionType.type == Schema.Type.BYTES
+                        || unionType.type == Schema.Type.ENUM
                 } ?: throw HttpInvalidContentException("Cannot map number to non-number union")
                 toAvro(type)
             }
@@ -257,7 +278,7 @@ class AvroProcessor(
             isObject -> {
                 val type = to.types.firstOrNull { unionType ->
                     unionType.type == Schema.Type.MAP
-                            || unionType.type == Schema.Type.RECORD
+                        || unionType.type == Schema.Type.RECORD
                 } ?: throw HttpInvalidContentException("Cannot map object to non-object union")
                 return toAvro(type, defaultVal)
             }
@@ -282,7 +303,7 @@ class AvroProcessor(
     private fun JsonNode.toAvroMap(schema: Schema): Map<String, Any?> {
         return if (this is ObjectNode) {
             fieldNames().asSequence()
-                    .associateWithTo(LinkedHashMap()) { key -> get(key).toAvro(schema) }
+                .associateWithTo(LinkedHashMap()) { key -> get(key).toAvro(schema) }
         } else throw HttpInvalidContentException("Can only convert objects to map")
     }
 
@@ -362,10 +383,10 @@ class AvroProcessor(
         private val SCHEMA_CLEAN = Duration.ofHours(2)
 
         private val cacheConfig = CacheConfig(
-                refreshDuration = Duration.ofHours(1),
-                retryDuration = Duration.ofMinutes(2),
-                staleThresholdDuration = Duration.ofMinutes(30),
-                maxSimultaneousCompute = 3,
+            refreshDuration = Duration.ofHours(1),
+            retryDuration = Duration.ofMinutes(2),
+            staleThresholdDuration = Duration.ofMinutes(30),
+            maxSimultaneousCompute = 3,
         )
 
         val JsonNode?.isMissing: Boolean
@@ -374,10 +395,11 @@ class AvroProcessor(
 
 
     data class JsonToObjectMapping(
-            val sourceSchema: Schema,
-            val targetSchema: Schema,
-            val targetSchemaId: Int,
-            val mapper: AvroDataMapper)
+        val sourceSchema: Schema,
+        val targetSchema: Schema,
+        val targetSchemaId: Int,
+        val mapper: AvroDataMapper,
+    )
 
     private fun JsonToObjectMapping.jsonToAvro(node: JsonNode): GenericRecord {
         val originalRecord = node.toAvroObject(sourceSchema)

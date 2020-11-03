@@ -9,12 +9,12 @@ import javax.ws.rs.core.Response
 
 class LzfseEncoder : ContentEncoder("lzfse", "x-lzfse") {
     override fun encode(
-            contentEncoding: String,
-            entityStream: OutputStream
+        contentEncoding: String,
+        entityStream: OutputStream,
     ): OutputStream = throw HttpApplicationException(Response.Status.NOT_ACCEPTABLE, "LZFSE encoding not implemented")
 
     override fun decode(
-            contentEncoding: String,
-            encodedStream: InputStream
+        contentEncoding: String,
+        encodedStream: InputStream,
     ): InputStream = LZFSEInputStream(encodedStream)
 }

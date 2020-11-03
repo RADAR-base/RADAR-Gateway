@@ -8,7 +8,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class SchedulingService: Closeable {
+class SchedulingService : Closeable {
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
     fun execute(method: () -> Unit) = scheduler.execute(method)
@@ -18,9 +18,9 @@ class SchedulingService: Closeable {
         return FutureRepeatReference(ref)
     }
 
-    interface RepeatReference: Closeable
+    interface RepeatReference : Closeable
 
-    private inner class FutureRepeatReference(private val ref: ScheduledFuture<*>):  RepeatReference {
+    private inner class FutureRepeatReference(private val ref: ScheduledFuture<*>) : RepeatReference {
         override fun close() {
             if (ref.cancel(false)) {
                 try {

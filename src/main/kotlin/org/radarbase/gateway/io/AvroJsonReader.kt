@@ -17,13 +17,15 @@ import javax.ws.rs.ext.Provider
 @Provider
 @Consumes("application/vnd.kafka.avro.v1+json", "application/vnd.kafka.avro.v2+json")
 class AvroJsonReader(
-        @Context objectMapper: ObjectMapper,
+    @Context objectMapper: ObjectMapper,
 ) : MessageBodyReader<JsonNode> {
     private val objectFactory = objectMapper.factory
 
-    override fun readFrom(type: Class<JsonNode>?, genericType: Type?,
-            annotations: Array<out Annotation>?, mediaType: MediaType?,
-            httpHeaders: MultivaluedMap<String, String>?, entityStream: InputStream?): JsonNode {
+    override fun readFrom(
+        type: Class<JsonNode>?, genericType: Type?,
+        annotations: Array<out Annotation>?, mediaType: MediaType?,
+        httpHeaders: MultivaluedMap<String, String>?, entityStream: InputStream?,
+    ): JsonNode {
 
         val parser = objectFactory.createParser(entityStream)
         return try {
@@ -33,6 +35,8 @@ class AvroJsonReader(
         } ?: throw HttpBadRequestException("malformed_json", "No content given")
     }
 
-    override fun isReadable(type: Class<*>?, genericType: Type?,
-            annotations: Array<out Annotation>?, mediaType: MediaType?) = true
+    override fun isReadable(
+        type: Class<*>?, genericType: Type?,
+        annotations: Array<out Annotation>?, mediaType: MediaType?,
+    ) = true
 }

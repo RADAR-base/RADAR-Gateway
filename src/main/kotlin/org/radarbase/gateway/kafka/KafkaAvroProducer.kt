@@ -13,9 +13,9 @@ import java.io.Closeable
 import java.util.concurrent.ExecutionException
 
 class KafkaAvroProducer(
-        config: Config,
-        schemaRegistryClient: SchemaRegistryClient
-): Closeable {
+    config: Config,
+    schemaRegistryClient: SchemaRegistryClient,
+) : Closeable {
     private val producer: Producer<Any, Any>
 
     init {
@@ -34,14 +34,14 @@ class KafkaAvroProducer(
     @Throws(KafkaException::class)
     fun produce(topic: String, records: List<Pair<GenericRecord, GenericRecord>>) {
         records
-                .map { (key, value) -> producer.send(ProducerRecord(topic, key, value)) }
-                .forEach {
-                    try {
-                        it.get() // asserts that the send completed and was successful
-                    } catch (ex: ExecutionException) {
-                        throw ex.cause!!
-                    }
+            .map { (key, value) -> producer.send(ProducerRecord(topic, key, value)) }
+            .forEach {
+                try {
+                    it.get() // asserts that the send completed and was successful
+                } catch (ex: ExecutionException) {
+                    throw ex.cause!!
                 }
+            }
     }
 
     override fun close() {

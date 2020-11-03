@@ -3,15 +3,17 @@ package org.radarbase.gateway
 import org.radarbase.jersey.GrizzlyServer
 import org.radarbase.jersey.config.ConfigLoader
 import org.slf4j.LoggerFactory
-import java.lang.IllegalStateException
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
     val config = try {
-        ConfigLoader.loadConfig<Config>(listOf(
+        ConfigLoader.loadConfig<Config>(
+            listOf(
                 "gateway.yml",
-                "/etc/radar-gateway/gateway.yml"), args)
-                .withDefaults()
+                "/etc/radar-gateway/gateway.yml"
+            ), args
+        )
+            .withDefaults()
     } catch (ex: IllegalArgumentException) {
         logger.error("No configuration file was found.")
         logger.error("Usage: radar-gateway <config-file>")

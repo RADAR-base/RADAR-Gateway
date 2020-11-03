@@ -23,7 +23,7 @@ import javax.ws.rs.ext.Provider
 @Priority(Priorities.USER)
 @Singleton
 class KafkaTopicFilter constructor(
-        @Context private val kafkaAdmin: KafkaAdminService
+    @Context private val kafkaAdmin: KafkaAdminService,
 ) : ContainerRequestFilter {
     override fun filter(requestContext: ContainerRequestContext) {
         val topic = requestContext.uriInfo.pathParameters.getFirst("topic_name")

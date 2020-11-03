@@ -5,11 +5,9 @@ import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import okio.Buffer
 import org.apache.avro.generic.GenericRecordBuilder
-import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.radarbase.data.AvroRecordData
-import org.radarbase.gateway.AuthConfig
 import org.radarbase.gateway.Config
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.producer.rest.BinaryRecordRequest
@@ -25,19 +23,23 @@ class BinaryToAvroConverterTest {
     @Test
     fun testConversion() {
 
-        val topic = AvroTopic("test",
-                ObservationKey.getClassSchema(), PhoneAcceleration.getClassSchema(),
-                ObservationKey::class.java, PhoneAcceleration::class.java)
+        val topic = AvroTopic(
+            "test",
+            ObservationKey.getClassSchema(), PhoneAcceleration.getClassSchema(),
+            ObservationKey::class.java, PhoneAcceleration::class.java
+        )
 
         val keySchemaMetadata = ParsedSchemaMetadata(1, 1, topic.keySchema)
         val valueSchemaMetadata = ParsedSchemaMetadata(2, 1, topic.valueSchema)
 
-        val requestRecordData = AvroRecordData(topic,
-                ObservationKey("p", "u", "s"),
-                listOf(
-                        PhoneAcceleration(1.0, 1.1, 1.2f, 1.3f, 1.4f),
-                        PhoneAcceleration(2.0, 2.1, 2.2f, 2.3f, 2.4f),
-                ))
+        val requestRecordData = AvroRecordData(
+            topic,
+            ObservationKey("p", "u", "s"),
+            listOf(
+                PhoneAcceleration(1.0, 1.1, 1.2f, 1.3f, 1.4f),
+                PhoneAcceleration(2.0, 2.1, 2.2f, 2.3f, 2.4f),
+            )
+        )
         val binaryRequest = BinaryRecordRequest(topic)
         binaryRequest.prepare(keySchemaMetadata, valueSchemaMetadata, requestRecordData)
         val requestBuffer = Buffer()
@@ -87,10 +89,13 @@ class BinaryToAvroConverterTest {
         }.build()
 
         assertEquals(
-                AvroProcessingResult(1, 2, listOf(
-                        Pair(genericKey, genericValue1),
-                        Pair(genericKey, genericValue2),
-                )),
-                converter.process("test", requestBuffer.inputStream()))
+            AvroProcessingResult(
+                1, 2, listOf(
+                Pair(genericKey, genericValue1),
+                Pair(genericKey, genericValue2),
+            )
+            ),
+            converter.process("test", requestBuffer.inputStream())
+        )
     }
 }
