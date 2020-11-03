@@ -1,4 +1,6 @@
 import java.time.Duration
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelectorScheme
+import org.gradle.kotlin.dsl.support.serviceOf
 import org.jetbrains.kotlin.cli.common.toBooleanLenient
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -16,6 +18,25 @@ description = "RADAR Gateway to handle secured data flow to backend."
 
 dependencyLocking {
     lockAllConfigurations()
+}
+
+configurations {
+    // Avoid non-release versions from wildcards
+    all {
+        val versionSelectorScheme = serviceOf<VersionSelectorScheme>()
+        resolutionStrategy.componentSelection.all {
+            if (candidate.version.contains("-SNAPSHOT")
+                    || candidate.version.contains("-rc", ignoreCase = true)
+                    || candidate.version.contains(".Draft", ignoreCase = true)
+                    || candidate.version.contains("-alpha", ignoreCase = true)
+                    || candidate.version.contains("-beta", ignoreCase = true)) {
+                val dependency = allDependencies.find { it.group == candidate.group && it.name == candidate.module }
+                if (dependency != null && !versionSelectorScheme.parseSelector(dependency.version).matchesUniqueVersion()) {
+                    reject("only releases are allowed for $dependency")
+                }
+            }
+        }
+    }
 }
 
 repositories {
