@@ -12,12 +12,13 @@ import org.radarbase.topic.AvroTopic
 import org.radarcns.auth.authorization.Permission
 
 class DecodedRecordData(
-        topicName: String,
-        private val decoder: BinaryDecoder,
-        schemaRetriever: SchemaRetriever,
-        auth: Auth,
-        private val readContext: BinaryToAvroConverter.ReadContext,
-        checkSources: Boolean) : RecordData<GenericRecord, GenericRecord> {
+    topicName: String,
+    private val decoder: BinaryDecoder,
+    schemaRetriever: SchemaRetriever,
+    auth: Auth,
+    private val readContext: BinaryToAvroConverter.ReadContext,
+    checkSources: Boolean,
+) : RecordData<GenericRecord, GenericRecord> {
 
     private val key: GenericRecord
     private var size: Int
@@ -46,15 +47,17 @@ class DecodedRecordData(
         keySchemaMetadata = schemaRetriever.getBySubjectAndVersion(topicName, false, keyVersion)
         valueSchemaMetadata = schemaRetriever.getBySubjectAndVersion(topicName, true, valueVersion)
 
-        topic = AvroTopic(topicName, keySchemaMetadata.schema, valueSchemaMetadata.schema,
-                GenericRecord::class.java, GenericRecord::class.java)
+        topic = AvroTopic(
+            topicName, keySchemaMetadata.schema, valueSchemaMetadata.schema,
+            GenericRecord::class.java, GenericRecord::class.java
+        )
 
         key = createKey(keySchemaMetadata.schema, projectId!!, userId!!, sourceId)
         readContext.init(valueSchemaMetadata.schema)
     }
 
     private fun createKey(schema: Schema, projectId: String, userId: String, sourceId: String):
-            GenericRecord {
+        GenericRecord {
         val keyBuilder = GenericRecordBuilder(schema)
         schema.getField("projectId")?.let { keyBuilder.set(it, projectId) }
         schema.getField("userId")?.let { keyBuilder.set(it, userId) }

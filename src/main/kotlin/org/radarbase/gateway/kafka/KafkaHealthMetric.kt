@@ -4,7 +4,7 @@ import org.radarbase.jersey.service.HealthService
 import javax.ws.rs.core.Context
 
 class KafkaHealthMetric(
-        @Context private val kafkaAdminService: KafkaAdminService
+    @Context private val kafkaAdminService: KafkaAdminService,
 ) : HealthService.Metric("kafka") {
     override val status: HealthService.Status
         get() = try {

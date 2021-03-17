@@ -1,6 +1,8 @@
-import java.time.Duration
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelectorScheme
+import org.gradle.kotlin.dsl.support.serviceOf
 import org.jetbrains.kotlin.cli.common.toBooleanLenient
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.time.Duration
 
 plugins {
     id("idea")
@@ -11,8 +13,31 @@ plugins {
 }
 
 group = "org.radarbase"
-version = "0.5.3"
+version = "0.5.4-SNAPSHOT"
 description = "RADAR Gateway to handle secured data flow to backend."
+
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+configurations {
+    // Avoid non-release versions from wildcards
+    all {
+        val versionSelectorScheme = serviceOf<VersionSelectorScheme>()
+        resolutionStrategy.componentSelection.all {
+            if (candidate.version.contains("-SNAPSHOT")
+                || candidate.version.contains("-rc", ignoreCase = true)
+                || candidate.version.contains(".Draft", ignoreCase = true)
+                || candidate.version.contains("-alpha", ignoreCase = true)
+                || candidate.version.contains("-beta", ignoreCase = true)) {
+                val dependency = allDependencies.find { it.group == candidate.group && it.name == candidate.module }
+                if (dependency != null && !versionSelectorScheme.parseSelector(dependency.version).matchesUniqueVersion()) {
+                    reject("only releases are allowed for $dependency")
+                }
+            }
+        }
+    }
+}
 
 repositories {
     jcenter()
@@ -52,7 +77,7 @@ dependencies {
     val okhttp3Version: String by project
     val radarSchemasVersion: String by project
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
+    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:[2.2,3.0)")
     testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
@@ -67,8 +92,8 @@ val kotlinApiVersion: String by project
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         jvmTarget = "11"
-        apiVersion = kotlinApiVersion
-        languageVersion = kotlinApiVersion
+        apiVersion = "1.4"
+        languageVersion = "1.4"
     }
 }
 
@@ -89,11 +114,11 @@ application {
     mainClassName = "org.radarbase.gateway.MainKt"
 
     applicationDefaultJvmArgs = listOf(
-            "-Dcom.sun.management.jmxremote",
-            "-Dcom.sun.management.jmxremote.local.only=false",
-            "-Dcom.sun.management.jmxremote.port=9010",
-            "-Dcom.sun.management.jmxremote.authenticate=false",
-            "-Dcom.sun.management.jmxremote.ssl=false"
+        "-Dcom.sun.management.jmxremote",
+        "-Dcom.sun.management.jmxremote.local.only=false",
+        "-Dcom.sun.management.jmxremote.port=9010",
+        "-Dcom.sun.management.jmxremote.authenticate=false",
+        "-Dcom.sun.management.jmxremote.ssl=false"
     )
 }
 
@@ -126,14 +151,14 @@ tasks.register("downloadDockerDependencies") {
 tasks.register("downloadDependencies") {
     doFirst {
         configurations.asMap
-                .filterValues { it.isCanBeResolved }
-                .forEach { (name, config) ->
-                    try {
-                        config.files
-                    } catch (ex: Exception) {
-                        project.logger.warn("Cannot find dependency for configuration {}", name, ex)
-                    }
+            .filterValues { it.isCanBeResolved }
+            .forEach { (name, config) ->
+                try {
+                    config.files
+                } catch (ex: Exception) {
+                    project.logger.warn("Cannot find dependency for configuration {}", name, ex)
                 }
+            }
         println("Downloaded all dependencies")
     }
     outputs.upToDateWhen { false }

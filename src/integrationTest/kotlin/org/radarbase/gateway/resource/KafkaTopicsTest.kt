@@ -36,24 +36,28 @@ import javax.ws.rs.core.Response.Status
 
 class KafkaTopicsTest {
     private fun requestAccessToken(): String {
-        val clientToken = httpClient.call( Status.OK, "access_token") {
+        val clientToken = httpClient.call(Status.OK, "access_token") {
             url("${MANAGEMENTPORTAL_URL}/oauth/token")
             addHeader("Authorization", Credentials.basic(MP_CLIENT, ""))
-            post(FormBody.Builder()
+            post(
+                FormBody.Builder()
                     .add("username", ADMIN_USER)
                     .add("password", ADMIN_PASSWORD)
                     .add("grant_type", "password")
-                    .build())
+                    .build()
+            )
         }
 
         val tokenUrl = httpClient.call(Status.OK, "tokenUrl") {
             addHeader("Authorization", BEARER + clientToken)
-            url(MANAGEMENTPORTAL_URL.toHttpUrl()
+            url(
+                MANAGEMENTPORTAL_URL.toHttpUrl()
                     .newBuilder("api/oauth-clients/pair")!!
                     .addEncodedQueryParameter("clientId", REST_CLIENT)
                     .addEncodedQueryParameter("login", USER)
                     .addEncodedQueryParameter("persistent", "false")
-                    .build())
+                    .build()
+            )
         }
 
         val refreshToken = httpClient.call(Status.OK, "refreshToken") {
@@ -63,10 +67,12 @@ class KafkaTopicsTest {
         return httpClient.call(Status.OK, "access_token") {
             url("${MANAGEMENTPORTAL_URL}/oauth/token")
             addHeader("Authorization", Credentials.basic(REST_CLIENT, ""))
-            post(FormBody.Builder()
+            post(
+                FormBody.Builder()
                     .add("grant_type", "refresh_token")
                     .add("refresh_token", refreshToken)
-                    .build())
+                    .build()
+            )
         }
     }
 
@@ -76,9 +82,11 @@ class KafkaTopicsTest {
 
         val retriever = SchemaRetriever(ServerConfig(URL(SCHEMA_REGISTRY_URL)), 10)
 
-        val topic = AvroTopic("test",
-                ObservationKey.getClassSchema(), PhoneAcceleration.getClassSchema(),
-                ObservationKey::class.java, PhoneAcceleration::class.java)
+        val topic = AvroTopic(
+            "test",
+            ObservationKey.getClassSchema(), PhoneAcceleration.getClassSchema(),
+            ObservationKey::class.java, PhoneAcceleration::class.java
+        )
 
         val time = System.currentTimeMillis() / 1000.0
         val key = ObservationKey(PROJECT, USER, SOURCE)
@@ -148,7 +156,7 @@ class KafkaTopicsTest {
         assertThat(gatewayTopicList, hasItem("test"))
     }
 
-    private class CallableThread(runnable: () -> Unit): Thread(runnable) {
+    private class CallableThread(runnable: () -> Unit) : Thread(runnable) {
         @Volatile
         var exception: Exception? = null
 
@@ -161,35 +169,44 @@ class KafkaTopicsTest {
         }
     }
 
-    private fun sendData(url: String, retriever: SchemaRetriever, topic: AvroTopic<ObservationKey, PhoneAcceleration>, accessToken: String, key: ObservationKey, value: PhoneAcceleration, binary: Boolean, gzip: Boolean): String {
+    private fun sendData(
+        url: String,
+        retriever: SchemaRetriever,
+        topic: AvroTopic<ObservationKey, PhoneAcceleration>,
+        accessToken: String,
+        key: ObservationKey,
+        value: PhoneAcceleration,
+        binary: Boolean,
+        gzip: Boolean,
+    ): String {
         val totalSize = LongAdder()
 
         val restClient = RestClient.newClient()
-                .also { client ->
-                    if (SHOW_DATA_SIZE) {
-                        client.httpClientBuilder()
-                                .addNetworkInterceptor { chain ->
-                                    val request = chain.request()
-                                    request.body?.let { body ->
-                                        val sink = Buffer()
-                                        body.writeTo(sink)
-                                        totalSize.add(sink.size)
-                                    }
-                                    chain.proceed(request)
-                                }
-                    }
+            .also { client ->
+                if (SHOW_DATA_SIZE) {
+                    client.httpClientBuilder()
+                        .addNetworkInterceptor { chain ->
+                            val request = chain.request()
+                            request.body?.let { body ->
+                                val sink = Buffer()
+                                body.writeTo(sink)
+                                totalSize.add(sink.size)
+                            }
+                            chain.proceed(request)
+                        }
                 }
-                .server(ServerConfig(url))
-                .timeout(10, TimeUnit.SECONDS)
-                .gzipCompression(gzip)
-                .build()
+            }
+            .server(ServerConfig(url))
+            .timeout(10, TimeUnit.SECONDS)
+            .gzipCompression(gzip)
+            .build()
 
         val sender = RestSender.Builder()
-                .httpClient(restClient)
-                .schemaRetriever(retriever)
-                .useBinaryContent(binary)
-                .addHeader("Authorization", BEARER + accessToken)
-                .build()
+            .httpClient(restClient)
+            .schemaRetriever(retriever)
+            .useBinaryContent(binary)
+            .addHeader("Authorization", BEARER + accessToken)
+            .build()
 
         val numRequests = LongAdder()
         val numTime = LongAdder()
@@ -212,8 +229,8 @@ class KafkaTopicsTest {
         senders.forEach { it.start() }
         senders.forEach { it.join() }
         senders.mapNotNull { it.exception }
-                .takeIf { it.isNotEmpty() }
-                ?.let { throw MultipleFailureException(it) }
+            .takeIf { it.isNotEmpty() }
+            ?.let { throw MultipleFailureException(it) }
 
         val timeEnd = System.nanoTime()
 
@@ -275,9 +292,13 @@ class KafkaTopicsTest {
             return call(expectedStatus.statusCode, requestSupplier)
         }
 
-        fun OkHttpClient.call(expectedStatus: Status, stringProperty: String, requestSupplier: Request.Builder.() -> Unit): String {
+        fun OkHttpClient.call(
+            expectedStatus: Status,
+            stringProperty: String,
+            requestSupplier: Request.Builder.() -> Unit,
+        ): String {
             return call(expectedStatus, requestSupplier)?.get(stringProperty)?.asText()
-                    ?: throw AssertionError("String property $stringProperty not found")
+                ?: throw AssertionError("String property $stringProperty not found")
         }
     }
 }

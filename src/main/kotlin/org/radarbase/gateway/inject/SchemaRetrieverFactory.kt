@@ -15,16 +15,18 @@ import javax.ws.rs.core.Context
 
 /** Creates a Schema Retriever based on the current schema registry configuration. */
 class SchemaRetrieverFactory(
-        @Context private val config: Config
-): Supplier<SchemaRetriever> {
+    @Context private val config: Config,
+) : Supplier<SchemaRetriever> {
     override fun get(): SchemaRetriever {
         val server = when (val schemaRegistryUrl = config.kafka.serialization[SCHEMA_REGISTRY_URL_CONFIG]) {
             is String -> ServerConfig(schemaRegistryUrl)
             is List<*> -> ServerConfig(schemaRegistryUrl.first() as String)
             else -> throw IllegalStateException("Configuration does not contain valid schema.registry.url")
         }
+
         @Suppress("DEPRECATION")
-        val basicCredentials = (config.kafka.serialization[SCHEMA_REGISTRY_USER_INFO_CONFIG].takeIf { it is String && it.isNotEmpty() }
+        val basicCredentials =
+            (config.kafka.serialization[SCHEMA_REGISTRY_USER_INFO_CONFIG].takeIf { it is String && it.isNotEmpty() }
                 ?: config.kafka.serialization[USER_INFO_CONFIG]).takeIf { it is String && it.isNotEmpty() } as String?
 
         val headers = if (basicCredentials != null && basicCredentials.contains(':')) {
@@ -32,10 +34,12 @@ class SchemaRetrieverFactory(
             headersOf("Authorization", Credentials.basic(username, password))
         } else headersOf()
 
-        return SchemaRetriever(RestClient.global()
+        return SchemaRetriever(
+            RestClient.global()
                 .server(server)
                 .headers(headers)
                 .timeout(30, TimeUnit.SECONDS)
-                .build(), 300)
+                .build(), 300
+        )
     }
 }
