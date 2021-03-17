@@ -1,11 +1,11 @@
 package org.radarbase.gateway.io
 
+import jakarta.ws.rs.core.Response
 import org.glassfish.jersey.spi.ContentEncoder
 import org.radarbase.io.lzfse.LZFSEInputStream
 import org.radarbase.jersey.exception.HttpApplicationException
 import java.io.InputStream
 import java.io.OutputStream
-import javax.ws.rs.core.Response
 
 class LzfseEncoder : ContentEncoder("lzfse", "x-lzfse") {
     override fun encode(

@@ -1,6 +1,6 @@
 package org.radarbase.gateway.inject
 
-import javax.ws.rs.NameBinding
+import jakarta.ws.rs.NameBinding
 
 /** Tag for additional processing required for incoming Avro data. */
 @NameBinding

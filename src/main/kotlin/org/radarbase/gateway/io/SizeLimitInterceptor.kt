@@ -1,14 +1,14 @@
 package org.radarbase.gateway.io
 
+import jakarta.annotation.Priority
+import jakarta.ws.rs.Priorities
+import jakarta.ws.rs.core.Context
+import jakarta.ws.rs.ext.Provider
+import jakarta.ws.rs.ext.ReaderInterceptor
+import jakarta.ws.rs.ext.ReaderInterceptorContext
 import org.radarbase.gateway.Config
 import org.radarbase.gateway.inject.ProcessAvro
-import javax.annotation.Priority
 import javax.inject.Singleton
-import javax.ws.rs.Priorities
-import javax.ws.rs.core.Context
-import javax.ws.rs.ext.Provider
-import javax.ws.rs.ext.ReaderInterceptor
-import javax.ws.rs.ext.ReaderInterceptorContext
 
 /**
  * Limits data stream to a maximum request size.
