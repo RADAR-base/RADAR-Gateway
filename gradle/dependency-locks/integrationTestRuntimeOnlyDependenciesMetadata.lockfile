@@ -18,10 +18,10 @@ org.glassfish.pfl:pfl-basic:4.0.1
 org.glassfish.pfl:pfl-dynamic:4.0.1
 org.glassfish.pfl:pfl-tf-tools:4.0.1
 org.glassfish.pfl:pfl-tf:4.0.1
-org.junit.jupiter:junit-jupiter-api:5.7.0
-org.junit.jupiter:junit-jupiter-engine:5.7.0
-org.junit.platform:junit-platform-commons:1.7.0
-org.junit.platform:junit-platform-engine:1.7.0
-org.junit:junit-bom:5.7.0
+org.junit.jupiter:junit-jupiter-api:5.7.1
+org.junit.jupiter:junit-jupiter-engine:5.7.1
+org.junit.platform:junit-platform-commons:1.7.1
+org.junit.platform:junit-platform-engine:1.7.1
+org.junit:junit-bom:5.7.1
 org.opentest4j:opentest4j:1.2.0
 org.slf4j:slf4j-api:1.7.25

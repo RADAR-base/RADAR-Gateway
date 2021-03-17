@@ -26,6 +26,7 @@ configurations {
         val versionSelectorScheme = serviceOf<VersionSelectorScheme>()
         resolutionStrategy.componentSelection.all {
             if (candidate.version.contains("-SNAPSHOT")
+                || candidate.version.contains("-M[0-9]+".toRegex())
                 || candidate.version.contains("-rc", ignoreCase = true)
                 || candidate.version.contains(".Draft", ignoreCase = true)
                 || candidate.version.contains("-alpha", ignoreCase = true)
@@ -40,14 +41,12 @@ configurations {
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
     // Non-jcenter radar releases
     maven(url = "https://dl.bintray.com/radar-cns/org.radarcns")
     maven(url = "https://dl.bintray.com/radar-base/org.radarbase")
-    // For working with dev-branches
-    maven(url = "https://repo.thehyve.nl/content/repositories/snapshots")
-    maven(url = "https://oss.jfrog.org/artifactory/libs-snapshot/")
     maven(url = "https://packages.confluent.io/maven/")
+    jcenter()
 }
 
 val integrationTest = testSets.create("integrationTest")
@@ -59,6 +58,7 @@ dependencies {
     val radarCommonsVersion: String by project
     implementation("org.radarbase:radar-commons:$radarCommonsVersion")
     implementation("org.radarbase:radar-jersey:${project.property("radarJerseyVersion")}")
+    implementation("org.radarbase:managementportal-client:${project.property("radarAuthVersion")}")
     implementation("org.radarbase:lzfse-decode:${project.property("lzfseVersion")}")
 
     implementation("org.apache.kafka:kafka-clients:${project.property("kafkaVersion")}")
@@ -87,8 +87,6 @@ dependencies {
     integrationTest.implementationConfigurationName("org.radarbase:radar-commons-testing:$radarCommonsVersion")
 }
 
-val kotlinApiVersion: String by project
-
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         jvmTarget = "11"
@@ -111,7 +109,7 @@ tasks.withType<Tar> {
 }
 
 application {
-    mainClassName = "org.radarbase.gateway.MainKt"
+    mainClass.set("org.radarbase.gateway.MainKt")
 
     applicationDefaultJvmArgs = listOf(
         "-Dcom.sun.management.jmxremote",
@@ -165,5 +163,5 @@ tasks.register("downloadDependencies") {
 }
 
 tasks.wrapper {
-    gradleVersion = "6.6.1"
+    gradleVersion = "6.8.3"
 }
