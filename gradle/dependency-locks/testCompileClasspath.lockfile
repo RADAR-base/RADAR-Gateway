@@ -6,17 +6,10 @@ com.fasterxml.jackson.core:jackson-annotations:2.12.1
 com.fasterxml.jackson.core:jackson-core:2.12.1
 com.fasterxml.jackson.core:jackson-databind:2.12.1
 com.fasterxml.jackson:jackson-bom:2.12.1
-com.github.luben:zstd-jni:1.4.4-7
 com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0
 com.squareup.okhttp3:mockwebserver:4.9.1
 com.squareup.okhttp3:okhttp:4.9.1
 com.squareup.okio:okio:2.8.0
-io.confluent:common-config:5.5.3
-io.confluent:common-utils:5.5.3
-io.confluent:kafka-avro-serializer:5.5.3
-io.confluent:kafka-schema-registry-client:5.5.3
-io.confluent:kafka-schema-serializer:5.5.3
-io.swagger:swagger-annotations:1.6.2
 jakarta.annotation:jakarta.annotation-api:2.0.0
 jakarta.inject:jakarta.inject-api:2.0.0
 jakarta.validation:jakarta.validation-api:3.0.0
@@ -25,8 +18,6 @@ junit:junit:4.13.1
 net.bytebuddy:byte-buddy-agent:1.9.0
 net.bytebuddy:byte-buddy:1.9.0
 org.apache.avro:avro:1.9.2
-org.apache.commons:commons-compress:1.19
-org.apache.kafka:kafka-clients:5.5.3-ccs
 org.apiguardian:apiguardian-api:1.1.0
 org.glassfish.hk2.external:aopalliance-repackaged:3.0.1
 org.glassfish.hk2.external:jakarta.inject:2.6.1
@@ -50,7 +41,6 @@ org.json:json:20201115
 org.junit.jupiter:junit-jupiter-api:5.7.1
 org.junit.platform:junit-platform-commons:1.7.1
 org.junit:junit-bom:5.7.1
-org.lz4:lz4-java:1.7.1
 org.mockito:mockito-core:2.23.0
 org.objenesis:objenesis:2.6
 org.opentest4j:opentest4j:1.2.0
@@ -62,4 +52,3 @@ org.radarcns:oauth-client-util:0.6.5
 org.radarcns:radar-auth:0.6.4
 org.radarcns:radar-schemas-commons:0.5.15
 org.slf4j:slf4j-api:1.7.30
-org.xerial.snappy:snappy-java:1.1.7.3

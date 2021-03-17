@@ -16,5 +16,5 @@ target/
 .gradletasknamecache
 
 # Build
-/build/
+build/
 *.war

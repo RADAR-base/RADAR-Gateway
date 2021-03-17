@@ -2,6 +2,7 @@ package org.radarbase.gateway.resource
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
+import jakarta.inject.Singleton
 import jakarta.ws.rs.*
 import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.Response
@@ -18,7 +19,6 @@ import org.radarcns.auth.authorization.Permission.Operation.CREATE
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
-import javax.inject.Singleton
 
 /** Topics submission and listing. Requests need authentication. */
 @Path("/topics")

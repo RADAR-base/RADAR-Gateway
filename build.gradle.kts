@@ -9,7 +9,7 @@ plugins {
     id("application")
     kotlin("jvm")
     id("org.unbroken-dome.test-sets") version "3.0.1"
-    id("com.avast.gradle.docker-compose") version "0.13.4"
+    id("com.avast.gradle.docker-compose") version "0.14.1"
 }
 
 group = "org.radarbase"
@@ -61,8 +61,7 @@ dependencies {
     implementation("org.radarbase:managementportal-client:${project.property("radarAuthVersion")}")
     implementation("org.radarbase:lzfse-decode:${project.property("lzfseVersion")}")
 
-    implementation("org.apache.kafka:kafka-clients:${project.property("kafkaVersion")}")
-    implementation("io.confluent:kafka-avro-serializer:${project.property("confluentVersion")}")
+    implementation(project(path = ":deprecated-javax", configuration = "shadow"))
 
     implementation("org.slf4j:slf4j-api:${project.property("slf4jVersion")}")
     implementation("com.fasterxml.jackson.core:jackson-databind:${project.property("jacksonVersion")}")
@@ -137,29 +136,31 @@ idea {
 }
 
 
-tasks.register("downloadDockerDependencies") {
-    doFirst {
-        configurations["compileClasspath"].files
-        configurations["runtimeClasspath"].files
-        println("Downloaded all dependencies")
+allprojects {
+    tasks.register("downloadDockerDependencies") {
+        doFirst {
+            configurations["compileClasspath"].files
+            configurations["runtimeClasspath"].files
+            println("Downloaded all dependencies")
+        }
+        outputs.upToDateWhen { false }
     }
-    outputs.upToDateWhen { false }
-}
 
-tasks.register("downloadDependencies") {
-    doFirst {
-        configurations.asMap
-            .filterValues { it.isCanBeResolved }
-            .forEach { (name, config) ->
-                try {
-                    config.files
-                } catch (ex: Exception) {
-                    project.logger.warn("Cannot find dependency for configuration {}", name, ex)
+    tasks.register("downloadDependencies") {
+        doFirst {
+            configurations.asMap
+                .filterValues { it.isCanBeResolved }
+                .forEach { (name, config) ->
+                    try {
+                        config.files
+                    } catch (ex: Exception) {
+                        project.logger.warn("Cannot find dependency for configuration {}", name, ex)
+                    }
                 }
-            }
-        println("Downloaded all dependencies")
+            println("Downloaded all dependencies")
+        }
+        outputs.upToDateWhen { false }
     }
-    outputs.upToDateWhen { false }
 }
 
 tasks.wrapper {

@@ -1,6 +1,7 @@
 package org.radarbase.gateway.filter
 
 import jakarta.annotation.Priority
+import jakarta.inject.Singleton
 import jakarta.ws.rs.Priorities
 import jakarta.ws.rs.container.ContainerRequestContext
 import jakarta.ws.rs.container.ContainerRequestFilter
@@ -13,7 +14,6 @@ import org.radarbase.jersey.exception.HttpApplicationException
 import org.radarbase.jersey.exception.HttpNotFoundException
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ExecutionException
-import javax.inject.Singleton
 
 /**
  * Asserts that data is only submitted to Kafka topics that already exist.

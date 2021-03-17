@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM gradle:6.6.1-jdk11 as builder
+FROM gradle:6.8.3-jdk11 as builder
 
 RUN mkdir /code
 WORKDIR /code
@@ -18,6 +18,7 @@ WORKDIR /code
 ENV GRADLE_USER_HOME=/code/.gradlecache
 
 COPY ./build.gradle.kts ./gradle.properties ./settings.gradle.kts /code/
+COPY ./deprecated-javax/build.gradle.kts /code/deprecated-javax/
 COPY gradle/dependency-locks /code/gradle/dependency-locks
 
 RUN gradle downloadDockerDependencies
