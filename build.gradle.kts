@@ -16,24 +16,30 @@ group = "org.radarbase"
 version = "0.5.4-SNAPSHOT"
 description = "RADAR Gateway to handle secured data flow to backend."
 
-dependencyLocking {
-    lockAllConfigurations()
-}
+allprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+    }
 
-configurations {
-    // Avoid non-release versions from wildcards
-    all {
-        val versionSelectorScheme = serviceOf<VersionSelectorScheme>()
-        resolutionStrategy.componentSelection.all {
-            if (candidate.version.contains("-SNAPSHOT")
-                || candidate.version.contains("-M[0-9]+".toRegex())
-                || candidate.version.contains("-rc", ignoreCase = true)
-                || candidate.version.contains(".Draft", ignoreCase = true)
-                || candidate.version.contains("-alpha", ignoreCase = true)
-                || candidate.version.contains("-beta", ignoreCase = true)) {
-                val dependency = allDependencies.find { it.group == candidate.group && it.name == candidate.module }
-                if (dependency != null && !versionSelectorScheme.parseSelector(dependency.version).matchesUniqueVersion()) {
-                    reject("only releases are allowed for $dependency")
+    configurations {
+        // Avoid non-release versions from wildcards
+        all {
+            val versionSelectorScheme = serviceOf<VersionSelectorScheme>()
+            resolutionStrategy.componentSelection.all {
+                if (candidate.version.contains("-SNAPSHOT")
+                    || candidate.version.contains("-M[0-9]+".toRegex())
+                    || candidate.version.contains("-rc", ignoreCase = true)
+                    || candidate.version.contains(".Draft", ignoreCase = true)
+                    || candidate.version.contains("-alpha", ignoreCase = true)
+                    || candidate.version.contains("-beta", ignoreCase = true)
+                ) {
+                    val dependency =
+                        allDependencies.find { it.group == candidate.group && it.name == candidate.module }
+                    if (dependency != null && !versionSelectorScheme.parseSelector(dependency.version)
+                            .matchesUniqueVersion()
+                    ) {
+                        reject("only releases are allowed for $dependency")
+                    }
                 }
             }
         }
