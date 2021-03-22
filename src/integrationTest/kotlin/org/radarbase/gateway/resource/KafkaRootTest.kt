@@ -1,10 +1,10 @@
 package org.radarbase.gateway.resource
 
+import jakarta.ws.rs.core.Response.Status
 import okhttp3.OkHttpClient
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.radarbase.gateway.resource.KafkaTopicsTest.Companion.call
-import javax.ws.rs.core.Response.Status
 
 class KafkaRootTest {
     @Test

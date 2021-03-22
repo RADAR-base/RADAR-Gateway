@@ -8,7 +8,7 @@ import org.radarbase.jersey.config.EnhancerFactory
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Locale
+import java.util.*
 
 data class Config(
     /** Radar-jersey resource configuration class. */

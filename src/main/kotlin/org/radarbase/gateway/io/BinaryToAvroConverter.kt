@@ -1,6 +1,7 @@
 package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream
+import jakarta.ws.rs.core.Context
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericDatumReader
@@ -15,7 +16,6 @@ import org.radarbase.producer.rest.SchemaRetriever
 import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
-import javax.ws.rs.core.Context
 
 /** Converts binary input from a RecordSet to Kafka JSON. */
 class BinaryToAvroConverter(

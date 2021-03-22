@@ -2,6 +2,10 @@ package org.radarbase.gateway.resource
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
+import jakarta.inject.Singleton
+import jakarta.ws.rs.*
+import jakarta.ws.rs.core.Context
+import jakarta.ws.rs.core.Response
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.BinaryToAvroConverter
@@ -15,10 +19,6 @@ import org.radarcns.auth.authorization.Permission.Operation.CREATE
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
-import javax.inject.Singleton
-import javax.ws.rs.*
-import javax.ws.rs.core.Context
-import javax.ws.rs.core.Response
 
 /** Topics submission and listing. Requests need authentication. */
 @Path("/topics")

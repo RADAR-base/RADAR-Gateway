@@ -9,30 +9,37 @@ plugins {
     id("application")
     kotlin("jvm")
     id("org.unbroken-dome.test-sets") version "3.0.1"
-    id("com.avast.gradle.docker-compose") version "0.13.4"
+    id("com.avast.gradle.docker-compose") version "0.14.1"
 }
 
 group = "org.radarbase"
-version = "0.5.4-SNAPSHOT"
+version = "0.5.4"
 description = "RADAR Gateway to handle secured data flow to backend."
 
-dependencyLocking {
-    lockAllConfigurations()
-}
+allprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+    }
 
-configurations {
-    // Avoid non-release versions from wildcards
-    all {
-        val versionSelectorScheme = serviceOf<VersionSelectorScheme>()
-        resolutionStrategy.componentSelection.all {
-            if (candidate.version.contains("-SNAPSHOT")
-                || candidate.version.contains("-rc", ignoreCase = true)
-                || candidate.version.contains(".Draft", ignoreCase = true)
-                || candidate.version.contains("-alpha", ignoreCase = true)
-                || candidate.version.contains("-beta", ignoreCase = true)) {
-                val dependency = allDependencies.find { it.group == candidate.group && it.name == candidate.module }
-                if (dependency != null && !versionSelectorScheme.parseSelector(dependency.version).matchesUniqueVersion()) {
-                    reject("only releases are allowed for $dependency")
+    configurations {
+        // Avoid non-release versions from wildcards
+        all {
+            val versionSelectorScheme = serviceOf<VersionSelectorScheme>()
+            resolutionStrategy.componentSelection.all {
+                if (candidate.version.contains("-SNAPSHOT")
+                    || candidate.version.contains("-M[0-9]+".toRegex())
+                    || candidate.version.contains("-rc", ignoreCase = true)
+                    || candidate.version.contains(".Draft", ignoreCase = true)
+                    || candidate.version.contains("-alpha", ignoreCase = true)
+                    || candidate.version.contains("-beta", ignoreCase = true)
+                ) {
+                    val dependency =
+                        allDependencies.find { it.group == candidate.group && it.name == candidate.module }
+                    if (dependency != null && !versionSelectorScheme.parseSelector(dependency.version)
+                            .matchesUniqueVersion()
+                    ) {
+                        reject("only releases are allowed for $dependency")
+                    }
                 }
             }
         }
@@ -40,14 +47,12 @@ configurations {
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
     // Non-jcenter radar releases
     maven(url = "https://dl.bintray.com/radar-cns/org.radarcns")
     maven(url = "https://dl.bintray.com/radar-base/org.radarbase")
-    // For working with dev-branches
-    maven(url = "https://repo.thehyve.nl/content/repositories/snapshots")
-    maven(url = "https://oss.jfrog.org/artifactory/libs-snapshot/")
     maven(url = "https://packages.confluent.io/maven/")
+    jcenter()
 }
 
 val integrationTest = testSets.create("integrationTest")
@@ -59,10 +64,10 @@ dependencies {
     val radarCommonsVersion: String by project
     implementation("org.radarbase:radar-commons:$radarCommonsVersion")
     implementation("org.radarbase:radar-jersey:${project.property("radarJerseyVersion")}")
+    implementation("org.radarbase:managementportal-client:${project.property("radarAuthVersion")}")
     implementation("org.radarbase:lzfse-decode:${project.property("lzfseVersion")}")
 
-    implementation("org.apache.kafka:kafka-clients:${project.property("kafkaVersion")}")
-    implementation("io.confluent:kafka-avro-serializer:${project.property("confluentVersion")}")
+    implementation(project(path = ":deprecated-javax", configuration = "shadow"))
 
     implementation("org.slf4j:slf4j-api:${project.property("slf4jVersion")}")
     implementation("com.fasterxml.jackson.core:jackson-databind:${project.property("jacksonVersion")}")
@@ -87,8 +92,6 @@ dependencies {
     integrationTest.implementationConfigurationName("org.radarbase:radar-commons-testing:$radarCommonsVersion")
 }
 
-val kotlinApiVersion: String by project
-
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         jvmTarget = "11"
@@ -111,7 +114,7 @@ tasks.withType<Tar> {
 }
 
 application {
-    mainClassName = "org.radarbase.gateway.MainKt"
+    mainClass.set("org.radarbase.gateway.MainKt")
 
     applicationDefaultJvmArgs = listOf(
         "-Dcom.sun.management.jmxremote",
@@ -139,31 +142,33 @@ idea {
 }
 
 
-tasks.register("downloadDockerDependencies") {
-    doFirst {
-        configurations["compileClasspath"].files
-        configurations["runtimeClasspath"].files
-        println("Downloaded all dependencies")
+allprojects {
+    tasks.register("downloadDockerDependencies") {
+        doFirst {
+            configurations["compileClasspath"].files
+            configurations["runtimeClasspath"].files
+            println("Downloaded all dependencies")
+        }
+        outputs.upToDateWhen { false }
     }
-    outputs.upToDateWhen { false }
-}
 
-tasks.register("downloadDependencies") {
-    doFirst {
-        configurations.asMap
-            .filterValues { it.isCanBeResolved }
-            .forEach { (name, config) ->
-                try {
-                    config.files
-                } catch (ex: Exception) {
-                    project.logger.warn("Cannot find dependency for configuration {}", name, ex)
+    tasks.register("downloadDependencies") {
+        doFirst {
+            configurations.asMap
+                .filterValues { it.isCanBeResolved }
+                .forEach { (name, config) ->
+                    try {
+                        config.files
+                    } catch (ex: Exception) {
+                        project.logger.warn("Cannot find dependency for configuration {}", name, ex)
+                    }
                 }
-            }
-        println("Downloaded all dependencies")
+            println("Downloaded all dependencies")
+        }
+        outputs.upToDateWhen { false }
     }
-    outputs.upToDateWhen { false }
 }
 
 tasks.wrapper {
-    gradleVersion = "6.6.1"
+    gradleVersion = "6.8.3"
 }

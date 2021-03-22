@@ -49,7 +49,7 @@ services:
   # Management Portal                                                         #
   #---------------------------------------------------------------------------#
   managementportal-app:
-    image: radarbase/management-portal:0.6.0
+    image: radarbase/management-portal:0.6.5
     ports:
       - "127.0.0.1:8080:8080"
     environment:
