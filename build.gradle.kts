@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "org.radarbase"
-version = "0.5.4"
+version = "0.5.5-SNAPSHOT"
 description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
