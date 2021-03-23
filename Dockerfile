@@ -20,6 +20,7 @@ ENV GRADLE_USER_HOME=/code/.gradlecache
 COPY ./build.gradle.kts ./gradle.properties ./settings.gradle.kts /code/
 COPY ./deprecated-javax/build.gradle.kts /code/deprecated-javax/
 COPY gradle/dependency-locks /code/gradle/dependency-locks
+COPY deprecated-javax/gradle/dependency-locks /code/deprecated-javax/gradle/dependency-locks
 
 RUN gradle downloadDockerDependencies
 
@@ -35,6 +36,10 @@ FROM openjdk:11-jre-slim
 MAINTAINER @blootsvoets
 
 LABEL description="RADAR-base Gateway docker container"
+
+RUN apt-get update && apt-get install -y \
+  curl \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /code/build/distributions/radar-gateway-*/bin/* /usr/bin/
 COPY --from=builder /code/build/distributions/radar-gateway-*/lib/* /usr/lib/
