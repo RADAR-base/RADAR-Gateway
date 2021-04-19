@@ -44,9 +44,5 @@ jobs:
             - name: Check
               run: ./gradlew check
 
-            # Gradle integration test. Includes internal docker-compose management
-            - name: Integration test
-              run: ./gradlew integrationTest
-
             - name: Docker has curl
               run: docker run --rm -it radarbase/radar-gateway:SNAPSHOT curl --help
