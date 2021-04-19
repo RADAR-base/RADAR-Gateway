@@ -48,8 +48,5 @@ jobs:
             - name: Integration test
               run: ./gradlew integrationTest
 
-            - name: Docker build
-              run: docker build -t gateway-test .
-
-            - name: Docker run curl
-              run: docker run --rm -it gateway-test curl --help
+            - name: Docker has curl
+              run: docker run --rm -it radarbase/radar-gateway:SNAPSHOT curl --help
