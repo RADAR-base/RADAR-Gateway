@@ -7,6 +7,8 @@ import okio.Buffer
 import org.apache.avro.generic.GenericRecordBuilder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.radarbase.auth.authorization.Permission
+import org.radarbase.auth.token.RadarToken
 import org.radarbase.data.AvroRecordData
 import org.radarbase.gateway.Config
 import org.radarbase.jersey.auth.Auth
@@ -14,8 +16,6 @@ import org.radarbase.producer.rest.BinaryRecordRequest
 import org.radarbase.producer.rest.ParsedSchemaMetadata
 import org.radarbase.producer.rest.SchemaRetriever
 import org.radarbase.topic.AvroTopic
-import org.radarcns.auth.authorization.Permission
-import org.radarcns.auth.token.RadarToken
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
 

@@ -6,6 +6,8 @@ import jakarta.inject.Singleton
 import jakarta.ws.rs.*
 import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.Response
+import org.radarbase.auth.authorization.Permission.Entity.MEASUREMENT
+import org.radarbase.auth.authorization.Permission.Operation.CREATE
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.BinaryToAvroConverter
@@ -14,8 +16,6 @@ import org.radarbase.gateway.kafka.ProducerPool
 import org.radarbase.jersey.auth.Authenticated
 import org.radarbase.jersey.auth.NeedsPermission
 import org.radarbase.jersey.exception.HttpBadRequestException
-import org.radarcns.auth.authorization.Permission.Entity.MEASUREMENT
-import org.radarcns.auth.authorization.Permission.Operation.CREATE
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream

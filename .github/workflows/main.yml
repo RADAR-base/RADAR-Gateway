@@ -47,3 +47,9 @@ jobs:
             # Gradle integration test. Includes internal docker-compose management
             - name: Integration test
               run: ./gradlew integrationTest
+
+            - name: Docker build
+              run: docker build -t gateway-test .
+
+            - name: Docker run curl
+              run: docker run --rm -it gateway-test curl --help
