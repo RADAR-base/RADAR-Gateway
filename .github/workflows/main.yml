@@ -45,4 +45,4 @@ jobs:
               run: ./gradlew check
 
             - name: Docker has curl
-              run: docker run --rm -it radarbase/radar-gateway:SNAPSHOT curl --help
+              run: docker run --rm radarbase/radar-gateway:SNAPSHOT curl --help
