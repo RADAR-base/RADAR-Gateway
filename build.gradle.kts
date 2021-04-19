@@ -7,7 +7,6 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("org.unbroken-dome.test-sets") version "3.0.1"
     id("com.avast.gradle.docker-compose") version "0.14.1"
     id("com.github.ben-manes.versions") version "0.38.0"
 }
@@ -39,7 +38,16 @@ repositories {
     maven(url = "https://packages.confluent.io/maven/")
 }
 
-val integrationTest = testSets.create("integrationTest")
+val integrationTestSourceSet = sourceSets.create("integrationTest") {
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+}
+
+val integrationTestImplementation: Configuration by configurations.getting {
+    extendsFrom(configurations.testImplementation.get())
+}
+
+configurations["integrationTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
@@ -71,9 +79,9 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
     testImplementation("org.radarbase:radar-schemas-commons:$radarSchemasVersion")
-    integrationTest.implementationConfigurationName("com.squareup.okhttp3:okhttp:$okhttp3Version")
-    integrationTest.implementationConfigurationName("org.radarbase:radar-schemas-commons:$radarSchemasVersion")
-    integrationTest.implementationConfigurationName("org.radarbase:radar-commons-testing:$radarCommonsVersion")
+    integrationTestImplementation("com.squareup.okhttp3:okhttp:$okhttp3Version")
+    integrationTestImplementation("org.radarbase:radar-schemas-commons:$radarSchemasVersion")
+    integrationTestImplementation("org.radarbase:radar-commons-testing:$radarCommonsVersion")
 }
 
 tasks.withType<KotlinCompile> {
@@ -83,6 +91,17 @@ tasks.withType<KotlinCompile> {
         languageVersion = "1.4"
     }
 }
+
+val integrationTest by tasks.registering(Test::class) {
+    description = "Runs integration tests."
+    group = "verification"
+
+    testClassesDirs = integrationTestSourceSet.output.classesDirs
+    classpath = integrationTestSourceSet.runtimeClasspath
+    shouldRunAfter("test")
+}
+
+tasks["check"].dependsOn(integrationTest)
 
 tasks.withType<Test> {
     testLogging {
@@ -154,5 +173,5 @@ allprojects {
 }
 
 tasks.wrapper {
-    gradleVersion = "6.8.3"
+    gradleVersion = "7.0"
 }
