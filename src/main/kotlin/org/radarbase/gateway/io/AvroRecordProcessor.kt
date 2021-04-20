@@ -10,7 +10,7 @@ import org.apache.avro.generic.GenericFixed
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.jsonDefaultValue
-import org.radarbase.auth.authorization.Permission
+import org.radarbase.auth.authorization.Permission.MEASUREMENT_CREATE
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.jersey.exception.HttpInvalidContentException
 import java.io.IOException
@@ -26,7 +26,6 @@ class AvroRecordProcessor(
     private val auth: Auth,
     private val objectMapper: ObjectMapper,
 ) {
-
     @Throws(IOException::class)
     fun process(
         records: JsonNode,
@@ -61,31 +60,9 @@ class AvroRecordProcessor(
             throw invalidContent("Field key must be a JSON object", context)
         }
 
-        val projectId = key["projectId"]?.let { project ->
-            if (project.isNull) {
-                // no project ID was provided, fill it in for the sender
-                val newProject = objectMapper.createObjectNode()
-                newProject.put("string", auth.defaultProject)
-                (key as ObjectNode).set("projectId", newProject) as JsonNode?
-                auth.defaultProject
-            } else {
-                // project ID was provided, it should match one of the validated project IDs.
-                project["string"]?.asText() ?: throw invalidContent(
-                    "Project ID should be wrapped in string union type", context
-                )
-            }
-        } ?: auth.defaultProject
-
-        if (checkSourceId) {
-            auth.checkPermissionOnSource(
-                Permission.MEASUREMENT_CREATE,
-                projectId, key["userId"]?.asText(), key["sourceId"]?.asText()
-            )
-        } else {
-            auth.checkPermissionOnSubject(
-                Permission.MEASUREMENT_CREATE,
-                projectId, key["userId"]?.asText()
-            )
+        val authId = key.toAuthId(context)
+        if (context.authIds.add(authId)) {
+            authId.checkPermission(auth, checkSourceId)
         }
 
         return keyMapping.jsonToAvro(key, context)
@@ -325,12 +302,65 @@ class AvroRecordProcessor(
         val type: Schema.Type,
         val name: String?,
         val parent: ParsingContext? = null,
+        val authIds: MutableSet<AuthId> = mutableSetOf(),
     ) {
         private fun toString(child: String?): String {
             val typedName = if (child != null) "$type { $name: $child }" else "$type { $name }"
             return parent?.toString(typedName) ?: typedName
         }
         override fun toString(): String = toString(null)
+    }
+
+    data class AuthId(
+        val projectId: String?,
+        val userId: String?,
+        val sourceId: String?
+    ) {
+        fun checkPermission(auth: Auth, checkSourceId: Boolean) {
+            if (checkSourceId) {
+                auth.checkPermissionOnSource(
+                    MEASUREMENT_CREATE,
+                    projectId,
+                    userId,
+                    sourceId,
+                )
+            } else {
+                auth.checkPermissionOnSubject(
+                    MEASUREMENT_CREATE,
+                    projectId,
+                    userId,
+                )
+            }
+        }
+    }
+
+    private fun JsonNode.toAuthId(
+        context: ParsingContext,
+    ): AuthId {
+        val projectId = this["projectId"]?.let { project ->
+            if (project.isNull) {
+                // no project ID was provided, fill it in for the sender
+                val newProject = objectMapper.createObjectNode().apply {
+                    put("string", auth.defaultProject)
+                }
+                (this as ObjectNode).set<JsonNode?>("projectId", newProject)
+                auth.defaultProject
+            } else {
+                // project ID was provided, it should match one of the validated project IDs.
+                project["string"]?.asText() ?: throw invalidContent(
+                    "Project ID should be wrapped in string union type",
+                    context,
+                )
+            }
+        } ?: auth.defaultProject
+
+        val userId = this["userId"]?.asText()
+
+        return if (checkSourceId) {
+            AuthId(projectId, userId, this["sourceId"]?.asText())
+        } else {
+            AuthId(projectId, userId, null)
+        }
     }
 
     private fun AvroProcessor.JsonToObjectMapping.jsonToAvro(
