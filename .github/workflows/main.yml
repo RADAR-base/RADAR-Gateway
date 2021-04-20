@@ -139,7 +139,8 @@ jobs:
           ./gradlew integrationTest -PdockerComposeBuild=false
 
       - uses: actions/upload-artifact@v2
-        if: steps.integration.outcome == 'success' || steps.integration.outcome == 'failure'
+        if: always()
         with:
           name: integration-test-logs
           path: build/container-logs/
+          retention-days: 7
