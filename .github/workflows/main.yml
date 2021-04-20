@@ -132,6 +132,8 @@ jobs:
       - name: Integration test
         run: |
           echo "RADAR_GATEWAY_TAG=${{ steps.docker_meta.outputs.version }}" >> src/integrationTest/docker/.env
+          ./gradlew composeUp -PdockerComposeBuild=false
+          sleep 15
           ./gradlew integrationTest -PdockerComposeBuild=false
 
       - uses: actions/upload-artifact@v2
