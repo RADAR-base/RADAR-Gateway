@@ -101,8 +101,6 @@ val integrationTest by tasks.registering(Test::class) {
     shouldRunAfter("test")
 }
 
-tasks["check"].dependsOn(integrationTest)
-
 tasks.withType<Test> {
     testLogging {
         showStandardStreams = true
@@ -130,6 +128,10 @@ application {
 
 dockerCompose {
     useComposeFiles = listOf("src/integrationTest/docker/docker-compose.yml")
+    val dockerComposeBuild: String? by project
+    val doBuild = dockerComposeBuild?.toBooleanLenient() ?: true
+    buildBeforeUp = doBuild
+    buildBeforePull = doBuild
     buildAdditionalArgs = emptyList<String>()
     val dockerComposeStopContainers: String? by project
     stopContainers = dockerComposeStopContainers?.toBooleanLenient() ?: true
