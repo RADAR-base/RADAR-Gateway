@@ -137,7 +137,8 @@ dockerCompose {
     stopContainers = dockerComposeStopContainers?.toBooleanLenient() ?: true
     waitForTcpPortsTimeout = Duration.ofMinutes(3)
     environment["SERVICES_HOST"] = "localhost"
-    isRequiredBy(tasks["integrationTest"])
+    captureContainersOutputToFiles = project.file("build/container-logs")
+    isRequiredBy(integrationTest)
 }
 
 idea {

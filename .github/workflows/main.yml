@@ -133,6 +133,13 @@ jobs:
 
       # Gradle check
       - name: Integration test
+        id: integration
         run: |
           echo "RADAR_GATEWAY_TAG=${{ steps.docker_meta.outputs.version }}" >> src/integrationTest/docker/.env
           ./gradlew integrationTest -PdockerComposeBuild=false
+
+      - uses: actions/upload-artifact@v2
+        if: steps.integration.outcome == 'success' || steps.integration.outcome == 'failure'
+        with:
+          name: integration-test-logs
+          path: build/container-logs/
