@@ -92,8 +92,7 @@ jobs:
           file: ./Dockerfile
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
-          push: ${{ github.event_name != 'pull_request' }}  # Push the master branch only
-          load: ${{ github.event_name == 'pull_request' }}  # Otherwise, just load it locally
+          load: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           # Use runtime labels from docker_meta as well as fixed labels
           labels: |
@@ -104,9 +103,9 @@ jobs:
             org.opencontainers.image.licenses=Apache-2.0
 
       # If the image was pushed, we need to pull it again to inspect it
-      - name: Pull image
+      - name: Push image
         if: ${{ github.event_name != 'pull_request' }}
-        run: docker pull ${{ env.DOCKER_IMAGE }}:${{ steps.docker_meta.outputs.version }}
+        run: docker push ${{ env.DOCKER_IMAGE }}:${{ steps.docker_meta.outputs.version }}
 
       - name: Docker image has curl
         run: docker run --rm ${{ env.DOCKER_IMAGE }}:${{ steps.docker_meta.outputs.version }} curl --help
@@ -133,7 +132,6 @@ jobs:
 
       # Gradle check
       - name: Integration test
-        id: integration
         run: |
           echo "RADAR_GATEWAY_TAG=${{ steps.docker_meta.outputs.version }}" >> src/integrationTest/docker/.env
           ./gradlew integrationTest -PdockerComposeBuild=false
