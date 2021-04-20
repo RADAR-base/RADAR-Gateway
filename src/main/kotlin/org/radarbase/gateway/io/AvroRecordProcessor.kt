@@ -10,9 +10,9 @@ import org.apache.avro.generic.GenericFixed
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.jsonDefaultValue
+import org.radarbase.auth.authorization.Permission
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.jersey.exception.HttpInvalidContentException
-import org.radarcns.auth.authorization.Permission
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets

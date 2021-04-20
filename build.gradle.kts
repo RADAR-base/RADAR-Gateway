@@ -1,5 +1,4 @@
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelectorScheme
-import org.gradle.kotlin.dsl.support.serviceOf
+import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import org.jetbrains.kotlin.cli.common.toBooleanLenient
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.Duration
@@ -8,40 +7,27 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("org.unbroken-dome.test-sets") version "3.0.1"
     id("com.avast.gradle.docker-compose") version "0.14.1"
+    id("com.github.ben-manes.versions") version "0.38.0"
 }
 
 group = "org.radarbase"
-version = "0.5.4"
+version = "0.5.5"
 description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
-    dependencyLocking {
-        lockAllConfigurations()
+    apply(plugin = "com.github.ben-manes.versions")
+
+    fun isNonStable(version: String): Boolean {
+        val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
+        val regex = "^[0-9,.v-]+(-r)?$".toRegex()
+        val isStable = stableKeyword || regex.matches(version)
+        return isStable.not()
     }
 
-    configurations {
-        // Avoid non-release versions from wildcards
-        all {
-            val versionSelectorScheme = serviceOf<VersionSelectorScheme>()
-            resolutionStrategy.componentSelection.all {
-                if (candidate.version.contains("-SNAPSHOT")
-                    || candidate.version.contains("-M[0-9]+".toRegex())
-                    || candidate.version.contains("-rc", ignoreCase = true)
-                    || candidate.version.contains(".Draft", ignoreCase = true)
-                    || candidate.version.contains("-alpha", ignoreCase = true)
-                    || candidate.version.contains("-beta", ignoreCase = true)
-                ) {
-                    val dependency =
-                        allDependencies.find { it.group == candidate.group && it.name == candidate.module }
-                    if (dependency != null && !versionSelectorScheme.parseSelector(dependency.version)
-                            .matchesUniqueVersion()
-                    ) {
-                        reject("only releases are allowed for $dependency")
-                    }
-                }
-            }
+    tasks.named<DependencyUpdatesTask>("dependencyUpdates").configure {
+        rejectVersionIf {
+            isNonStable(candidate.version)
         }
     }
 }
@@ -49,13 +35,19 @@ allprojects {
 repositories {
     mavenCentral()
     // Non-jcenter radar releases
-    maven(url = "https://dl.bintray.com/radar-cns/org.radarcns")
-    maven(url = "https://dl.bintray.com/radar-base/org.radarbase")
     maven(url = "https://packages.confluent.io/maven/")
-    jcenter()
 }
 
-val integrationTest = testSets.create("integrationTest")
+val integrationTestSourceSet = sourceSets.create("integrationTest") {
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+}
+
+val integrationTestImplementation: Configuration by configurations.getting {
+    extendsFrom(configurations.testImplementation.get())
+}
+
+configurations["integrationTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
@@ -86,10 +78,10 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
-    testImplementation("org.radarcns:radar-schemas-commons:$radarSchemasVersion")
-    integrationTest.implementationConfigurationName("com.squareup.okhttp3:okhttp:$okhttp3Version")
-    integrationTest.implementationConfigurationName("org.radarcns:radar-schemas-commons:$radarSchemasVersion")
-    integrationTest.implementationConfigurationName("org.radarbase:radar-commons-testing:$radarCommonsVersion")
+    testImplementation("org.radarbase:radar-schemas-commons:$radarSchemasVersion")
+    integrationTestImplementation("com.squareup.okhttp3:okhttp:$okhttp3Version")
+    integrationTestImplementation("org.radarbase:radar-schemas-commons:$radarSchemasVersion")
+    integrationTestImplementation("org.radarbase:radar-commons-testing:$radarCommonsVersion")
 }
 
 tasks.withType<KotlinCompile> {
@@ -99,6 +91,17 @@ tasks.withType<KotlinCompile> {
         languageVersion = "1.4"
     }
 }
+
+val integrationTest by tasks.registering(Test::class) {
+    description = "Runs integration tests."
+    group = "verification"
+
+    testClassesDirs = integrationTestSourceSet.output.classesDirs
+    classpath = integrationTestSourceSet.runtimeClasspath
+    shouldRunAfter("test")
+}
+
+tasks["check"].dependsOn(integrationTest)
 
 tasks.withType<Test> {
     testLogging {
@@ -170,5 +173,5 @@ allprojects {
 }
 
 tasks.wrapper {
-    gradleVersion = "6.8.3"
+    gradleVersion = "7.0"
 }

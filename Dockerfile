@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM gradle:6.8.3-jdk11 as builder
+FROM gradle:7.0-jdk11 as builder
 
 RUN mkdir /code
 WORKDIR /code
@@ -19,13 +19,12 @@ ENV GRADLE_USER_HOME=/code/.gradlecache
 
 COPY ./build.gradle.kts ./gradle.properties ./settings.gradle.kts /code/
 COPY ./deprecated-javax/build.gradle.kts /code/deprecated-javax/
-COPY gradle/dependency-locks /code/gradle/dependency-locks
 
-RUN gradle downloadDockerDependencies
+RUN gradle downloadDockerDependencies --no-watch-fs
 
 COPY ./src/ /code/src
 
-RUN gradle distTar \
+RUN gradle distTar --no-watch-fs \
     && cd build/distributions \
     && tar xzf *.tar.gz \
     && rm *.tar.gz radar-gateway-*/lib/radar-gateway-*.jar
@@ -35,6 +34,10 @@ FROM openjdk:11-jre-slim
 MAINTAINER @blootsvoets
 
 LABEL description="RADAR-base Gateway docker container"
+
+RUN apt-get update && apt-get install -y \
+  curl \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /code/build/distributions/radar-gateway-*/bin/* /usr/bin/
 COPY --from=builder /code/build/distributions/radar-gateway-*/lib/* /usr/lib/
