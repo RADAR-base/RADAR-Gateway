@@ -83,7 +83,7 @@ services:
   gateway:
     build:
       context: ../../..
-    image: radarbase/radar-gateway:SNAPSHOT
+    image: radarbase/radar-gateway:${RADAR_GATEWAY_TAG}
     depends_on:
       - kafka-1
       - schema-registry-1
