@@ -134,5 +134,5 @@ jobs:
       # Gradle check
       - name: Integration test
         run: |
-          echo "RADAR_GATEWAY_TAG=${{ steps.docker_meta.outputs.version }}" > src/integrationTest/docker/.env
+          echo "RADAR_GATEWAY_TAG=${{ steps.docker_meta.outputs.version }}" >> src/integrationTest/docker/.env
           ./gradlew integrationTest -PdockerComposeBuild=false
