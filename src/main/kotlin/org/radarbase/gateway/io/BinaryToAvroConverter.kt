@@ -32,15 +32,22 @@ class BinaryToAvroConverter(
 
         binaryDecoder = decoder
 
-        val recordData =
-            DecodedRecordData(topic, decoder, schemaRetriever, auth, readContext, config.auth.checkSourceId)
+        val recordData = DecodedRecordData(
+            topic,
+            decoder,
+            schemaRetriever,
+            auth,
+            readContext,
+            config.auth.checkSourceId,
+        )
 
         return AvroProcessingResult(
             recordData.keySchemaMetadata.id,
             recordData.valueSchemaMetadata.id,
             recordData.map { value ->
                 Pair(recordData.key, value)
-            })
+            },
+        )
     }
 
     class ReadContext {

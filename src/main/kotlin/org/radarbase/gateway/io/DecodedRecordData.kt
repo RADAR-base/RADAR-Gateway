@@ -36,9 +36,20 @@ class DecodedRecordData(
         val sourceId = decoder.readString()
 
         if (checkSources) {
-            auth.checkPermissionOnSource(Permission.MEASUREMENT_CREATE, projectId, userId, sourceId)
+            auth.checkPermissionOnSource(
+                Permission.MEASUREMENT_CREATE,
+                projectId,
+                userId,
+                sourceId,
+                "POST $topicName",
+            )
         } else {
-            auth.checkPermissionOnSubject(Permission.MEASUREMENT_CREATE, projectId, userId)
+            auth.checkPermissionOnSubject(
+                Permission.MEASUREMENT_CREATE,
+                projectId,
+                userId,
+                "POST $topicName",
+            )
         }
 
         remaining = decoder.readArrayStart().toInt()

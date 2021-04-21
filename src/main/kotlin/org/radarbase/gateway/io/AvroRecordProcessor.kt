@@ -28,6 +28,7 @@ class AvroRecordProcessor(
 ) {
     @Throws(IOException::class)
     fun process(
+        topic: String,
         records: JsonNode,
         keyMapping: AvroProcessor.JsonToObjectMapping,
         valueMapping: AvroProcessor.JsonToObjectMapping,
@@ -43,7 +44,7 @@ class AvroRecordProcessor(
             val value = record["value"]
                 ?: throw invalidContent("Missing value field in record", context)
             Pair(
-                processKey(key, keyMapping, ParsingContext(Schema.Type.MAP, "key", context)),
+                processKey(topic, key, keyMapping, ParsingContext(Schema.Type.MAP, "key", context)),
                 processValue(value, valueMapping, ParsingContext(Schema.Type.MAP, "value", context)),
             )
         }
@@ -52,6 +53,7 @@ class AvroRecordProcessor(
     /** Parse single record key.  */
     @Throws(IOException::class)
     fun processKey(
+        topic: String,
         key: JsonNode,
         keyMapping: AvroProcessor.JsonToObjectMapping,
         context: ParsingContext,
@@ -62,7 +64,7 @@ class AvroRecordProcessor(
 
         val authId = key.toAuthId(context)
         if (context.authIds.add(authId)) {
-            authId.checkPermission(auth, checkSourceId)
+            authId.checkPermission(auth, checkSourceId, topic)
         }
 
         return keyMapping.jsonToAvro(key, context)
@@ -316,19 +318,21 @@ class AvroRecordProcessor(
         val userId: String?,
         val sourceId: String?
     ) {
-        fun checkPermission(auth: Auth, checkSourceId: Boolean) {
+        fun checkPermission(auth: Auth, checkSourceId: Boolean, topic: String) {
             if (checkSourceId) {
                 auth.checkPermissionOnSource(
                     MEASUREMENT_CREATE,
                     projectId,
                     userId,
                     sourceId,
+                    "POST $topic",
                 )
             } else {
                 auth.checkPermissionOnSubject(
                     MEASUREMENT_CREATE,
                     projectId,
                     userId,
+                    "POST $topic",
                 )
             }
         }

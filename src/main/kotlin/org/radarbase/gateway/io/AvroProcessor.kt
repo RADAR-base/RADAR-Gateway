@@ -79,7 +79,7 @@ class AvroProcessor(
         return AvroProcessingResult(
             keyMapping.targetSchemaId,
             valueMapping.targetSchemaId,
-            processor.process(records, keyMapping, valueMapping),
+            processor.process(topic, records, keyMapping, valueMapping),
         )
     }
 
