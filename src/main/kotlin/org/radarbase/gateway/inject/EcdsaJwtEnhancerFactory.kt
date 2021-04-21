@@ -19,7 +19,7 @@ class EcdsaJwtEnhancerFactory(private val config: Config) : EnhancerFactory {
             jwtRSAPublicKeys = config.auth.publicKeys.rsa,
             jwtKeystoreAlias = config.auth.keyStore.alias,
             jwtKeystorePassword = config.auth.keyStore.password,
-            jwtKeystorePath = config.auth.keyStore.path.toString()
+            jwtKeystorePath = config.auth.keyStore.path.toString(),
         )
         return listOf(
             GatewayResourceEnhancer(config),

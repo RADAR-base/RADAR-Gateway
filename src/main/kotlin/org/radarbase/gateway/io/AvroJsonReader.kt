@@ -22,21 +22,26 @@ class AvroJsonReader(
     private val objectFactory = objectMapper.factory
 
     override fun readFrom(
-        type: Class<JsonNode>?, genericType: Type?,
-        annotations: Array<out Annotation>?, mediaType: MediaType?,
-        httpHeaders: MultivaluedMap<String, String>?, entityStream: InputStream?,
+        type: Class<JsonNode>?,
+        genericType: Type?,
+        annotations: Array<out Annotation>?,
+        mediaType: MediaType?,
+        httpHeaders: MultivaluedMap<String, String>?,
+        entityStream: InputStream?,
     ): JsonNode {
-
         val parser = objectFactory.createParser(entityStream)
         return try {
-            parser.readValueAsTree<JsonNode?>()
+            parser.readValueAsTree()
+                ?: throw HttpBadRequestException("malformed_json", "No content given")
         } catch (ex: JsonParseException) {
             throw HttpBadRequestException("malformed_json", ex.message ?: ex.toString())
-        } ?: throw HttpBadRequestException("malformed_json", "No content given")
+        }
     }
 
     override fun isReadable(
-        type: Class<*>?, genericType: Type?,
-        annotations: Array<out Annotation>?, mediaType: MediaType?,
+        type: Class<*>?,
+        genericType: Type?,
+        annotations: Array<out Annotation>?,
+        mediaType: MediaType?,
     ) = true
 }
