@@ -21,7 +21,7 @@ jobs:
       - name: Gradle cache
         uses: actions/cache@v2
         with:
-          # A list of files, directories, and wildcard patterns to cache and restore
+          # Cache gradle directories
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
@@ -34,6 +34,7 @@ jobs:
       # Compile code
       - name: Compile code
         run: ./gradlew assemble
+
       # Upload it to GitHub
       - name: Upload to GitHub
         uses: AButler/upload-release-assets@v2.0

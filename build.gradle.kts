@@ -7,7 +7,7 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("com.avast.gradle.docker-compose") version "0.14.1"
+    id("com.avast.gradle.docker-compose") version "0.14.3"
     id("com.github.ben-manes.versions") version "0.38.0"
 }
 
