@@ -31,15 +31,12 @@ class DecodedRecordData(
     init {
         val keyVersion = decoder.readInt()
         val valueVersion = decoder.readInt()
-        val projectId = if (decoder.readIndex() == 1) decoder.readString() else auth.defaultProject
-        val userId = if (decoder.readIndex() == 1) decoder.readString() else auth.userId
-        val sourceId = decoder.readString()
-
-        if (checkSources) {
-            auth.checkPermissionOnSource(Permission.MEASUREMENT_CREATE, projectId, userId, sourceId)
-        } else {
-            auth.checkPermissionOnSubject(Permission.MEASUREMENT_CREATE, projectId, userId)
-        }
+        val authId = AuthId(
+            projectId = if (decoder.readIndex() == 1) decoder.readString() else auth.defaultProject,
+            userId = if (decoder.readIndex() == 1) decoder.readString() else auth.userId,
+            sourceId = decoder.readString(),
+        )
+        authId.checkPermission(auth, checkSources, topicName)
 
         remaining = decoder.readArrayStart().toInt()
         size = remaining
@@ -48,21 +45,26 @@ class DecodedRecordData(
         valueSchemaMetadata = schemaRetriever.getBySubjectAndVersion(topicName, true, valueVersion)
 
         topic = AvroTopic(
-            topicName, keySchemaMetadata.schema, valueSchemaMetadata.schema,
-            GenericRecord::class.java, GenericRecord::class.java
+            topicName,
+            keySchemaMetadata.schema,
+            valueSchemaMetadata.schema,
+            GenericRecord::class.java,
+            GenericRecord::class.java
         )
 
-        key = createKey(keySchemaMetadata.schema, projectId!!, userId!!, sourceId)
+        key = createKey(keySchemaMetadata.schema, authId)
         readContext.init(valueSchemaMetadata.schema)
     }
 
-    private fun createKey(schema: Schema, projectId: String, userId: String, sourceId: String):
-        GenericRecord {
-        val keyBuilder = GenericRecordBuilder(schema)
-        schema.getField("projectId")?.let { keyBuilder.set(it, projectId) }
-        schema.getField("userId")?.let { keyBuilder.set(it, userId) }
-        schema.getField("sourceId")?.let { keyBuilder.set(it, sourceId) }
-        return keyBuilder.build()
+    private fun createKey(
+        schema: Schema,
+        authId: AuthId,
+    ): GenericRecord {
+        return GenericRecordBuilder(schema).apply {
+            schema.getField("projectId")?.let { set(it, authId.projectId) }
+            schema.getField("userId")?.let { set(it, authId.userId) }
+            schema.getField("sourceId")?.let { set(it, authId.sourceId) }
+        }.build()
     }
 
     override fun getKey() = key

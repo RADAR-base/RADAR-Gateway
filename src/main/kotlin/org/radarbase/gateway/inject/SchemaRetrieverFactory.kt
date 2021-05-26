@@ -39,7 +39,8 @@ class SchemaRetrieverFactory(
                 .server(server)
                 .headers(headers)
                 .timeout(30, TimeUnit.SECONDS)
-                .build(), 300
+                .build(),
+            300,
         )
     }
 }

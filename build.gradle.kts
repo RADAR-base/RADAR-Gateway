@@ -7,12 +7,12 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("com.avast.gradle.docker-compose") version "0.14.1"
+    id("com.avast.gradle.docker-compose") version "0.14.3"
     id("com.github.ben-manes.versions") version "0.38.0"
 }
 
 group = "org.radarbase"
-version = "0.5.5"
+version = "0.5.6"
 description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
@@ -68,7 +68,11 @@ dependencies {
     runtimeOnly("org.glassfish.grizzly:grizzly-framework-monitoring:$grizzlyVersion")
     runtimeOnly("org.glassfish.grizzly:grizzly-http-monitoring:$grizzlyVersion")
     runtimeOnly("org.glassfish.grizzly:grizzly-http-server-monitoring:$grizzlyVersion")
-    runtimeOnly("ch.qos.logback:logback-classic:${project.property("logbackVersion")}")
+
+    val log4j2Version: String by project
+    runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:$log4j2Version")
+    runtimeOnly("org.apache.logging.log4j:log4j-api:$log4j2Version")
+    runtimeOnly("org.apache.logging.log4j:log4j-jul:$log4j2Version")
 
     val junitVersion: String by project
     val okhttp3Version: String by project
@@ -101,8 +105,6 @@ val integrationTest by tasks.registering(Test::class) {
     shouldRunAfter("test")
 }
 
-tasks["check"].dependsOn(integrationTest)
-
 tasks.withType<Test> {
     testLogging {
         showStandardStreams = true
@@ -130,12 +132,17 @@ application {
 
 dockerCompose {
     useComposeFiles = listOf("src/integrationTest/docker/docker-compose.yml")
+    val dockerComposeBuild: String? by project
+    val doBuild = dockerComposeBuild?.toBooleanLenient() ?: true
+    buildBeforeUp = doBuild
+    buildBeforePull = doBuild
     buildAdditionalArgs = emptyList<String>()
     val dockerComposeStopContainers: String? by project
     stopContainers = dockerComposeStopContainers?.toBooleanLenient() ?: true
     waitForTcpPortsTimeout = Duration.ofMinutes(3)
     environment["SERVICES_HOST"] = "localhost"
-    isRequiredBy(tasks["integrationTest"])
+    captureContainersOutputToFiles = project.file("build/container-logs")
+    isRequiredBy(integrationTest)
 }
 
 idea {
@@ -173,5 +180,5 @@ allprojects {
 }
 
 tasks.wrapper {
-    gradleVersion = "7.0"
+    gradleVersion = "7.0.2"
 }

@@ -12,10 +12,10 @@ class ManagementPortalEnhancerFactory(private val config: Config) : EnhancerFact
     override fun createEnhancers(): List<JerseyResourceEnhancer> {
         val authConfig = AuthConfig(
             managementPortal = MPConfig(
-                url = config.auth.managementPortalUrl
+                url = config.auth.managementPortalUrl,
             ),
             jwtResourceName = config.auth.resourceName,
-            jwtIssuer = config.auth.issuer
+            jwtIssuer = config.auth.issuer,
         )
         return listOf(
             GatewayResourceEnhancer(config),

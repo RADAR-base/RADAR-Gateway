@@ -6,6 +6,10 @@ import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
+    System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager")
+
+    val logger = LoggerFactory.getLogger("org.radarbase.gateway.MainKt")
+
     val config = try {
         ConfigLoader.loadConfig<Config>(
             listOf(
@@ -31,5 +35,3 @@ fun main(args: Array<String>) {
     val server = GrizzlyServer(config.server.baseUri, resources, config.server.isJmxEnabled)
     server.listen()
 }
-
-private val logger = LoggerFactory.getLogger("org.radarbase.gateway.MainKt")

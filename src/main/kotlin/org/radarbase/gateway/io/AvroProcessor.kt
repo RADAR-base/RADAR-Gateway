@@ -79,13 +79,14 @@ class AvroProcessor(
         return AvroProcessingResult(
             keyMapping.targetSchemaId,
             valueMapping.targetSchemaId,
-            processor.process(records, keyMapping, valueMapping),
+            processor.process(topic, records, keyMapping, valueMapping),
         )
     }
 
     private fun createMapping(topic: String, ofValue: Boolean, sourceSchema: Schema): JsonToObjectMapping {
         val latestSchema = schemaRetriever.getBySubjectAndVersion(topic, ofValue, -1)
-        val schemaMapper = AvroDataMapperFactory.get().createMapper(sourceSchema, latestSchema.schema, null)
+        val schemaMapper = AvroDataMapperFactory.get()
+            .createMapper(sourceSchema, latestSchema.schema, null)
         return JsonToObjectMapping(sourceSchema, latestSchema.schema, latestSchema.id, schemaMapper)
     }
 

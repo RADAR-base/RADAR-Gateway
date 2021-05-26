@@ -38,7 +38,7 @@ internal class AvroRecordProcessorTest {
                 targetSchemaId = 100,
                 mapper = IDENTITY_MAPPER
             ),
-            AvroRecordProcessor.ParsingContext(Schema.Type.MAP, "value", AvroRecordProcessor.ParsingContext(Schema.Type.ARRAY, "records[0]")),
+            AvroParsingContext(Schema.Type.MAP, "value", AvroParsingContext(Schema.Type.ARRAY, "records[0]")),
         )
 
         assertThat(result.get("time"), `is`(1.0))

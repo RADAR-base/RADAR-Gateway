@@ -24,7 +24,7 @@ class GatewayResourceEnhancer(private val config: Config) : JerseyResourceEnhanc
     override val packages: Array<String> = arrayOf(
         "org.radarbase.gateway.filter",
         "org.radarbase.gateway.io",
-        "org.radarbase.gateway.resource"
+        "org.radarbase.gateway.resource",
     )
 
     override val classes: Array<Class<*>> = arrayOf(
@@ -32,7 +32,7 @@ class GatewayResourceEnhancer(private val config: Config) : JerseyResourceEnhanc
         GZipEncoder::class.java,
         DeflateEncoder::class.java,
         LzfseEncoder::class.java,
-        ConfigLoader.Filters.logResponse
+        ConfigLoader.Filters.logResponse,
     )
 
     override fun AbstractBinder.enhance() {

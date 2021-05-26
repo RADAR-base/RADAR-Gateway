@@ -1,5 +1,5 @@
 plugins {
-    id("com.github.johnrengelman.shadow") version "6.1.0"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
     java
 }
 
@@ -9,22 +9,24 @@ repositories {
 }
 
 dependencies {
-    implementation("org.apache.kafka:kafka-clients:${project.property("kafkaVersion")}") {
+    val kafkaVersion: String by project
+    implementation("org.apache.kafka:kafka-clients:$kafkaVersion") {
         isTransitive = true
         exclude(group = "org.slf4j", module = "slf4j-api")
     }
-    implementation("io.confluent:kafka-avro-serializer:${project.property("confluentVersion")}") {
+    val confluentVersion: String by project
+    implementation("io.confluent:kafka-avro-serializer:$confluentVersion") {
         isTransitive = false
     }
-    implementation("io.confluent:kafka-schema-serializer:${project.property("confluentVersion")}") {
+    implementation("io.confluent:kafka-schema-serializer:$confluentVersion") {
         isTransitive = false
     }
-    implementation("io.confluent:kafka-schema-registry-client:${project.property("confluentVersion")}") {
+    implementation("io.confluent:kafka-schema-registry-client:$confluentVersion") {
         isTransitive = false
     }
     implementation("org.glassfish.jersey.core:jersey-common:2.31")
     implementation("io.swagger:swagger-annotations:1.6.2")
-    implementation("io.confluent:common-utils:6.1.0") {
+    implementation("io.confluent:common-utils:$confluentVersion") {
         isTransitive = false
     }
 }
