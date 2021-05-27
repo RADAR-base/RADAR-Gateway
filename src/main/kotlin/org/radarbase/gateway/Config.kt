@@ -88,12 +88,12 @@ data class KafkaConfig(
             "linger.ms" to 10,
             "retries" to 5,
             "acks" to "all",
-            "delivery.timeout.ms" to 6000
+            "delivery.timeout.ms" to 6000,
         )
         private val adminDefaults = mapOf(
             "default.api.timeout.ms" to 6000,
             "request.timeout.ms" to 3000,
-            "retries" to 5
+            "retries" to 5,
         )
 
         private const val KAFKA_PRODUCER_PREFIX = "KAFKA_PRODUCER_"
@@ -102,15 +102,11 @@ data class KafkaConfig(
 
         private fun propertiesFromEnv(prefix: String): Map<String, String> = System.getenv()
             .filterKeys { it.startsWith(prefix) }
-            .map { (k, v) ->
-                Pair(
-                    k.removePrefix(prefix)
-                        .toLowerCase(Locale.US)
-                        .replace('_', '.'),
-                    v
-                )
+            .mapKeys { (k, _) ->
+                k.removePrefix(prefix)
+                    .lowercase(Locale.US)
+                    .replace('_', '.')
             }
-            .toMap()
 
         private val serializationDefaults = mapOf<String, Any>(
             MAX_SCHEMAS_PER_SUBJECT_CONFIG to 10_000

@@ -15,9 +15,9 @@ fun main(args: Array<String>) {
             listOf(
                 "gateway.yml",
                 "/etc/radar-gateway/gateway.yml"
-            ), args
-        )
-            .withDefaults()
+            ),
+            args,
+        ).withDefaults()
     } catch (ex: IllegalArgumentException) {
         logger.error("No configuration file was found.")
         logger.error("Usage: radar-gateway <config-file>")
