@@ -8,34 +8,18 @@ plugins {
     id("application")
     kotlin("jvm")
     id("com.avast.gradle.docker-compose") version "0.14.3"
-    id("com.github.ben-manes.versions") version "0.38.0"
+    id("com.github.ben-manes.versions") version "0.39.0"
 }
 
-group = "org.radarbase"
-version = "0.5.7-SNAPSHOT"
 description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
-    apply(plugin = "com.github.ben-manes.versions")
+    group = "org.radarbase"
+    version = "0.5.7-SNAPSHOT"
 
-    fun isNonStable(version: String): Boolean {
-        val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
-        val regex = "^[0-9,.v-]+(-r)?$".toRegex()
-        val isStable = stableKeyword || regex.matches(version)
-        return isStable.not()
+    repositories {
+        mavenCentral()
     }
-
-    tasks.named<DependencyUpdatesTask>("dependencyUpdates").configure {
-        rejectVersionIf {
-            isNonStable(candidate.version)
-        }
-    }
-}
-
-repositories {
-    mavenCentral()
-    // Non-jcenter radar releases
-    maven(url = "https://packages.confluent.io/maven/")
 }
 
 val integrationTestSourceSet = sourceSets.create("integrationTest") {
@@ -55,14 +39,17 @@ dependencies {
 
     val radarCommonsVersion: String by project
     implementation("org.radarbase:radar-commons:$radarCommonsVersion")
-    implementation("org.radarbase:radar-jersey:${project.property("radarJerseyVersion")}")
+    val radarJerseyVersion: String by project
+    implementation("org.radarbase:radar-jersey:$radarJerseyVersion")
     implementation("org.radarbase:managementportal-client:${project.property("radarAuthVersion")}")
     implementation("org.radarbase:lzfse-decode:${project.property("lzfseVersion")}")
 
     implementation(project(path = ":deprecated-javax", configuration = "shadow"))
 
     implementation("org.slf4j:slf4j-api:${project.property("slf4jVersion")}")
-    implementation("com.fasterxml.jackson.core:jackson-databind:${project.property("jacksonVersion")}")
+
+    val jacksonVersion: String by project
+    implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
 
     val grizzlyVersion: String by project
     runtimeOnly("org.glassfish.grizzly:grizzly-framework-monitoring:$grizzlyVersion")
@@ -99,7 +86,6 @@ tasks.withType<KotlinCompile> {
 val integrationTest by tasks.registering(Test::class) {
     description = "Runs integration tests."
     group = "verification"
-
     testClassesDirs = integrationTestSourceSet.output.classesDirs
     classpath = integrationTestSourceSet.runtimeClasspath
     shouldRunAfter("test")
@@ -151,7 +137,6 @@ idea {
     }
 }
 
-
 allprojects {
     tasks.register("downloadDockerDependencies") {
         doFirst {
@@ -179,6 +164,19 @@ allprojects {
     }
 }
 
+fun isNonStable(version: String): Boolean {
+    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
+    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
+    val isStable = stableKeyword || regex.matches(version)
+    return isStable.not()
+}
+
+tasks.withType<DependencyUpdatesTask> {
+    rejectVersionIf {
+        isNonStable(candidate.version)
+    }
+}
+
 tasks.wrapper {
-    gradleVersion = "7.0.2"
+    gradleVersion = "7.1"
 }
