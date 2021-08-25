@@ -52,6 +52,9 @@ dependencies {
     val jacksonVersion: String by project
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
 
+    val avroVersion: String by project
+    runtimeOnly("org.apache.avro:avro:$avroVersion")
+
     val grizzlyVersion: String by project
     runtimeOnly("org.glassfish.grizzly:grizzly-framework-monitoring:$grizzlyVersion")
     runtimeOnly("org.glassfish.grizzly:grizzly-http-monitoring:$grizzlyVersion")
@@ -127,7 +130,7 @@ dockerCompose {
     val dockerComposeStopContainers: String? by project
     stopContainers.set(dockerComposeStopContainers?.toBooleanLenient() ?: true)
     waitForTcpPortsTimeout.set(Duration.ofMinutes(3))
-    environment.set(mapOf("SERVICES_HOST" to "localhost"))
+    environment.put("SERVICES_HOST", "localhost")
     captureContainersOutputToFiles.set(project.file("build/container-logs"))
     isRequiredBy(integrationTest)
 }
