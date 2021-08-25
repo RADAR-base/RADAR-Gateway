@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM gradle:7.0-jdk11 as builder
+FROM gradle:7.2-jdk11 as builder
 
 RUN mkdir /code
 WORKDIR /code
