@@ -7,35 +7,20 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("com.avast.gradle.docker-compose") version "0.14.3"
-    id("com.github.ben-manes.versions") version "0.38.0"
+    id("com.avast.gradle.docker-compose") version "0.14.9"
+    id("com.github.ben-manes.versions") version "0.39.0"
 }
 
-group = "org.radarbase"
-version = "0.5.6"
 description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
-    apply(plugin = "com.github.ben-manes.versions")
+    group = "org.radarbase"
+    version = "0.5.7"
 
-    fun isNonStable(version: String): Boolean {
-        val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
-        val regex = "^[0-9,.v-]+(-r)?$".toRegex()
-        val isStable = stableKeyword || regex.matches(version)
-        return isStable.not()
+    repositories {
+        mavenCentral()
+        maven(url = "https://packages.confluent.io/maven/")
     }
-
-    tasks.named<DependencyUpdatesTask>("dependencyUpdates").configure {
-        rejectVersionIf {
-            isNonStable(candidate.version)
-        }
-    }
-}
-
-repositories {
-    mavenCentral()
-    // Non-jcenter radar releases
-    maven(url = "https://packages.confluent.io/maven/")
 }
 
 val integrationTestSourceSet = sourceSets.create("integrationTest") {
@@ -55,14 +40,20 @@ dependencies {
 
     val radarCommonsVersion: String by project
     implementation("org.radarbase:radar-commons:$radarCommonsVersion")
-    implementation("org.radarbase:radar-jersey:${project.property("radarJerseyVersion")}")
+    val radarJerseyVersion: String by project
+    implementation("org.radarbase:radar-jersey:$radarJerseyVersion")
     implementation("org.radarbase:managementportal-client:${project.property("radarAuthVersion")}")
     implementation("org.radarbase:lzfse-decode:${project.property("lzfseVersion")}")
 
     implementation(project(path = ":deprecated-javax", configuration = "shadow"))
 
     implementation("org.slf4j:slf4j-api:${project.property("slf4jVersion")}")
-    implementation("com.fasterxml.jackson.core:jackson-databind:${project.property("jacksonVersion")}")
+
+    val jacksonVersion: String by project
+    implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+
+    val avroVersion: String by project
+    runtimeOnly("org.apache.avro:avro:$avroVersion")
 
     val grizzlyVersion: String by project
     runtimeOnly("org.glassfish.grizzly:grizzly-framework-monitoring:$grizzlyVersion")
@@ -91,15 +82,14 @@ dependencies {
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         jvmTarget = "11"
-        apiVersion = "1.4"
-        languageVersion = "1.4"
+        apiVersion = "1.5"
+        languageVersion = "1.5"
     }
 }
 
 val integrationTest by tasks.registering(Test::class) {
     description = "Runs integration tests."
     group = "verification"
-
     testClassesDirs = integrationTestSourceSet.output.classesDirs
     classpath = integrationTestSourceSet.runtimeClasspath
     shouldRunAfter("test")
@@ -131,17 +121,17 @@ application {
 }
 
 dockerCompose {
-    useComposeFiles = listOf("src/integrationTest/docker/docker-compose.yml")
+    useComposeFiles.set(listOf("src/integrationTest/docker/docker-compose.yml"))
     val dockerComposeBuild: String? by project
     val doBuild = dockerComposeBuild?.toBooleanLenient() ?: true
-    buildBeforeUp = doBuild
-    buildBeforePull = doBuild
-    buildAdditionalArgs = emptyList<String>()
+    buildBeforeUp.set(doBuild)
+    buildBeforePull.set(doBuild)
+    buildAdditionalArgs.set(emptyList<String>())
     val dockerComposeStopContainers: String? by project
-    stopContainers = dockerComposeStopContainers?.toBooleanLenient() ?: true
-    waitForTcpPortsTimeout = Duration.ofMinutes(3)
-    environment["SERVICES_HOST"] = "localhost"
-    captureContainersOutputToFiles = project.file("build/container-logs")
+    stopContainers.set(dockerComposeStopContainers?.toBooleanLenient() ?: true)
+    waitForTcpPortsTimeout.set(Duration.ofMinutes(3))
+    environment.put("SERVICES_HOST", "localhost")
+    captureContainersOutputToFiles.set(project.file("build/container-logs"))
     isRequiredBy(integrationTest)
 }
 
@@ -150,7 +140,6 @@ idea {
         isDownloadSources = true
     }
 }
-
 
 allprojects {
     tasks.register("downloadDockerDependencies") {
@@ -179,6 +168,19 @@ allprojects {
     }
 }
 
+fun isNonStable(version: String): Boolean {
+    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
+    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
+    val isStable = stableKeyword || regex.matches(version)
+    return isStable.not()
+}
+
+tasks.withType<DependencyUpdatesTask> {
+    rejectVersionIf {
+        isNonStable(candidate.version)
+    }
+}
+
 tasks.wrapper {
-    gradleVersion = "7.0.2"
+    gradleVersion = "7.2"
 }

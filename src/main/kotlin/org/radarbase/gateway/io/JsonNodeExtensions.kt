@@ -32,7 +32,7 @@ fun JsonNode.toAvro(to: Schema, context: AvroParsingContext, defaultVal: JsonNod
                 to.type,
                 context)
             Schema.Type.BOOLEAN -> toAvroBoolean(context)
-            Schema.Type.ARRAY -> toAvroArray(to.elementType, context)
+            Schema.Type.ARRAY -> toAvroArray(to, context)
             Schema.Type.NULL -> null
             Schema.Type.BYTES -> toAvroBytes(context)
             Schema.Type.FIXED -> toAvroFixed(to, context)
@@ -183,7 +183,7 @@ fun JsonNode?.toAvroUnion(
                 unionType.type == Schema.Type.ARRAY
             } ?: throw invalidContent("Cannot map array to non-array union", context)
             return toAvroArray(
-                type.elementType,
+                type,
                 AvroParsingContext(Schema.Type.UNION, type.name, context),
             )
         }
@@ -247,5 +247,13 @@ fun JsonNode.toAvroArray(
     context: AvroParsingContext,
 ): Any {
     if (!isArray) throw invalidContent("Cannot map non-array to array", context)
-    return GenericData.Array<Any>(schema, (this as ArrayNode).toList())
+    return GenericData.Array<Any>(
+        schema,
+        (this as ArrayNode).mapIndexed { idx, value ->
+            value.toAvro(
+                schema.elementType,
+                AvroParsingContext(Schema.Type.ARRAY, idx.toString(), context)
+            )
+        },
+    )
 }

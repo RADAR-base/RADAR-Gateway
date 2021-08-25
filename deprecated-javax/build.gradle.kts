@@ -3,11 +3,6 @@ plugins {
     java
 }
 
-repositories {
-    mavenCentral()
-    maven(url = "https://packages.confluent.io/maven/")
-}
-
 dependencies {
     val kafkaVersion: String by project
     implementation("org.apache.kafka:kafka-clients:$kafkaVersion") {
