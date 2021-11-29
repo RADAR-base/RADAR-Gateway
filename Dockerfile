@@ -10,34 +10,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM gradle:7.2-jdk11 as builder
+FROM azul/zulu-openjdk-alpine:17 as builder
 
 RUN mkdir /code
 WORKDIR /code
 
-ENV GRADLE_USER_HOME=/code/.gradlecache
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
 
-COPY ./build.gradle.kts ./gradle.properties ./settings.gradle.kts /code/
+COPY gradle /code/gradle
+COPY ./gradlew ./build.gradle.kts ./gradle.properties ./settings.gradle.kts /code/
 COPY ./deprecated-javax/build.gradle.kts /code/deprecated-javax/
 
-RUN gradle downloadDockerDependencies --no-watch-fs
+RUN ./gradlew downloadDockerDependencies --no-watch-fs
 
 COPY ./src/ /code/src
 
-RUN gradle distTar --no-watch-fs \
+RUN ./gradlew distTar --no-watch-fs \
     && cd build/distributions \
     && tar xzf *.tar.gz \
     && rm *.tar.gz radar-gateway-*/lib/radar-gateway-*.jar
 
-FROM openjdk:11-jre-slim
+FROM azul/zulu-openjdk-alpine:17-jre-headless
 
 MAINTAINER @blootsvoets
 
 LABEL description="RADAR-base Gateway docker container"
 
-RUN apt-get update && apt-get install -y \
-  curl \
-  && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl
 
 COPY --from=builder /code/build/distributions/radar-gateway-*/bin/* /usr/bin/
 COPY --from=builder /code/build/distributions/radar-gateway-*/lib/* /usr/lib/

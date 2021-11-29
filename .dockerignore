@@ -4,4 +4,4 @@ build
 /out
 /.git
 /.gradle
-/gradle/wrapper
+/.idea

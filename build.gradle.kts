@@ -81,9 +81,9 @@ dependencies {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "11"
-        apiVersion = "1.5"
-        languageVersion = "1.5"
+        jvmTarget = "17"
+        apiVersion = "1.6"
+        languageVersion = "1.6"
     }
 }
 
@@ -182,5 +182,5 @@ tasks.withType<DependencyUpdatesTask> {
 }
 
 tasks.wrapper {
-    gradleVersion = "7.2"
+    gradleVersion = "7.3"
 }

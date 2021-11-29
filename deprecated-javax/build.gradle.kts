@@ -1,5 +1,5 @@
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.johnrengelman.shadow") version "7.1.0"
     java
 }
 
@@ -19,8 +19,8 @@ dependencies {
     implementation("io.confluent:kafka-schema-registry-client:$confluentVersion") {
         isTransitive = false
     }
-    implementation("org.glassfish.jersey.core:jersey-common:2.31")
-    implementation("io.swagger:swagger-annotations:1.6.2")
+    implementation("org.glassfish.jersey.core:jersey-common:2.34")
+    implementation("io.swagger:swagger-annotations:1.6.3")
     implementation("io.confluent:common-utils:$confluentVersion") {
         isTransitive = false
     }
