@@ -41,7 +41,9 @@ class KafkaTopics(
     @OPTIONS
     @Path("/{topic_name}")
     fun topicOptions(): Response = Response.noContent()
-        .header("Accept", "$ACCEPT_BINARY_V1,$ACCEPT_AVRO_V2_JSON,$ACCEPT_AVRO_V1_JSON")
+        .header("Accept",
+            "$ACCEPT_JSON,$ACCEPT_BINARY_V1,$ACCEPT_AVRO_V2_JSON,$ACCEPT_AVRO_V1_JSON," +
+                    "$ACCEPT_AVRO_V3_JSON,$ACCEPT_AVRO_NON_SPECIFIC,$ACCEPT_BINARY_NON_SPECIFIC")
         .header("Accept-Encoding", "gzip,lzfse")
         .header("Accept-Charset", "utf-8")
         .header("Allow", "HEAD,GET,POST,OPTIONS")
@@ -49,8 +51,10 @@ class KafkaTopics(
 
     @Path("/{topic_name}")
     @POST
-    @Consumes(ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON)
-    @Produces(PRODUCE_AVRO_V1_JSON, PRODUCE_JSON)
+    @Consumes(ACCEPT_JSON, ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON, ACCEPT_AVRO_V3_JSON,
+        ACCEPT_AVRO_NON_SPECIFIC)
+    @Produces(PRODUCE_AVRO_V1_JSON, PRODUCE_AVRO_V2_JSON, PRODUCE_AVRO_V3_JSON,
+        PRODUCE_AVRO_NON_SPECIFIC, PRODUCE_JSON)
     @NeedsPermission(MEASUREMENT, CREATE)
     @ProcessAvro
     fun postToTopic(
@@ -67,15 +71,15 @@ class KafkaTopics(
     @Path("/{topic_name}")
     @POST
     @ProcessAvro
-    @Consumes(ACCEPT_BINARY_V1)
-    @Produces(PRODUCE_AVRO_V1_JSON, PRODUCE_JSON)
+    @Consumes(ACCEPT_BINARY_NON_SPECIFIC, ACCEPT_BINARY_V1)
+    @Produces(PRODUCE_AVRO_V1_JSON, PRODUCE_AVRO_V2_JSON, PRODUCE_AVRO_V3_JSON,
+        PRODUCE_AVRO_NON_SPECIFIC, PRODUCE_JSON)
     @NeedsPermission(MEASUREMENT, CREATE)
     fun postToTopicBinary(
         input: InputStream,
         @Context binaryToAvroConverter: BinaryToAvroConverter,
         @PathParam("topic_name") topic: String,
     ): TopicPostResponse {
-
         val processingResult = try {
             binaryToAvroConverter.process(topic, input)
         } catch (ex: IOException) {
@@ -97,10 +101,17 @@ class KafkaTopics(
 
     companion object {
         private val logger = LoggerFactory.getLogger(KafkaTopics::class.java)
+        const val ACCEPT_JSON = "application/json"
         const val ACCEPT_AVRO_V1_JSON = "application/vnd.kafka.avro.v1+json"
         const val ACCEPT_AVRO_V2_JSON = "application/vnd.kafka.avro.v2+json"
+        const val ACCEPT_AVRO_V3_JSON = "application/vnd.kafka.avro.v3+json"
+        const val ACCEPT_AVRO_NON_SPECIFIC = "application/vnd.kafka.avro+json"
         const val ACCEPT_BINARY_V1 = "application/vnd.radarbase.avro.v1+binary"
+        const val ACCEPT_BINARY_NON_SPECIFIC = "application/vnd.radarbase.avro+binary"
         const val PRODUCE_AVRO_V1_JSON = "application/vnd.kafka.v1+json"
+        const val PRODUCE_AVRO_V2_JSON = "application/vnd.kafka.v2+json"
+        const val PRODUCE_AVRO_V3_JSON = "application/vnd.kafka.v3+json"
+        const val PRODUCE_AVRO_NON_SPECIFIC = "application/vnd.kafka+json"
         const val PRODUCE_JSON = "application/json"
     }
 }
