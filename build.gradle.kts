@@ -7,7 +7,7 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("com.avast.gradle.docker-compose") version "0.14.9"
+    id("com.avast.gradle.docker-compose") version "0.14.11"
     id("com.github.ben-manes.versions") version "0.39.0"
 }
 
@@ -69,7 +69,7 @@ dependencies {
     val okhttp3Version: String by project
     val radarSchemasVersion: String by project
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:[2.2,3.0)")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
     testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
@@ -182,5 +182,5 @@ tasks.withType<DependencyUpdatesTask> {
 }
 
 tasks.wrapper {
-    gradleVersion = "7.3"
+    gradleVersion = "7.3.1"
 }

@@ -14,8 +14,8 @@ import org.radarbase.gateway.io.LzfseEncoder
 import org.radarbase.gateway.kafka.*
 import org.radarbase.gateway.service.SchedulingService
 import org.radarbase.gateway.service.SchedulingServiceFactory
-import org.radarbase.jersey.config.ConfigLoader
-import org.radarbase.jersey.config.JerseyResourceEnhancer
+import org.radarbase.jersey.enhancer.JerseyResourceEnhancer
+import org.radarbase.jersey.filter.Filters
 import org.radarbase.jersey.service.HealthService
 import org.radarbase.jersey.service.ProjectService
 import org.radarbase.producer.rest.SchemaRetriever
@@ -32,7 +32,7 @@ class GatewayResourceEnhancer(private val config: Config) : JerseyResourceEnhanc
         GZipEncoder::class.java,
         DeflateEncoder::class.java,
         LzfseEncoder::class.java,
-        ConfigLoader.Filters.logResponse,
+        Filters.logResponse,
     )
 
     override fun AbstractBinder.enhance() {

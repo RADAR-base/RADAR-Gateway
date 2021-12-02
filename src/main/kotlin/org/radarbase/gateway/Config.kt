@@ -4,7 +4,7 @@ import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.MAX_SCHEMAS
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG
 import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
 import org.radarbase.gateway.inject.ManagementPortalEnhancerFactory
-import org.radarbase.jersey.config.EnhancerFactory
+import org.radarbase.jersey.enhancer.EnhancerFactory
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path

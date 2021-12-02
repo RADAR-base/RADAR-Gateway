@@ -1,12 +1,12 @@
 package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.nhaarman.mockitokotlin2.doReturn
-import com.nhaarman.mockitokotlin2.mock
 import okio.Buffer
 import org.apache.avro.generic.GenericRecordBuilder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 import org.radarbase.auth.authorization.Permission
 import org.radarbase.auth.token.RadarToken
 import org.radarbase.data.AvroRecordData

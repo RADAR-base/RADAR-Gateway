@@ -3,9 +3,9 @@ package org.radarbase.gateway.inject
 import org.radarbase.gateway.Config
 import org.radarbase.jersey.auth.AuthConfig
 import org.radarbase.jersey.auth.MPConfig
-import org.radarbase.jersey.config.ConfigLoader
-import org.radarbase.jersey.config.EnhancerFactory
-import org.radarbase.jersey.config.JerseyResourceEnhancer
+import org.radarbase.jersey.enhancer.EnhancerFactory
+import org.radarbase.jersey.enhancer.Enhancers
+import org.radarbase.jersey.enhancer.JerseyResourceEnhancer
 
 
 /** This binder needs to register all non-Jersey classes, otherwise initialization fails. */
@@ -23,10 +23,9 @@ class EcdsaJwtEnhancerFactory(private val config: Config) : EnhancerFactory {
         )
         return listOf(
             GatewayResourceEnhancer(config),
-            ConfigLoader.Enhancers.radar(authConfig),
-            ConfigLoader.Enhancers.ecdsa,
-            ConfigLoader.Enhancers.httpException,
-            ConfigLoader.Enhancers.generalException
+            Enhancers.radar(authConfig),
+            Enhancers.ecdsa,
+            Enhancers.exception,
         )
     }
 }
