@@ -128,7 +128,7 @@ class KafkaTopicsTest {
             url("$BASE_URI/topics").head()
         }
 
-        httpClient.call(Status.UNSUPPORTED_MEDIA_TYPE) {
+        httpClient.call(422) {
             url("$BASE_URI/topics/test")
             post("{}".toRequestBody(JSON_TYPE))
             addHeader("Authorization", BEARER + accessToken)
