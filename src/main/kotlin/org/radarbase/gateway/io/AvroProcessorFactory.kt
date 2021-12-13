@@ -3,13 +3,13 @@ package org.radarbase.gateway.io
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.ws.rs.core.Context
 import org.glassfish.jersey.internal.inject.DisposableSupplier
-import org.radarbase.gateway.Config
+import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.gateway.service.SchedulingService
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.producer.rest.SchemaRetriever
 
 class AvroProcessorFactory(
-    @Context private val config: Config,
+    @Context private val config: GatewayConfig,
     @Context private val auth: Auth,
     @Context private val objectMapper: ObjectMapper,
     @Context private val schedulingService: SchedulingService,

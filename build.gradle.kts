@@ -42,12 +42,19 @@ dependencies {
     implementation("org.radarbase:radar-commons:$radarCommonsVersion")
     val radarJerseyVersion: String by project
     implementation("org.radarbase:radar-jersey:$radarJerseyVersion")
-    implementation("org.radarbase:managementportal-client:${project.property("radarAuthVersion")}")
-    implementation("org.radarbase:lzfse-decode:${project.property("lzfseVersion")}")
+    val radarAuthVersion: String by project
+    implementation("org.radarbase:managementportal-client:$radarAuthVersion")
+    val lzfseVersion: String by project
+    implementation("org.radarbase:lzfse-decode:$lzfseVersion")
 
-    implementation(project(path = ":deprecated-javax", configuration = "shadow"))
+    val kafkaVersion: String by project
+    implementation("org.apache.kafka:kafka-clients:$kafkaVersion")
+    val confluentVersion: String by project
+    implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
+    implementation("io.confluent:kafka-schema-registry-client:$confluentVersion")
 
-    implementation("org.slf4j:slf4j-api:${project.property("slf4jVersion")}")
+    val slf4jVersion: String by project
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
 
     val jacksonVersion: String by project
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
@@ -68,8 +75,9 @@ dependencies {
     val junitVersion: String by project
     val okhttp3Version: String by project
     val radarSchemasVersion: String by project
+    val mockitoKotlinVersion: String by project
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
     testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 

@@ -10,7 +10,7 @@ import jakarta.ws.rs.core.Response
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.common.KafkaException
 import org.apache.kafka.common.errors.*
-import org.radarbase.gateway.Config
+import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.jersey.exception.HttpApplicationException
 import org.radarbase.jersey.exception.HttpBadGatewayException
 import org.radarbase.jersey.exception.HttpBadRequestException
@@ -21,7 +21,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Semaphore
 
 class ProducerPool(
-    @Context private val config: Config,
+    @Context private val config: GatewayConfig,
 ) : Closeable {
     private val semaphore = Semaphore(config.server.maxRequests)
     private val pool = ArrayBlockingQueue<KafkaAvroProducer>(config.kafka.poolSize)

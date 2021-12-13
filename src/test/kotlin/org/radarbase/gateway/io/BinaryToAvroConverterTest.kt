@@ -10,7 +10,7 @@ import org.mockito.kotlin.mock
 import org.radarbase.auth.authorization.Permission
 import org.radarbase.auth.token.RadarToken
 import org.radarbase.data.AvroRecordData
-import org.radarbase.gateway.Config
+import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.producer.rest.BinaryRecordRequest
 import org.radarbase.producer.rest.ParsedSchemaMetadata
@@ -66,7 +66,7 @@ class BinaryToAvroConverterTest {
 
             override fun hasRole(projectId: String, role: String) = true
         }
-        val converter = BinaryToAvroConverter(schemaRetriever, auth, Config())
+        val converter = BinaryToAvroConverter(schemaRetriever, auth, GatewayConfig())
 
         val genericKey = GenericRecordBuilder(ObservationKey.getClassSchema()).apply {
             this["projectId"] = "p"

@@ -5,7 +5,7 @@ kafka:
   producer:
     bootstrap.servers: kafka-1:9092
   serialization:
-    schema.registry.url: http://schema-registry-1:8081
+    schema.registry.url: http://schema-registry:8081
 
 auth:
   managementPortalUrl: http://managementportal-app:8080

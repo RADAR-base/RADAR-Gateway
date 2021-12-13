@@ -1,6 +1,6 @@
 /src/integrationTest
 /src/test
-build
+/build
 /out
 /.git
 /.gradle

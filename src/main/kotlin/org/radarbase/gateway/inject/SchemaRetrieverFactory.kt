@@ -7,7 +7,7 @@ import jakarta.ws.rs.core.Context
 import okhttp3.Credentials
 import okhttp3.Headers.Companion.headersOf
 import org.radarbase.config.ServerConfig
-import org.radarbase.gateway.Config
+import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.producer.rest.RestClient
 import org.radarbase.producer.rest.SchemaRetriever
 import java.util.concurrent.TimeUnit
@@ -15,7 +15,7 @@ import java.util.function.Supplier
 
 /** Creates a Schema Retriever based on the current schema registry configuration. */
 class SchemaRetrieverFactory(
-    @Context private val config: Config,
+    @Context private val config: GatewayConfig,
 ) : Supplier<SchemaRetriever> {
     override fun get(): SchemaRetriever {
         val server = when (val schemaRegistryUrl = config.kafka.serialization[SCHEMA_REGISTRY_URL_CONFIG]) {

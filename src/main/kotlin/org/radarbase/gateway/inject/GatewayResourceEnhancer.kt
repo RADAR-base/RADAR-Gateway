@@ -6,7 +6,7 @@ import org.glassfish.jersey.internal.inject.PerThread
 import org.glassfish.jersey.message.DeflateEncoder
 import org.glassfish.jersey.message.GZipEncoder
 import org.glassfish.jersey.server.filter.EncodingFilter
-import org.radarbase.gateway.Config
+import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.AvroProcessorFactory
 import org.radarbase.gateway.io.BinaryToAvroConverter
@@ -20,7 +20,7 @@ import org.radarbase.jersey.service.HealthService
 import org.radarbase.jersey.service.ProjectService
 import org.radarbase.producer.rest.SchemaRetriever
 
-class GatewayResourceEnhancer(private val config: Config) : JerseyResourceEnhancer {
+class GatewayResourceEnhancer(private val config: GatewayConfig) : JerseyResourceEnhancer {
     override val packages: Array<String> = arrayOf(
         "org.radarbase.gateway.filter",
         "org.radarbase.gateway.io",
@@ -37,7 +37,7 @@ class GatewayResourceEnhancer(private val config: Config) : JerseyResourceEnhanc
 
     override fun AbstractBinder.enhance() {
         bind(config)
-            .to(Config::class.java)
+            .to(GatewayConfig::class.java)
 
         bindFactory(AvroProcessorFactory::class.java)
             .to(AvroProcessor::class.java)

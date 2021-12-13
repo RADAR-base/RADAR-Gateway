@@ -1,5 +1,6 @@
 package org.radarbase.gateway
 
+import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.jersey.GrizzlyServer
 import org.radarbase.jersey.config.ConfigLoader
 import org.slf4j.LoggerFactory
@@ -11,7 +12,7 @@ fun main(args: Array<String>) {
     val logger = LoggerFactory.getLogger("org.radarbase.gateway.MainKt")
 
     val config = try {
-        ConfigLoader.loadConfig<Config>(
+        ConfigLoader.loadConfig<GatewayConfig>(
             listOf(
                 "gateway.yml",
                 "/etc/radar-gateway/gateway.yml"

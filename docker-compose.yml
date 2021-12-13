@@ -5,7 +5,7 @@ services:
   #---------------------------------------------------------------------------#
   # Zookeeper Cluster                                                         #
   #---------------------------------------------------------------------------#
-  zookeeper-1:
+  zookeeper:
     image: confluentinc/cp-zookeeper:${KAFKA_CONFLUENT_VERSION}
     environment:
       ZOOKEEPER_SERVER_ID: 1
@@ -18,10 +18,11 @@ services:
   kafka-1:
     image: confluentinc/cp-kafka:${KAFKA_CONFLUENT_VERSION}
     depends_on:
-      - zookeeper-1
+      - zookeeper
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_COMPRESSION_TYPE: lz4
@@ -29,18 +30,20 @@ services:
       KAFKA_TRANSITION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSITION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
 
   #---------------------------------------------------------------------------#
   # Schema Registry                                                           #
   #---------------------------------------------------------------------------#
-  schema-registry-1:
+  schema-registry:
     image: confluentinc/cp-schema-registry:${KAFKA_CONFLUENT_VERSION}
     depends_on:
       - kafka-1
     ports:
       - "127.0.0.1:8081:8081"
     environment:
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka-1:9092
       SCHEMA_REGISTRY_HOST_NAME: schema-registry-1
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: 1
@@ -49,7 +52,7 @@ services:
   # Management Portal                                                         #
   #---------------------------------------------------------------------------#
   managementportal-app:
-    image: radarbase/management-portal:0.6.5
+    image: radarbase/management-portal:0.8.0
     ports:
       - "127.0.0.1:8080:8080"
     environment:
@@ -68,7 +71,7 @@ services:
       image: radarbase/radar-gateway:SNAPSHOT
       depends_on:
         - kafka-1
-        - schema-registry-1
+        - schema-registry
         - managementportal-app
       ports:
         - "127.0.0.1:8090:8090"

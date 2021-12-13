@@ -3,7 +3,7 @@ package org.radarbase.gateway.io
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.avro.Schema
-import org.radarbase.gateway.Config
+import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.gateway.service.SchedulingService
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.jersey.exception.HttpApplicationException
@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentMap
  * unfilled security metadata as necessary.
  */
 class AvroProcessor(
-    config: Config,
+    config: GatewayConfig,
     auth: Auth,
     private val schemaRetriever: SchemaRetriever,
     objectMapper: ObjectMapper,
@@ -91,7 +91,8 @@ class AvroProcessor(
     }
 
     private fun schemaMapping(topic: String, ofValue: Boolean, id: JsonNode?, schema: JsonNode?): JsonToObjectMapping {
-        val subject = "$topic-${if (ofValue) "value" else "key"}"
+        val subjectSuffix = if (ofValue) "value" else "key"
+        val subject = "$topic-$subjectSuffix"
         return when {
             id?.isNumber == true -> {
                 idMapping.computeIfAbsent(Pair(subject, id.asInt())) {
