@@ -10,22 +10,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM azul/zulu-openjdk-alpine:17 as builder
+FROM gradle:7.3-jdk17-alpine as builder
 
 RUN mkdir /code
 WORKDIR /code
 
 ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
 
-COPY gradle /code/gradle
 COPY ./gradlew ./build.gradle.kts ./gradle.properties ./settings.gradle.kts /code/
 COPY ./deprecated-javax/build.gradle.kts /code/deprecated-javax/
 
-RUN ./gradlew downloadDockerDependencies --no-watch-fs
+RUN gradle downloadDockerDependencies --no-watch-fs
 
 COPY ./src/ /code/src
 
-RUN ./gradlew distTar --no-watch-fs \
+RUN gradle distTar --no-watch-fs \
     && cd build/distributions \
     && tar xzf *.tar.gz \
     && rm *.tar.gz radar-gateway-*/lib/radar-gateway-*.jar
