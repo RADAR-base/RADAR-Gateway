@@ -1,8 +1,8 @@
-gradle/
 /src/integrationTest
 /src/test
 build
 /out
 /.git
 /.gradle
+/gradle/wrapper
 /.idea
