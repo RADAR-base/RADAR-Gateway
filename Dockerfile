@@ -17,7 +17,7 @@ WORKDIR /code
 
 ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
 
-COPY ./gradlew ./build.gradle.kts ./gradle.properties ./settings.gradle.kts /code/
+COPY ./build.gradle.kts ./gradle.properties ./settings.gradle.kts /code/
 COPY ./deprecated-javax/build.gradle.kts /code/deprecated-javax/
 
 RUN gradle downloadDockerDependencies --no-watch-fs
