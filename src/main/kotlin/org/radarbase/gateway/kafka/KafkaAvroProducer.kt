@@ -7,13 +7,13 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.KafkaException
-import org.radarbase.gateway.Config
+import org.radarbase.gateway.config.GatewayConfig
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.util.concurrent.ExecutionException
 
 class KafkaAvroProducer(
-    config: Config,
+    config: GatewayConfig,
     schemaRegistryClient: SchemaRegistryClient,
 ) : Closeable {
     private val producer: Producer<Any, Any>

@@ -9,7 +9,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.io.BinaryDecoder
 import org.apache.avro.io.Decoder
 import org.apache.avro.io.DecoderFactory
-import org.radarbase.gateway.Config
+import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.jersey.exception.HttpInvalidContentException
 import org.radarbase.producer.rest.SchemaRetriever
@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 class BinaryToAvroConverter(
     @Context private val schemaRetriever: SchemaRetriever,
     @Context private val auth: Auth,
-    @Context private val config: Config,
+    @Context private val config: GatewayConfig,
 ) {
 
     private var binaryDecoder: BinaryDecoder? = null

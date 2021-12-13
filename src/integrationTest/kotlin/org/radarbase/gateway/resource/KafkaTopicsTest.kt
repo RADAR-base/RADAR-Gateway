@@ -128,7 +128,7 @@ class KafkaTopicsTest {
             url("$BASE_URI/topics").head()
         }
 
-        httpClient.call(Status.UNSUPPORTED_MEDIA_TYPE) {
+        httpClient.call(422) {
             url("$BASE_URI/topics/test")
             post("{}".toRequestBody(JSON_TYPE))
             addHeader("Authorization", BEARER + accessToken)
@@ -259,7 +259,7 @@ class KafkaTopicsTest {
         private const val MANAGEMENTPORTAL_URL = "http://localhost:8080"
         private const val SCHEMA_REGISTRY_URL = "http://localhost:8081/"
         private const val REST_PROXY_URL = "http://localhost:8082/"
-        private const val NUM_THREADS = 15
+        private const val NUM_THREADS = 1
         private const val NUM_SENDS = 1
         private const val SHOW_DATA_SIZE = false
         const val MP_CLIENT = "ManagementPortalapp"

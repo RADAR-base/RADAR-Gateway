@@ -4,7 +4,7 @@ import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.Response
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.TopicDescription
-import org.radarbase.gateway.Config
+import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.jersey.exception.HttpApplicationException
 import org.radarbase.jersey.exception.HttpNotFoundException
 import org.radarbase.jersey.util.CacheConfig
@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
 
-class KafkaAdminService(@Context private val config: Config) : Closeable {
+class KafkaAdminService(@Context private val config: GatewayConfig) : Closeable {
     private val adminClient: AdminClient = AdminClient.create(config.kafka.admin)
 
     private val listCache = CachedSet<String>(listCacheConfig) {

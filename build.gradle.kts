@@ -7,7 +7,7 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("com.avast.gradle.docker-compose") version "0.14.9"
+    id("com.avast.gradle.docker-compose") version "0.14.11"
     id("com.github.ben-manes.versions") version "0.39.0"
 }
 
@@ -15,7 +15,7 @@ description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
     group = "org.radarbase"
-    version = "0.5.7"
+    version = "0.5.8"
 
     repositories {
         mavenCentral()
@@ -42,12 +42,19 @@ dependencies {
     implementation("org.radarbase:radar-commons:$radarCommonsVersion")
     val radarJerseyVersion: String by project
     implementation("org.radarbase:radar-jersey:$radarJerseyVersion")
-    implementation("org.radarbase:managementportal-client:${project.property("radarAuthVersion")}")
-    implementation("org.radarbase:lzfse-decode:${project.property("lzfseVersion")}")
+    val radarAuthVersion: String by project
+    implementation("org.radarbase:managementportal-client:$radarAuthVersion")
+    val lzfseVersion: String by project
+    implementation("org.radarbase:lzfse-decode:$lzfseVersion")
 
-    implementation(project(path = ":deprecated-javax", configuration = "shadow"))
+    val kafkaVersion: String by project
+    implementation("org.apache.kafka:kafka-clients:$kafkaVersion")
+    val confluentVersion: String by project
+    implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
+    implementation("io.confluent:kafka-schema-registry-client:$confluentVersion")
 
-    implementation("org.slf4j:slf4j-api:${project.property("slf4jVersion")}")
+    val slf4jVersion: String by project
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
 
     val jacksonVersion: String by project
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
@@ -68,8 +75,9 @@ dependencies {
     val junitVersion: String by project
     val okhttp3Version: String by project
     val radarSchemasVersion: String by project
+    val mockitoKotlinVersion: String by project
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:[2.2,3.0)")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
     testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
@@ -81,9 +89,9 @@ dependencies {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "11"
-        apiVersion = "1.5"
-        languageVersion = "1.5"
+        jvmTarget = "17"
+        apiVersion = "1.6"
+        languageVersion = "1.6"
     }
 }
 
@@ -182,5 +190,5 @@ tasks.withType<DependencyUpdatesTask> {
 }
 
 tasks.wrapper {
-    gradleVersion = "7.2"
+    gradleVersion = "7.3.1"
 }
