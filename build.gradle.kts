@@ -15,7 +15,7 @@ description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
     group = "org.radarbase"
-    version = "0.5.8"
+    version = "0.5.9"
 
     repositories {
         mavenCentral()
@@ -190,5 +190,5 @@ tasks.withType<DependencyUpdatesTask> {
 }
 
 tasks.wrapper {
-    gradleVersion = "7.3.1"
+    gradleVersion = "7.3.2"
 }
