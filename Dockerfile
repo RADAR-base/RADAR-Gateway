@@ -14,14 +14,14 @@ FROM gradle:7.3-jdk17 as builder
 
 RUN mkdir /code
 WORKDIR /code
+ENV GRADLE_USER_HOME=/code/.gradlecache \
+   GRADLE_OPTS=-Djdk.lang.Process.launchMechanism=vfork
 
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
-
-COPY ./build.gradle.kts ./gradle.properties ./settings.gradle.kts /code/
+COPY build.gradle.kts settings.gradle.kts gradle.properties /code/
 
 RUN gradle downloadDockerDependencies --no-watch-fs
 
-COPY ./src/ /code/src
+COPY src/ /code/src
 
 RUN gradle distTar --no-watch-fs \
     && cd build/distributions \
@@ -33,6 +33,10 @@ FROM azul/zulu-openjdk-alpine:17-jre-headless
 MAINTAINER @blootsvoets
 
 LABEL description="RADAR-base Gateway docker container"
+
+# Override JAVA_OPTS to set heap parameters, for example
+ENV JAVA_OPTS="" \
+    RADAR_GATEWAY_OPTS=""
 
 RUN apk add --no-cache curl
 
