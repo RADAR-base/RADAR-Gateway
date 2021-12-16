@@ -3,6 +3,8 @@
 /build
 /out
 /.git
-/.gradle
+/.gradle*
 /gradle/wrapper
+/gradlew*
 /.idea
+/.github

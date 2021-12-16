@@ -149,30 +149,20 @@ idea {
     }
 }
 
-allprojects {
-    tasks.register("downloadDockerDependencies") {
-        doFirst {
-            configurations["compileClasspath"].files
-            configurations["runtimeClasspath"].files
-            println("Downloaded all dependencies")
-        }
-        outputs.upToDateWhen { false }
+tasks.register("downloadDependencies") {
+    doFirst {
+        configurations["compileClasspath"].files
+        configurations["runtimeClasspath"].files
+        println("Downloaded all dependencies")
     }
+    outputs.upToDateWhen { false }
+}
 
-    tasks.register("downloadDependencies") {
-        doFirst {
-            configurations.asMap
-                .filterValues { it.isCanBeResolved }
-                .forEach { (name, config) ->
-                    try {
-                        config.files
-                    } catch (ex: Exception) {
-                        project.logger.warn("Cannot find dependency for configuration {}", name, ex)
-                    }
-                }
-            println("Downloaded all dependencies")
-        }
-        outputs.upToDateWhen { false }
+tasks.register<Copy>("copyDependencies") {
+    from(configurations.runtimeClasspath.map { it.files })
+    into("$buildDir/third-party/")
+    doLast {
+        println("Copied third-party runtime dependencies")
     }
 }
 

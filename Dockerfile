@@ -19,14 +19,11 @@ ENV GRADLE_USER_HOME=/code/.gradlecache \
 
 COPY build.gradle.kts settings.gradle.kts gradle.properties /code/
 
-RUN gradle downloadDockerDependencies --no-watch-fs
+RUN gradle downloadDependencies copyDependencies startScripts --no-watch-fs
 
 COPY src/ /code/src
 
-RUN gradle distTar --no-watch-fs \
-    && cd build/distributions \
-    && tar xzf *.tar.gz \
-    && rm *.tar.gz radar-gateway-*/lib/radar-gateway-*.jar
+RUN gradle jar --no-watch-fs
 
 FROM azul/zulu-openjdk-alpine:17-jre-headless
 
@@ -40,8 +37,8 @@ ENV JAVA_OPTS="" \
 
 RUN apk add --no-cache curl
 
-COPY --from=builder /code/build/distributions/radar-gateway-*/bin/* /usr/bin/
-COPY --from=builder /code/build/distributions/radar-gateway-*/lib/* /usr/lib/
+COPY --from=builder /code/build/scripts/* /usr/bin/
+COPY --from=builder /code/build/third-party/* /usr/lib/
 COPY --from=builder /code/build/libs/radar-gateway-*.jar /usr/lib/
 
 USER 101
