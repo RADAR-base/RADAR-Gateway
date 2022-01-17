@@ -7,15 +7,15 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("com.avast.gradle.docker-compose") version "0.14.11"
-    id("com.github.ben-manes.versions") version "0.39.0"
+    id("com.avast.gradle.docker-compose") version "0.14.13"
+    id("com.github.ben-manes.versions") version "0.41.0"
 }
 
 description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
     group = "org.radarbase"
-    version = "0.5.10"
+    version = "0.5.11-SNAPSHOT"
 
     repositories {
         mavenCentral()
