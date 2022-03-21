@@ -15,7 +15,7 @@ description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
     group = "org.radarbase"
-    version = "0.5.11-SNAPSHOT"
+    version = "0.5.11"
 
     repositories {
         mavenCentral()
