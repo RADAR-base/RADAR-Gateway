@@ -58,10 +58,9 @@ dependencies {
 
     val jacksonVersion: String by project
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
-    val jacksonModuleKotlinVersion: String by project
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonModuleKotlinVersion") {
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion") {
         version {
-            strictly(jacksonModuleKotlinVersion)
+            strictly(jacksonVersion)
         }
     }
 
