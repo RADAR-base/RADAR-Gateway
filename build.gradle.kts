@@ -7,15 +7,15 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("com.avast.gradle.docker-compose") version "0.14.11"
-    id("com.github.ben-manes.versions") version "0.39.0"
+    id("com.avast.gradle.docker-compose") version "0.15.2"
+    id("com.github.ben-manes.versions") version "0.42.0"
 }
 
 description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
     group = "org.radarbase"
-    version = "0.5.10"
+    version = "0.5.11"
 
     repositories {
         mavenCentral()
@@ -58,6 +58,11 @@ dependencies {
 
     val jacksonVersion: String by project
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion") {
+        version {
+            strictly(jacksonVersion)
+        }
+    }
 
     val avroVersion: String by project
     runtimeOnly("org.apache.avro:avro:$avroVersion")
@@ -180,5 +185,5 @@ tasks.withType<DependencyUpdatesTask> {
 }
 
 tasks.wrapper {
-    gradleVersion = "7.3.3"
+    gradleVersion = "7.4.1"
 }
