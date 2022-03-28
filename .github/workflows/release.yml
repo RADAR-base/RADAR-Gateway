@@ -74,6 +74,7 @@ jobs:
         with:
           # Allow running the image on the architectures supported by openjdk:17-jre-slim
           platforms: linux/amd64,linux/arm64
+          context: .
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           # Use runtime labels from docker_meta as well as fixed labels

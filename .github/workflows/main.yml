@@ -92,6 +92,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: ${{ steps.cache-parameters.outputs.cache-to }}
           load: true
+          context: .
           tags: ${{ steps.docker_meta.outputs.tags }}
           # Use runtime labels from docker_meta as well as fixed labels
           labels: |
