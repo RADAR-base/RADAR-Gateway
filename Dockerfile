@@ -25,7 +25,7 @@ COPY src/ /code/src
 
 RUN gradle jar --no-watch-fs
 
-FROM azul/zulu-openjdk-alpine:17-jre-headless
+FROM eclipse-temurin:17-jre
 
 MAINTAINER @blootsvoets
 
@@ -34,8 +34,6 @@ LABEL description="RADAR-base Gateway docker container"
 # Override JAVA_OPTS to set heap parameters, for example
 ENV JAVA_OPTS="" \
     RADAR_GATEWAY_OPTS=""
-
-RUN apk add --no-cache curl
 
 COPY --from=builder /code/build/scripts/* /usr/bin/
 COPY --from=builder /code/build/third-party/* /usr/lib/

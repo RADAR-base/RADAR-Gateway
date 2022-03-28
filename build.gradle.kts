@@ -15,7 +15,7 @@ description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
     group = "org.radarbase"
-    version = "0.5.11"
+    version = "0.5.12"
 
     repositories {
         mavenCentral()
@@ -57,12 +57,8 @@ dependencies {
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
 
     val jacksonVersion: String by project
-    implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion") {
-        version {
-            strictly(jacksonVersion)
-        }
-    }
+    implementation(platform("com.fasterxml.jackson:jackson-bom:$jacksonVersion"))
+    implementation("com.fasterxml.jackson.core:jackson-databind")
 
     val avroVersion: String by project
     runtimeOnly("org.apache.avro:avro:$avroVersion")
