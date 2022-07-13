@@ -1,5 +1,4 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import org.jetbrains.kotlin.cli.common.toBooleanLenient
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.Duration
 
@@ -7,7 +6,7 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("com.avast.gradle.docker-compose") version "0.15.2"
+    id("com.avast.gradle.docker-compose") version "0.16.8"
     id("com.github.ben-manes.versions") version "0.42.0"
 }
 
@@ -15,11 +14,12 @@ description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
     group = "org.radarbase"
-    version = "0.5.12"
+    version = "0.5.13"
 
     repositories {
         mavenCentral()
         maven(url = "https://packages.confluent.io/maven/")
+        maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
     }
 }
 
@@ -132,12 +132,12 @@ application {
 dockerCompose {
     useComposeFiles.set(listOf("src/integrationTest/docker/docker-compose.yml"))
     val dockerComposeBuild: String? by project
-    val doBuild = dockerComposeBuild?.toBooleanLenient() ?: true
+    val doBuild = dockerComposeBuild?.toBoolean() ?: true
     buildBeforeUp.set(doBuild)
     buildBeforePull.set(doBuild)
     buildAdditionalArgs.set(emptyList<String>())
     val dockerComposeStopContainers: String? by project
-    stopContainers.set(dockerComposeStopContainers?.toBooleanLenient() ?: true)
+    stopContainers.set(dockerComposeStopContainers?.toBoolean() ?: true)
     waitForTcpPortsTimeout.set(Duration.ofMinutes(3))
     environment.put("SERVICES_HOST", "localhost")
     captureContainersOutputToFiles.set(project.file("build/container-logs"))
@@ -181,5 +181,5 @@ tasks.withType<DependencyUpdatesTask> {
 }
 
 tasks.wrapper {
-    gradleVersion = "7.4.1"
+    gradleVersion = "7.4.2"
 }
