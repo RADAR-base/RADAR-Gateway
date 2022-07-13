@@ -43,18 +43,17 @@ class KafkaAdminService(@Context private val config: GatewayConfig) : Closeable 
         }
         return topicInfo.computeIfAbsent(topic) {
             CachedValue(describeCacheConfig, {
-                val topicDescription = try {
+                val topicDescriptions = try {
                     adminClient.describeTopics(listOf(topic))
-                        .values()
-                        .values
-                        .first()
+                        .allTopicNames()
                         .get(3L, TimeUnit.SECONDS)
                 } catch (ex: Exception) {
                     logger.error("Failed to describe topics", ex)
                     throw KafkaUnavailableException(ex)
                 }
 
-                topicDescription.toTopicInfo()
+                topicDescriptions[topic]?.toTopicInfo()
+                    ?: throw HttpNotFoundException("topic_not_found", "Topic $topic does not exist")
             })
         }.get()
     }
