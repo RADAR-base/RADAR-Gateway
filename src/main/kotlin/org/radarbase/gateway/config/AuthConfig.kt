@@ -8,6 +8,8 @@ data class AuthConfig(
      * in the ManagementPortal.
      */
     val checkSourceId: Boolean = true,
+    /** Whether to request authorization for the /topics endpoint. */
+    val authorizeListTopics: Boolean = true,
     /** OAuth 2.0 token issuer. If null, this is not checked. */
     val issuer: String? = null,
     /**
