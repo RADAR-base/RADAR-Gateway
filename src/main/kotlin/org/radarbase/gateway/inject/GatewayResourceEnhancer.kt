@@ -15,6 +15,7 @@ import org.radarbase.gateway.io.LzfseEncoder
 import org.radarbase.gateway.kafka.*
 import org.radarbase.gateway.service.SchedulingService
 import org.radarbase.gateway.service.SchedulingServiceFactory
+import org.radarbase.jersey.auth.filter.AuthenticationFilter
 import org.radarbase.jersey.enhancer.JerseyResourceEnhancer
 import org.radarbase.jersey.filter.Filters
 import org.radarbase.jersey.service.HealthService
@@ -36,6 +37,7 @@ class GatewayResourceEnhancer(private val config: GatewayConfig) : JerseyResourc
         add(Filters.logResponse)
 
         if (config.auth.authorizeListTopics) {
+            add(AuthenticationFilter::class.java)
             add(KafkaTopicsAuthFilter::class.java)
         }
     }.toTypedArray()
