@@ -23,21 +23,28 @@ import java.io.InputStream
 /** Topics submission and listing. Requests need authentication. */
 @Path("/topics")
 @Singleton
-@Authenticated
+@Produces(
+    KafkaTopics.PRODUCE_AVRO_V1_JSON,
+    KafkaTopics.PRODUCE_AVRO_V2_JSON,
+    KafkaTopics.PRODUCE_AVRO_V3_JSON,
+    KafkaTopics.PRODUCE_AVRO_NON_SPECIFIC,
+    KafkaTopics.PRODUCE_JSON,
+)
 class KafkaTopics(
     @Context private val kafkaAdminService: KafkaAdminService,
     @Context private val producerPool: ProducerPool,
 ) {
     @GET
-    @Produces(PRODUCE_AVRO_V1_JSON)
     fun topics() = kafkaAdminService.listTopics()
 
+    @Authenticated
     @Path("/{topic_name}")
     @GET
     fun topic(
         @PathParam("topic_name") topic: String,
     ) = kafkaAdminService.topicInfo(topic)
 
+    @Authenticated
     @OPTIONS
     @Path("/{topic_name}")
     fun topicOptions(): Response = Response.noContent()
@@ -49,12 +56,11 @@ class KafkaTopics(
         .header("Allow", "HEAD,GET,POST,OPTIONS")
         .build()
 
+    @Authenticated
     @Path("/{topic_name}")
     @POST
     @Consumes(ACCEPT_JSON, ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON, ACCEPT_AVRO_V3_JSON,
         ACCEPT_AVRO_NON_SPECIFIC)
-    @Produces(PRODUCE_AVRO_V1_JSON, PRODUCE_AVRO_V2_JSON, PRODUCE_AVRO_V3_JSON,
-        PRODUCE_AVRO_NON_SPECIFIC, PRODUCE_JSON)
     @NeedsPermission(MEASUREMENT, CREATE)
     @ProcessAvro
     fun postToTopic(
@@ -68,12 +74,11 @@ class KafkaTopics(
         return TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
     }
 
+    @Authenticated
     @Path("/{topic_name}")
     @POST
     @ProcessAvro
     @Consumes(ACCEPT_BINARY_NON_SPECIFIC, ACCEPT_BINARY_V1)
-    @Produces(PRODUCE_AVRO_V1_JSON, PRODUCE_AVRO_V2_JSON, PRODUCE_AVRO_V3_JSON,
-        PRODUCE_AVRO_NON_SPECIFIC, PRODUCE_JSON)
     @NeedsPermission(MEASUREMENT, CREATE)
     fun postToTopicBinary(
         input: InputStream,
