@@ -81,9 +81,9 @@ jobs:
         id: cache-parameters
         run: |
           if [ "${{ steps.cache-buildx.outputs.cache-hit }}" = "true" ]; then
-            echo "::set-output name=cache-to::"
+            echo "cache-to=" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=cache-to::type=local,dest=/tmp/.buildx-cache-new,mode=max"
+            echo "cache-to=type=local,dest=/tmp/.buildx-cache-new,mode=max" >> $GITHUB_OUTPUT
           fi
 
       - name: Build docker
