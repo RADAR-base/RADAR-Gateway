@@ -37,7 +37,6 @@ class GatewayResourceEnhancer(private val config: GatewayConfig) : JerseyResourc
         add(Filters.logResponse)
 
         if (config.auth.authorizeListTopics) {
-            add(AuthenticationFilter::class.java)
             add(KafkaTopicsAuthFilter::class.java)
         }
     }.toTypedArray()
