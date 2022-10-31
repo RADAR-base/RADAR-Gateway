@@ -6,15 +6,15 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("com.avast.gradle.docker-compose") version "0.16.8"
-    id("com.github.ben-manes.versions") version "0.42.0"
+    id("com.avast.gradle.docker-compose") version "0.16.9"
+    id("com.github.ben-manes.versions") version "0.43.0"
 }
 
 description = "RADAR Gateway to handle secured data flow to backend."
 
 allprojects {
     group = "org.radarbase"
-    version = "0.5.13"
+    version = "0.5.14"
 
     repositories {
         mavenCentral()
@@ -69,8 +69,8 @@ dependencies {
     runtimeOnly("org.glassfish.grizzly:grizzly-http-server-monitoring:$grizzlyVersion")
 
     val log4j2Version: String by project
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:$log4j2Version")
-    runtimeOnly("org.apache.logging.log4j:log4j-api:$log4j2Version")
+    runtimeOnly("org.apache.logging.log4j:log4j-core:$log4j2Version")
+    runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:$log4j2Version")
     runtimeOnly("org.apache.logging.log4j:log4j-jul:$log4j2Version")
 
     val junitVersion: String by project
@@ -91,8 +91,8 @@ dependencies {
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         jvmTarget = "17"
-        apiVersion = "1.6"
-        languageVersion = "1.6"
+        apiVersion = "1.7"
+        languageVersion = "1.7"
     }
 }
 
@@ -168,7 +168,7 @@ tasks.register<Copy>("copyDependencies") {
 }
 
 fun isNonStable(version: String): Boolean {
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
+    val stableKeyword = listOf("RELEASE", "FINAL", "GA", "-CE").any { version.toUpperCase().contains(it) }
     val regex = "^[0-9,.v-]+(-r)?$".toRegex()
     val isStable = stableKeyword || regex.matches(version)
     return isStable.not()
@@ -181,5 +181,5 @@ tasks.withType<DependencyUpdatesTask> {
 }
 
 tasks.wrapper {
-    gradleVersion = "7.4.2"
+    gradleVersion = "7.5.1"
 }

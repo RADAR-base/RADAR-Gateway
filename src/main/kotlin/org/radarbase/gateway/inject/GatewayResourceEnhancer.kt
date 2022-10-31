@@ -7,6 +7,7 @@ import org.glassfish.jersey.message.DeflateEncoder
 import org.glassfish.jersey.message.GZipEncoder
 import org.glassfish.jersey.server.filter.EncodingFilter
 import org.radarbase.gateway.config.GatewayConfig
+import org.radarbase.gateway.filter.KafkaTopicsAuthFilter
 import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.AvroProcessorFactory
 import org.radarbase.gateway.io.BinaryToAvroConverter
@@ -14,6 +15,7 @@ import org.radarbase.gateway.io.LzfseEncoder
 import org.radarbase.gateway.kafka.*
 import org.radarbase.gateway.service.SchedulingService
 import org.radarbase.gateway.service.SchedulingServiceFactory
+import org.radarbase.jersey.auth.filter.AuthenticationFilter
 import org.radarbase.jersey.enhancer.JerseyResourceEnhancer
 import org.radarbase.jersey.filter.Filters
 import org.radarbase.jersey.service.HealthService
@@ -27,13 +29,17 @@ class GatewayResourceEnhancer(private val config: GatewayConfig) : JerseyResourc
         "org.radarbase.gateway.resource",
     )
 
-    override val classes: Array<Class<*>> = arrayOf(
-        EncodingFilter::class.java,
-        GZipEncoder::class.java,
-        DeflateEncoder::class.java,
-        LzfseEncoder::class.java,
-        Filters.logResponse,
-    )
+    override val classes: Array<Class<*>> = buildList(6) {
+        add(EncodingFilter::class.java)
+        add(GZipEncoder::class.java)
+        add(DeflateEncoder::class.java)
+        add(LzfseEncoder::class.java)
+        add(Filters.logResponse)
+
+        if (config.auth.authorizeListTopics) {
+            add(KafkaTopicsAuthFilter::class.java)
+        }
+    }.toTypedArray()
 
     override fun AbstractBinder.enhance() {
         bind(config)
