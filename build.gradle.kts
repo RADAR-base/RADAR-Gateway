@@ -7,7 +7,7 @@ plugins {
     id("application")
     kotlin("jvm")
     id("com.avast.gradle.docker-compose") version "0.16.9"
-    id("com.github.ben-manes.versions") version "0.42.0"
+    id("com.github.ben-manes.versions") version "0.43.0"
 }
 
 description = "RADAR Gateway to handle secured data flow to backend."
