@@ -7,7 +7,6 @@ import org.radarbase.jersey.enhancer.EnhancerFactory
 import org.radarbase.jersey.enhancer.Enhancers
 import org.radarbase.jersey.enhancer.JerseyResourceEnhancer
 
-
 /** This binder needs to register all non-Jersey classes, otherwise initialization fails. */
 class EcdsaJwtEnhancerFactory(private val config: GatewayConfig) : EnhancerFactory {
     override fun createEnhancers(): List<JerseyResourceEnhancer> {

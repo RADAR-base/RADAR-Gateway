@@ -78,8 +78,10 @@ class KafkaAdminService(@Context private val config: GatewayConfig) : Closeable 
             return TopicPartitionInfo(partition = partition())
         }
 
-        private fun TopicDescription.toTopicInfo() = TopicInfo(name(), partitions()
-            .map { it.toTopicPartitionInfo() })
+        private fun TopicDescription.toTopicInfo() = TopicInfo(
+            name(),
+            partitions().map { it.toTopicPartitionInfo() },
+        )
 
         class KafkaUnavailableException(ex: Exception) : HttpApplicationException(
             Response.Status.SERVICE_UNAVAILABLE,

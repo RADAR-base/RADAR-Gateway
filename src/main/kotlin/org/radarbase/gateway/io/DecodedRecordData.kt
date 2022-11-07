@@ -4,7 +4,6 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.io.BinaryDecoder
-import org.radarbase.auth.authorization.Permission
 import org.radarbase.data.RecordData
 import org.radarbase.jersey.auth.Auth
 import org.radarbase.producer.rest.ParsedSchemaMetadata

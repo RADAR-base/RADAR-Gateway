@@ -13,24 +13,24 @@ import org.radarbase.jersey.exception.HttpInvalidContentException
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
-val JsonNode?.isMissing: Boolean
-    get() = this == null || this.isNull
-
 fun JsonNode.toAvro(to: Schema, context: AvroParsingContext, defaultVal: JsonNode? = null): Any? {
     return if (isNull) {
         when {
             to.type == Schema.Type.NULL -> null
             to.type == Schema.Type.UNION -> toAvroUnion(to, context, defaultVal)
-            defaultVal.isMissing -> throw invalidContent("No value given to field without default", context)
-            else -> return defaultVal!!.toAvro(to,
-                AvroParsingContext(to.type, "default value", context))
+            defaultVal == null || defaultVal.isNull -> throw invalidContent("No value given to field without default", context)
+            else -> defaultVal.toAvro(
+                to,
+                AvroParsingContext(to.type, "default value", context)
+            )
         }
     } else {
         when (to.type!!) {
             Schema.Type.RECORD -> toAvroObject(to, context)
             Schema.Type.LONG, Schema.Type.FLOAT, Schema.Type.DOUBLE, Schema.Type.INT -> toAvroNumber(
                 to.type,
-                context)
+                context,
+            )
             Schema.Type.BOOLEAN -> toAvroBoolean(context)
             Schema.Type.ARRAY -> toAvroArray(to, context)
             Schema.Type.NULL -> null
@@ -52,9 +52,11 @@ fun JsonNode.toAvroObject(
     val builder = GenericRecordBuilder(schema)
     for (field in schema.fields) {
         get(field.name())?.let { node ->
-            val fieldContext = AvroParsingContext(Schema.Type.RECORD,
-                "${schema.name}.${field.name()}",
-                context)
+            val fieldContext = AvroParsingContext(
+                type = Schema.Type.RECORD,
+                name = "${schema.name}.${field.name()}",
+                parent = context,
+            )
             builder[field] = node.toAvro(field.schema(), fieldContext, field.jsonDefaultValue)
         }
     }
@@ -114,7 +116,6 @@ fun invalidContent(message: String, context: AvroParsingContext): HttpInvalidCon
     throw HttpInvalidContentException("$message (context $context)")
 }
 
-
 fun JsonNode.toAvroString(context: AvroParsingContext): String {
     return if (isTextual || isNumber || isBoolean) asText()
     else throw invalidContent("Cannot map non-simple types to string: $this", context)
@@ -128,7 +129,7 @@ fun JsonNode?.toAvroUnion(
     return when {
         this == null || this.isNull -> {
             when {
-                to.types.any { it.type == Schema.Type.NULL} -> null
+                to.types.any { it.type == Schema.Type.NULL } -> null
                 defaultVal != null -> defaultVal.toAvro(to.types.first(), context)
                 else -> throw invalidContent("Cannot map null value to non-null union", context)
             }
@@ -147,10 +148,10 @@ fun JsonNode?.toAvroUnion(
         }
         isNumber -> {
             val type = to.types.firstOrNull { unionType ->
-                unionType.type == Schema.Type.LONG
-                    || unionType.type == Schema.Type.INT
-                    || unionType.type == Schema.Type.FLOAT
-                    || unionType.type == Schema.Type.DOUBLE
+                unionType.type == Schema.Type.LONG ||
+                    unionType.type == Schema.Type.INT ||
+                    unionType.type == Schema.Type.FLOAT ||
+                    unionType.type == Schema.Type.DOUBLE
             } ?: throw invalidContent("Cannot map number to non-number union", context)
             toAvroNumber(
                 type.type,
@@ -159,10 +160,10 @@ fun JsonNode?.toAvroUnion(
         }
         isTextual -> {
             val type = to.types.firstOrNull { unionType ->
-                unionType.type == Schema.Type.STRING
-                    || unionType.type == Schema.Type.FIXED
-                    || unionType.type == Schema.Type.BYTES
-                    || unionType.type == Schema.Type.ENUM
+                unionType.type == Schema.Type.STRING ||
+                    unionType.type == Schema.Type.FIXED ||
+                    unionType.type == Schema.Type.BYTES ||
+                    unionType.type == Schema.Type.ENUM
             } ?: throw invalidContent("Cannot map text to non-textual union", context)
             toAvro(
                 type,
@@ -189,8 +190,8 @@ fun JsonNode?.toAvroUnion(
         }
         isObject -> {
             val type = to.types.firstOrNull { unionType ->
-                unionType.type == Schema.Type.MAP
-                        || unionType.type == Schema.Type.RECORD
+                unionType.type == Schema.Type.MAP ||
+                    unionType.type == Schema.Type.RECORD
             } ?: throw invalidContent("Cannot map object to non-object union", context)
             return toAvro(
                 type,
@@ -231,8 +232,12 @@ fun JsonNode.toAvroMap(
     if (this !is ObjectNode) throw invalidContent("Can only convert objects to map", context)
 
     return fieldNames().asSequence()
-        .associateWith { key -> get(key).toAvro(schema,
-            AvroParsingContext(Schema.Type.MAP, key, context)) }
+        .associateWith { key ->
+            get(key).toAvro(
+                schema,
+                AvroParsingContext(Schema.Type.MAP, key, context)
+            )
+        }
 }
 
 fun JsonNode.toAvroBytes(context: AvroParsingContext): ByteBuffer {

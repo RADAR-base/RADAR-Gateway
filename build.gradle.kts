@@ -6,21 +6,19 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("com.avast.gradle.docker-compose") version "0.16.9"
-    id("com.github.ben-manes.versions") version "0.43.0"
+    id("com.avast.gradle.docker-compose")
+    id("com.github.ben-manes.versions")
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 description = "RADAR Gateway to handle secured data flow to backend."
+group = "org.radarbase"
+version = "0.5.15"
 
-allprojects {
-    group = "org.radarbase"
-    version = "0.5.14"
-
-    repositories {
-        mavenCentral()
-        maven(url = "https://packages.confluent.io/maven/")
-        maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
-    }
+repositories {
+    mavenCentral()
+    maven(url = "https://packages.confluent.io/maven/")
+    maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
 }
 
 val integrationTestSourceSet = sourceSets.create("integrationTest") {
@@ -77,9 +75,13 @@ dependencies {
     val okhttp3Version: String by project
     val radarSchemasVersion: String by project
     val mockitoKotlinVersion: String by project
+    val hamcrestVersion: String by project
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
-    testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version")
+    testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version") {
+        exclude(group = "junit", module = "junit")
+    }
+    testImplementation("org.hamcrest:hamcrest:$hamcrestVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
     testImplementation("org.radarbase:radar-schemas-commons:$radarSchemasVersion")
@@ -148,6 +150,11 @@ idea {
     module {
         isDownloadSources = true
     }
+}
+
+ktlint {
+    val ktlintVersion: String by project
+    version.set(ktlintVersion)
 }
 
 tasks.register("downloadDependencies") {

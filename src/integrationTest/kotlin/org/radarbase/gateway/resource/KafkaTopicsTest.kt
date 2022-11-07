@@ -12,12 +12,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
-import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.hasItem
+import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.junit.runners.model.MultipleFailureException
 import org.radarbase.config.ServerConfig
 import org.radarbase.data.AvroRecordData
 import org.radarbase.gateway.resource.KafkaRootTest.Companion.BASE_URI
@@ -37,7 +36,7 @@ import java.util.concurrent.atomic.LongAdder
 class KafkaTopicsTest {
     private fun requestAccessToken(): String {
         val clientToken = httpClient.call(Status.OK, "access_token") {
-            url("${MANAGEMENTPORTAL_URL}/oauth/token")
+            url("$MANAGEMENTPORTAL_URL/oauth/token")
             addHeader("Authorization", Credentials.basic(MP_CLIENT, ""))
             post(
                 FormBody.Builder()
@@ -65,7 +64,7 @@ class KafkaTopicsTest {
         }
 
         return httpClient.call(Status.OK, "access_token") {
-            url("${MANAGEMENTPORTAL_URL}/oauth/token")
+            url("$MANAGEMENTPORTAL_URL/oauth/token")
             addHeader("Authorization", Credentials.basic(REST_CLIENT, ""))
             post(
                 FormBody.Builder()
@@ -84,8 +83,10 @@ class KafkaTopicsTest {
 
         val topic = AvroTopic(
             "test",
-            ObservationKey.getClassSchema(), PhoneAcceleration.getClassSchema(),
-            ObservationKey::class.java, PhoneAcceleration::class.java
+            ObservationKey.getClassSchema(),
+            PhoneAcceleration.getClassSchema(),
+            ObservationKey::class.java,
+            PhoneAcceleration::class.java
         )
 
         val time = System.currentTimeMillis() / 1000.0
@@ -112,7 +113,6 @@ class KafkaTopicsTest {
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = true)
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = false)
         results.forEach { println(it) }
-
 
         httpClient.call(Status.OK) {
             url("$BASE_URI/topics")
@@ -229,8 +229,8 @@ class KafkaTopicsTest {
         senders.forEach { it.start() }
         senders.forEach { it.join() }
         senders.mapNotNull { it.exception }
-            .takeIf { it.isNotEmpty() }
-            ?.let { throw MultipleFailureException(it) }
+            .reduceOrNull { acc, exception -> acc.apply { addSuppressed(exception) } }
+            ?.let { throw it }
 
         val timeEnd = System.nanoTime()
 
