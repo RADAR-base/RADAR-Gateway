@@ -62,7 +62,6 @@ class AvroRecordProcessor(
         return keyMapping.jsonToAvro(key, context)
     }
 
-
     /** Parse single record key.  */
     @Throws(IOException::class)
     fun processValue(

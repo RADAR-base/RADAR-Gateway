@@ -6,8 +6,9 @@ plugins {
     id("idea")
     id("application")
     kotlin("jvm")
-    id("com.avast.gradle.docker-compose") version "0.16.9"
-    id("com.github.ben-manes.versions") version "0.43.0"
+    id("com.avast.gradle.docker-compose")
+    id("com.github.ben-manes.versions")
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 description = "RADAR Gateway to handle secured data flow to backend."
@@ -148,6 +149,11 @@ idea {
     module {
         isDownloadSources = true
     }
+}
+
+ktlint {
+    val ktlintVersion: String by project
+    version.set(ktlintVersion)
 }
 
 tasks.register("downloadDependencies") {

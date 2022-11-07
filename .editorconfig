@@ -16,3 +16,6 @@ indent_size = 2
 
 [*.gradle]
 indent_size = 4
+
+[*.kt]
+disabled_rules=no-wildcard-imports

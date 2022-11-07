@@ -1,6 +1,7 @@
 package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.NullNode
 import okio.Buffer
 import org.apache.avro.generic.GenericRecordBuilder
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -57,9 +58,7 @@ class BinaryToAvroConverterTest {
         val auth = object : Auth {
             override val token: RadarToken = token
 
-            override fun getClaim(name: String): JsonNode {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-            }
+            override fun getClaim(name: String): JsonNode = NullNode.getInstance()
 
             override val defaultProject: String = "p"
             override val userId: String = "u"
@@ -90,10 +89,12 @@ class BinaryToAvroConverterTest {
 
         assertEquals(
             AvroProcessingResult(
-                1, 2, listOf(
-                Pair(genericKey, genericValue1),
-                Pair(genericKey, genericValue2),
-            )
+                keySchemaId = 1,
+                valueSchemaId = 2,
+                records = listOf(
+                    Pair(genericKey, genericValue1),
+                    Pair(genericKey, genericValue2),
+                )
             ),
             converter.process("test", requestBuffer.inputStream())
         )

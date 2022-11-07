@@ -12,8 +12,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
-import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.hasItem
+import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.LongAdder
 class KafkaTopicsTest {
     private fun requestAccessToken(): String {
         val clientToken = httpClient.call(Status.OK, "access_token") {
-            url("${MANAGEMENTPORTAL_URL}/oauth/token")
+            url("$MANAGEMENTPORTAL_URL/oauth/token")
             addHeader("Authorization", Credentials.basic(MP_CLIENT, ""))
             post(
                 FormBody.Builder()
@@ -65,7 +65,7 @@ class KafkaTopicsTest {
         }
 
         return httpClient.call(Status.OK, "access_token") {
-            url("${MANAGEMENTPORTAL_URL}/oauth/token")
+            url("$MANAGEMENTPORTAL_URL/oauth/token")
             addHeader("Authorization", Credentials.basic(REST_CLIENT, ""))
             post(
                 FormBody.Builder()
@@ -112,7 +112,6 @@ class KafkaTopicsTest {
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = true)
         results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = false)
         results.forEach { println(it) }
-
 
         httpClient.call(Status.OK) {
             url("$BASE_URI/topics")
