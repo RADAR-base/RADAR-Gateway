@@ -84,8 +84,10 @@ class KafkaTopicsTest {
 
         val topic = AvroTopic(
             "test",
-            ObservationKey.getClassSchema(), PhoneAcceleration.getClassSchema(),
-            ObservationKey::class.java, PhoneAcceleration::class.java
+            ObservationKey.getClassSchema(),
+            PhoneAcceleration.getClassSchema(),
+            ObservationKey::class.java,
+            PhoneAcceleration::class.java
         )
 
         val time = System.currentTimeMillis() / 1000.0

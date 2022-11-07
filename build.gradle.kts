@@ -75,9 +75,13 @@ dependencies {
     val okhttp3Version: String by project
     val radarSchemasVersion: String by project
     val mockitoKotlinVersion: String by project
+    val hamcrestVersion: String by project
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
-    testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version")
+    testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version") {
+        exclude(group = "junit", module = "junit")
+    }
+    testImplementation("org.hamcrest:hamcrest:$hamcrestVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
 
     testImplementation("org.radarbase:radar-schemas-commons:$radarSchemasVersion")
