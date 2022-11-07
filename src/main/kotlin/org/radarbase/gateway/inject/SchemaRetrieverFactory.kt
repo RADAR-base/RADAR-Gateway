@@ -43,8 +43,4 @@ class SchemaRetrieverFactory(
             300,
         )
     }
-
-    companion object {
-        private fun Map<String, Any>.getString(key: String): String? = get(key) as? String?
-    }
 }
