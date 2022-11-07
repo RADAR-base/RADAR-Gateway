@@ -26,10 +26,10 @@ class SchemaRetrieverFactory(
 
         @Suppress("DEPRECATION")
         val basicCredentials =
-            config.kafka.serialization[SCHEMA_REGISTRY_USER_INFO_CONFIG] as? String
-                ?: config.kafka.serialization[USER_INFO_CONFIG] as? String
+            config.kafka.serialization[SCHEMA_REGISTRY_USER_INFO_CONFIG].asNonEmptyString()
+                ?: config.kafka.serialization[USER_INFO_CONFIG].asNonEmptyString()
 
-        val headers = if (!basicCredentials.isNullOrEmpty() && basicCredentials.contains(':')) {
+        val headers = if (basicCredentials != null && basicCredentials.contains(':')) {
             val (username, password) = basicCredentials.split(':', limit = 2)
             headersOf("Authorization", Credentials.basic(username, password))
         } else headersOf()
@@ -42,5 +42,11 @@ class SchemaRetrieverFactory(
                 .build(),
             300,
         )
+    }
+
+    companion object {
+        private fun Any?.asNonEmptyString(): String? =
+            if (this is String && this.isNotEmpty()) this
+            else null
     }
 }
