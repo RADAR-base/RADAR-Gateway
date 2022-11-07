@@ -17,7 +17,6 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.junit.runners.model.MultipleFailureException
 import org.radarbase.config.ServerConfig
 import org.radarbase.data.AvroRecordData
 import org.radarbase.gateway.resource.KafkaRootTest.Companion.BASE_URI
@@ -230,8 +229,8 @@ class KafkaTopicsTest {
         senders.forEach { it.start() }
         senders.forEach { it.join() }
         senders.mapNotNull { it.exception }
-            .takeIf { it.isNotEmpty() }
-            ?.let { throw MultipleFailureException(it) }
+            .reduceOrNull { acc, exception -> acc.apply { addSuppressed(exception) } }
+            ?.let { throw it }
 
         val timeEnd = System.nanoTime()
 
