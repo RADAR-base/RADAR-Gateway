@@ -12,16 +12,13 @@ plugins {
 }
 
 description = "RADAR Gateway to handle secured data flow to backend."
+group = "org.radarbase"
+version = "0.5.15"
 
-allprojects {
-    group = "org.radarbase"
-    version = "0.5.15"
-
-    repositories {
-        mavenCentral()
-        maven(url = "https://packages.confluent.io/maven/")
-        maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
-    }
+repositories {
+    mavenCentral()
+    maven(url = "https://packages.confluent.io/maven/")
+    maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
 }
 
 val integrationTestSourceSet = sourceSets.create("integrationTest") {
