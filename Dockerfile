@@ -10,20 +10,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM --platform=$BUILDPLATFORM gradle:7.5-jdk17 as builder
+FROM --platform=$BUILDPLATFORM gradle:7.6-jdk17 as builder
 
 RUN mkdir /code
 WORKDIR /code
 ENV GRADLE_USER_HOME=/code/.gradlecache \
-   GRADLE_OPTS=-Djdk.lang.Process.launchMechanism=vfork
+   GRADLE_OPTS="-Djdk.lang.Process.launchMechanism=vfork -Dorg.gradle.vfs.watch=false"
 
 COPY build.gradle.kts settings.gradle.kts gradle.properties /code/
 
-RUN gradle downloadDependencies copyDependencies startScripts --no-watch-fs
+RUN gradle downloadDependencies copyDependencies startScripts
 
 COPY src/ /code/src
 
-RUN gradle jar --no-watch-fs
+RUN gradle jar
 
 FROM eclipse-temurin:17-jre
 
@@ -37,7 +37,7 @@ ENV JAVA_OPTS="" \
 
 COPY --from=builder /code/build/scripts/* /usr/bin/
 COPY --from=builder /code/build/third-party/* /usr/lib/
-COPY --from=builder /code/build/libs/radar-gateway-*.jar /usr/lib/
+COPY --from=builder /code/build/libs/*.jar /usr/lib/
 
 USER 101
 
