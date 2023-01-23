@@ -81,6 +81,14 @@ class GatewayResourceEnhancer(private val config: GatewayConfig) : JerseyResourc
 
     /** Project service without validation of the project's existence. */
     class UnverifiedProjectService : ProjectService {
+        override fun ensureOrganization(organizationId: String) = Unit
+
         override fun ensureProject(projectId: String) = Unit
+
+        override fun ensureSubject(projectId: String, userId: String) = Unit
+
+        override fun listProjects(organizationId: String): List<String> = emptyList()
+
+        override fun projectOrganization(projectId: String): String = "main"
     }
 }

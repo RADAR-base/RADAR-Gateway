@@ -112,6 +112,7 @@ val integrationTest by tasks.registering(Test::class) {
     testClassesDirs = integrationTestSourceSet.output.classesDirs
     classpath = integrationTestSourceSet.runtimeClasspath
     shouldRunAfter("test")
+    outputs.upToDateWhen { false }
 }
 
 tasks.withType<Test> {
