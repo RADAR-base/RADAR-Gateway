@@ -1,4 +1,6 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.Duration
 
@@ -13,7 +15,7 @@ plugins {
 
 description = "RADAR Gateway to handle secured data flow to backend."
 group = "org.radarbase"
-version = "0.5.15"
+version = "0.5.16"
 
 repositories {
     mavenCentral()
@@ -90,11 +92,17 @@ dependencies {
     integrationTestImplementation("org.radarbase:radar-commons-testing:$radarCommonsVersion")
 }
 
+val jvmTargetVersion = 17
+
+tasks.withType<JavaCompile> {
+    options.release.set(jvmTargetVersion)
+}
+
 tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = "17"
-        apiVersion = "1.7"
-        languageVersion = "1.7"
+    compilerOptions {
+        jvmTarget.set(JvmTarget.fromTarget(jvmTargetVersion.toString()))
+        apiVersion.set(KotlinVersion.KOTLIN_1_8)
+        languageVersion.set(KotlinVersion.KOTLIN_1_8)
     }
 }
 
@@ -127,7 +135,7 @@ application {
         "-Dcom.sun.management.jmxremote.local.only=false",
         "-Dcom.sun.management.jmxremote.port=9010",
         "-Dcom.sun.management.jmxremote.authenticate=false",
-        "-Dcom.sun.management.jmxremote.ssl=false"
+        "-Dcom.sun.management.jmxremote.ssl=false",
     )
 }
 
@@ -188,5 +196,5 @@ tasks.withType<DependencyUpdatesTask> {
 }
 
 tasks.wrapper {
-    gradleVersion = "7.5.1"
+    gradleVersion = "8.0.1"
 }

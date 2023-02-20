@@ -86,7 +86,7 @@ class KafkaAdminService(@Context private val config: GatewayConfig) : Closeable 
         class KafkaUnavailableException(ex: Exception) : HttpApplicationException(
             Response.Status.SERVICE_UNAVAILABLE,
             "kafka_unavailable",
-            ex.message ?: ex.cause?.message ?: ex.javaClass.name
+            ex.message ?: ex.cause?.message ?: ex.javaClass.name,
         )
     }
 

@@ -39,23 +39,24 @@ class KafkaTopicsTest {
             url("$MANAGEMENTPORTAL_URL/oauth/token")
             addHeader("Authorization", Credentials.basic(MP_CLIENT, ""))
             post(
-                FormBody.Builder()
-                    .add("username", ADMIN_USER)
-                    .add("password", ADMIN_PASSWORD)
-                    .add("grant_type", "password")
-                    .build()
+                FormBody.Builder().run {
+                    add("username", ADMIN_USER)
+                    add("password", ADMIN_PASSWORD)
+                    add("grant_type", "password")
+                    build()
+                },
             )
         }
 
         val tokenUrl = httpClient.call(Status.OK, "tokenUrl") {
             addHeader("Authorization", BEARER + clientToken)
             url(
-                MANAGEMENTPORTAL_URL.toHttpUrl()
-                    .newBuilder("api/oauth-clients/pair")!!
-                    .addEncodedQueryParameter("clientId", REST_CLIENT)
-                    .addEncodedQueryParameter("login", USER)
-                    .addEncodedQueryParameter("persistent", "false")
-                    .build()
+                MANAGEMENTPORTAL_URL.toHttpUrl().newBuilder("api/oauth-clients/pair")!!.run {
+                    addEncodedQueryParameter("clientId", REST_CLIENT)
+                    addEncodedQueryParameter("login", USER)
+                    addEncodedQueryParameter("persistent", "false")
+                    build()
+                },
             )
         }
 
@@ -67,10 +68,11 @@ class KafkaTopicsTest {
             url("$MANAGEMENTPORTAL_URL/oauth/token")
             addHeader("Authorization", Credentials.basic(REST_CLIENT, ""))
             post(
-                FormBody.Builder()
-                    .add("grant_type", "refresh_token")
-                    .add("refresh_token", refreshToken)
-                    .build()
+                FormBody.Builder().run {
+                    add("grant_type", "refresh_token")
+                    add("refresh_token", refreshToken)
+                    build()
+                },
             )
         }
     }
@@ -86,7 +88,7 @@ class KafkaTopicsTest {
             ObservationKey.getClassSchema(),
             PhoneAcceleration.getClassSchema(),
             ObservationKey::class.java,
-            PhoneAcceleration::class.java
+            PhoneAcceleration::class.java,
         )
 
         val time = System.currentTimeMillis() / 1000.0

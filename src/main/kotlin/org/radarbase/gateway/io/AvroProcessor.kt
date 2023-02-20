@@ -104,7 +104,7 @@ class AvroProcessor(
                                 throw HttpApplicationException(
                                     422,
                                     "schema_not_found",
-                                    "Schema ID not found in subject"
+                                    "Schema ID not found in subject",
                                 )
                             } else {
                                 throw HttpBadGatewayException("cannot get data from schema registry: ${ex.javaClass.simpleName}")
@@ -124,7 +124,7 @@ class AvroProcessor(
                             throw throw HttpApplicationException(
                                 422,
                                 "schema_not_found",
-                                "Schema ID not found in subject"
+                                "Schema ID not found in subject",
                             )
                         }
                     })

@@ -39,7 +39,7 @@ internal class AvroRecordProcessorTest {
                 sourceSchema = PhoneBluetoothDevices.getClassSchema(),
                 targetSchema = PhoneBluetoothDevices.getClassSchema(),
                 targetSchemaId = 100,
-                mapper = IDENTITY_MAPPER
+                mapper = IDENTITY_MAPPER,
             ),
             AvroParsingContext(Schema.Type.MAP, "value", AvroParsingContext(Schema.Type.ARRAY, "records[0]")),
         )
@@ -85,7 +85,7 @@ internal class AvroRecordProcessorTest {
                 sourceSchema = Questionnaire.getClassSchema(),
                 targetSchema = Questionnaire.getClassSchema(),
                 targetSchemaId = 101,
-                mapper = IDENTITY_MAPPER
+                mapper = IDENTITY_MAPPER,
             ),
             AvroParsingContext(Schema.Type.MAP, "value", AvroParsingContext(Schema.Type.ARRAY, "records[0]")),
         )

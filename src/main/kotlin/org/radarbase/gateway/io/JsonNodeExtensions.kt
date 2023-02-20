@@ -21,7 +21,7 @@ fun JsonNode.toAvro(to: Schema, context: AvroParsingContext, defaultVal: JsonNod
             defaultVal == null || defaultVal.isNull -> throw invalidContent("No value given to field without default", context)
             else -> defaultVal.toAvro(
                 to,
-                AvroParsingContext(to.type, "default value", context)
+                AvroParsingContext(to.type, "default value", context),
             )
         }
     } else {
@@ -67,13 +67,13 @@ fun JsonNode.toAvroFixed(
     schema: Schema,
     context: AvroParsingContext,
 ): GenericFixed {
-    return if (isTextual) {
-        val bytes = textValue()!!.toByteArray(StandardCharsets.ISO_8859_1)
-        if (bytes.size != schema.fixedSize) {
-            throw invalidContent("Cannot use a different Fixed size", context)
-        }
-        GenericData.Fixed(schema, bytes)
-    } else throw invalidContent("Can only convert strings to byte arrays", context)
+    if (!isTextual) throw invalidContent("Can only convert strings to byte arrays", context)
+
+    val bytes = textValue()!!.toByteArray(StandardCharsets.ISO_8859_1)
+    if (bytes.size != schema.fixedSize) {
+        throw invalidContent("Cannot use a different Fixed size", context)
+    }
+    return GenericData.Fixed(schema, bytes)
 }
 
 fun JsonNode.toAvroNumber(
@@ -117,96 +117,95 @@ fun invalidContent(message: String, context: AvroParsingContext): HttpInvalidCon
 }
 
 fun JsonNode.toAvroString(context: AvroParsingContext): String {
-    return if (isTextual || isNumber || isBoolean) asText()
-    else throw invalidContent("Cannot map non-simple types to string: $this", context)
+    if (isTextual || isNumber || isBoolean) {
+        return asText()
+    } else {
+        throw invalidContent("Cannot map non-simple types to string: $this", context)
+    }
 }
 
 fun JsonNode?.toAvroUnion(
     to: Schema,
     context: AvroParsingContext,
     defaultVal: JsonNode?,
-): Any? {
-    return when {
-        this == null || this.isNull -> {
-            when {
-                to.types.any { it.type == Schema.Type.NULL } -> null
-                defaultVal != null -> defaultVal.toAvro(to.types.first(), context)
-                else -> throw invalidContent("Cannot map null value to non-null union", context)
-            }
-        }
-        this is ObjectNode -> {
-            val fieldName = fieldNames().asSequence().firstOrNull()
-                ?: throw invalidContent("Cannot union without a value", context)
-            val type = to.types
-                .firstOrNull { unionType -> fieldName == unionType.name || fieldName == unionType.fullName }
-                ?: throw invalidContent("Cannot find any matching union types", context)
-
-            this[fieldName].toAvro(
-                type,
-                AvroParsingContext(Schema.Type.UNION, type.name, context),
-            )
-        }
-        isNumber -> {
-            val type = to.types.firstOrNull { unionType ->
-                unionType.type == Schema.Type.LONG ||
-                    unionType.type == Schema.Type.INT ||
-                    unionType.type == Schema.Type.FLOAT ||
-                    unionType.type == Schema.Type.DOUBLE
-            } ?: throw invalidContent("Cannot map number to non-number union", context)
-            toAvroNumber(
-                type.type,
-                AvroParsingContext(Schema.Type.UNION, type.name, context),
-            )
-        }
-        isTextual -> {
-            val type = to.types.firstOrNull { unionType ->
-                unionType.type == Schema.Type.STRING ||
-                    unionType.type == Schema.Type.FIXED ||
-                    unionType.type == Schema.Type.BYTES ||
-                    unionType.type == Schema.Type.ENUM
-            } ?: throw invalidContent("Cannot map text to non-textual union", context)
-            toAvro(
-                type,
-                AvroParsingContext(Schema.Type.UNION, type.name, context),
-                defaultVal,
-            )
-        }
-        isBoolean -> {
-            if (to.types.none { unionType -> unionType.type == Schema.Type.BOOLEAN }) {
-                throw invalidContent("Cannot map boolean to non-boolean union", context)
-            }
-            toAvroBoolean(
-                AvroParsingContext(Schema.Type.UNION, Schema.Type.BOOLEAN.name, context),
-            )
-        }
-        isArray -> {
-            val type = to.types.firstOrNull { unionType ->
-                unionType.type == Schema.Type.ARRAY
-            } ?: throw invalidContent("Cannot map array to non-array union", context)
-            return toAvroArray(
-                type,
-                AvroParsingContext(Schema.Type.UNION, type.name, context),
-            )
-        }
-        isObject -> {
-            val type = to.types.firstOrNull { unionType ->
-                unionType.type == Schema.Type.MAP ||
-                    unionType.type == Schema.Type.RECORD
-            } ?: throw invalidContent("Cannot map object to non-object union", context)
-            return toAvro(
-                type,
-                AvroParsingContext(Schema.Type.UNION, type.name, context),
-                defaultVal,
-            )
-        }
-        else -> throw invalidContent("Cannot map unknown JSON node type", context)
+): Any? = when {
+    this == null || this.isNull -> when {
+        to.types.any { it.type == Schema.Type.NULL } -> null
+        defaultVal != null -> defaultVal.toAvro(to.types.first(), context)
+        else -> throw invalidContent("Cannot map null value to non-null union", context)
     }
+    this is ObjectNode -> {
+        val fieldName = fieldNames().asSequence().firstOrNull()
+            ?: throw invalidContent("Cannot union without a value", context)
+        val type = to.types
+            .firstOrNull { unionType -> fieldName == unionType.name || fieldName == unionType.fullName }
+            ?: throw invalidContent("Cannot find any matching union types", context)
+
+        this[fieldName].toAvro(
+            type,
+            AvroParsingContext(Schema.Type.UNION, type.name, context),
+        )
+    }
+    isNumber -> {
+        val type = to.types.firstOrNull { unionType ->
+            unionType.type == Schema.Type.LONG ||
+                unionType.type == Schema.Type.INT ||
+                unionType.type == Schema.Type.FLOAT ||
+                unionType.type == Schema.Type.DOUBLE
+        } ?: throw invalidContent("Cannot map number to non-number union", context)
+        toAvroNumber(
+            type.type,
+            AvroParsingContext(Schema.Type.UNION, type.name, context),
+        )
+    }
+    isTextual -> {
+        val type = to.types.firstOrNull { unionType ->
+            unionType.type == Schema.Type.STRING ||
+                unionType.type == Schema.Type.FIXED ||
+                unionType.type == Schema.Type.BYTES ||
+                unionType.type == Schema.Type.ENUM
+        } ?: throw invalidContent("Cannot map text to non-textual union", context)
+        toAvro(
+            type,
+            AvroParsingContext(Schema.Type.UNION, type.name, context),
+            defaultVal,
+        )
+    }
+    isBoolean -> {
+        if (to.types.none { unionType -> unionType.type == Schema.Type.BOOLEAN }) {
+            throw invalidContent("Cannot map boolean to non-boolean union", context)
+        }
+        toAvroBoolean(
+            AvroParsingContext(Schema.Type.UNION, Schema.Type.BOOLEAN.name, context),
+        )
+    }
+    isArray -> {
+        val type = to.types.firstOrNull { unionType ->
+            unionType.type == Schema.Type.ARRAY
+        } ?: throw invalidContent("Cannot map array to non-array union", context)
+        toAvroArray(
+            type,
+            AvroParsingContext(Schema.Type.UNION, type.name, context),
+        )
+    }
+    isObject -> {
+        val type = to.types.firstOrNull { unionType ->
+            unionType.type == Schema.Type.MAP ||
+                unionType.type == Schema.Type.RECORD
+        } ?: throw invalidContent("Cannot map object to non-object union", context)
+        toAvro(
+            type,
+            AvroParsingContext(Schema.Type.UNION, type.name, context),
+            defaultVal,
+        )
+    }
+    else -> throw invalidContent("Cannot map unknown JSON node type", context)
 }
 
 fun JsonNode.toAvroEnum(
     schema: Schema,
     context: AvroParsingContext,
-    defaultVal: JsonNode?
+    defaultVal: JsonNode?,
 ): GenericData.EnumSymbol {
     if (!isTextual) throw invalidContent("Can only convert strings to enum", context)
 
@@ -231,20 +230,20 @@ fun JsonNode.toAvroMap(
 ): Map<String, Any?> {
     if (this !is ObjectNode) throw invalidContent("Can only convert objects to map", context)
 
-    return fieldNames().asSequence()
-        .associateWith { key ->
-            get(key).toAvro(
-                schema,
-                AvroParsingContext(Schema.Type.MAP, key, context)
-            )
+    return buildMap {
+        fieldNames().forEach { fieldName ->
+            val fieldContext = AvroParsingContext(Schema.Type.MAP, fieldName, context)
+            val field = this@toAvroMap.get(fieldName)
+            put(fieldName, field.toAvro(schema, fieldContext))
         }
+    }
 }
 
 fun JsonNode.toAvroBytes(context: AvroParsingContext): ByteBuffer {
-    return if (isTextual) {
-        val fromArray = textValue()!!.toByteArray(StandardCharsets.ISO_8859_1)
-        ByteBuffer.wrap(fromArray)
-    } else throw invalidContent("Can only convert strings to byte arrays", context)
+    if (!isTextual) throw invalidContent("Can only convert strings to byte arrays", context)
+
+    val fromArray = textValue()!!.toByteArray(StandardCharsets.ISO_8859_1)
+    return ByteBuffer.wrap(fromArray)
 }
 
 fun JsonNode.toAvroArray(
@@ -255,10 +254,8 @@ fun JsonNode.toAvroArray(
     return GenericData.Array<Any>(
         schema,
         (this as ArrayNode).mapIndexed { idx, value ->
-            value.toAvro(
-                schema.elementType,
-                AvroParsingContext(Schema.Type.ARRAY, idx.toString(), context)
-            )
+            val elementContext = AvroParsingContext(Schema.Type.ARRAY, idx.toString(), context)
+            value.toAvro(schema.elementType, elementContext)
         },
     )
 }

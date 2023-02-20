@@ -6,7 +6,7 @@ import org.radarbase.jersey.auth.Auth
 data class AuthId(
     val projectId: String?,
     val userId: String?,
-    val sourceId: String?
+    val sourceId: String?,
 ) {
     fun checkPermission(auth: Auth, checkSourceId: Boolean, topic: String) {
         if (checkSourceId) {
