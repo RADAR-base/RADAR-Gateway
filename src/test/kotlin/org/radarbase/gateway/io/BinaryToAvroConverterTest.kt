@@ -23,11 +23,12 @@ import org.radarcns.passive.phone.PhoneAcceleration
 class BinaryToAvroConverterTest {
     @Test
     fun testConversion() {
-
         val topic = AvroTopic(
             "test",
-            ObservationKey.getClassSchema(), PhoneAcceleration.getClassSchema(),
-            ObservationKey::class.java, PhoneAcceleration::class.java
+            ObservationKey.getClassSchema(),
+            PhoneAcceleration.getClassSchema(),
+            ObservationKey::class.java,
+            PhoneAcceleration::class.java,
         )
 
         val keySchemaMetadata = ParsedSchemaMetadata(1, 1, topic.keySchema)
@@ -39,7 +40,7 @@ class BinaryToAvroConverterTest {
             listOf(
                 PhoneAcceleration(1.0, 1.1, 1.2f, 1.3f, 1.4f),
                 PhoneAcceleration(2.0, 2.1, 2.2f, 2.3f, 2.4f),
-            )
+            ),
         )
         val binaryRequest = BinaryRecordRequest(topic)
         binaryRequest.prepare(keySchemaMetadata, valueSchemaMetadata, requestRecordData)
@@ -94,9 +95,9 @@ class BinaryToAvroConverterTest {
                 records = listOf(
                     Pair(genericKey, genericValue1),
                     Pair(genericKey, genericValue2),
-                )
+                ),
             ),
-            converter.process("test", requestBuffer.inputStream())
+            converter.process("test", requestBuffer.inputStream()),
         )
     }
 }

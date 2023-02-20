@@ -41,15 +41,17 @@ class ProducerPool(
             config.kafka.serialization[MAX_SCHEMAS_PER_SUBJECT_CONFIG] as Int,
             null,
             config.kafka.serialization,
-            null
+            null,
         )
     }
 
     fun produce(topic: String, records: List<Pair<GenericRecord, GenericRecord>>) {
-        if (!semaphore.tryAcquire()) throw HttpApplicationException(
-            Response.Status.SERVICE_UNAVAILABLE,
-            "Too many open Kafka requests"
-        )
+        if (!semaphore.tryAcquire()) {
+            throw HttpApplicationException(
+                Response.Status.SERVICE_UNAVAILABLE,
+                "Too many open Kafka requests",
+            )
+        }
         try {
             val producer = pool.poll() ?: KafkaAvroProducer(config, schemaRegistryClient)
             var reuse = true
@@ -71,7 +73,7 @@ class ProducerPool(
                         throw HttpApplicationException(
                             Response.Status.GATEWAY_TIMEOUT,
                             "kafka_timeout",
-                            "Cannot reach Kafka to send data"
+                            "Cannot reach Kafka to send data",
                         )
                     }
                     is SerializationException -> {
@@ -82,7 +84,7 @@ class ProducerPool(
                         logger.error("Retryable failure to send data", ex)
                         throw HttpInternalServerException(
                             "kafka_send_failure",
-                            "Failed to send data to kafka: ${ex.javaClass}"
+                            "Failed to send data to kafka: ${ex.javaClass}",
                         )
                     }
                 }

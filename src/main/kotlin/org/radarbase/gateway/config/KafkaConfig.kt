@@ -15,16 +15,24 @@ data class KafkaConfig(
     val serialization: Map<String, Any> = mapOf(),
 ) {
     fun withDefaults(): KafkaConfig = copy(
-        producer = producerDefaults + producer + propertiesFromEnv(KAFKA_PRODUCER_PREFIX),
-        admin = mutableMapOf<String, Any>().apply {
-            producer[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]?.let {
-                this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = it
-            }
-            this += adminDefaults
-            this += admin
-            this += propertiesFromEnv(KAFKA_ADMIN_PREFIX)
+        producer = buildMap {
+            putAll(producerDefaults)
+            putAll(producer)
+            putPropertiesFromEnv(KAFKA_PRODUCER_PREFIX)
         },
-        serialization = serializationDefaults + serialization + propertiesFromEnv(KAFKA_SERIALIZATION_PREFIX)
+        admin = buildMap {
+            producer[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG]?.let {
+                put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, it)
+            }
+            putAll(adminDefaults)
+            putAll(admin)
+            putPropertiesFromEnv(KAFKA_ADMIN_PREFIX)
+        },
+        serialization = buildMap {
+            putAll(serializationDefaults)
+            putAll(serialization)
+            putPropertiesFromEnv(KAFKA_SERIALIZATION_PREFIX)
+        },
     )
 
     fun validate() {
@@ -57,16 +65,19 @@ data class KafkaConfig(
         private const val KAFKA_ADMIN_PREFIX = "KAFKA_ADMIN_"
         private const val KAFKA_SERIALIZATION_PREFIX = "KAFKA_SERIALIZATION_"
 
-        private fun propertiesFromEnv(prefix: String): Map<String, String> = System.getenv()
-            .filterKeys { it.startsWith(prefix) }
-            .mapKeys { (k, _) ->
-                k.removePrefix(prefix)
-                    .lowercase(Locale.US)
-                    .replace('_', '.')
+        private fun MutableMap<String, Any>.putPropertiesFromEnv(prefix: String) = System.getenv().asSequence()
+            .filter { (key, _) -> key.startsWith(prefix, ignoreCase = true) }
+            .forEach { (key, value) ->
+                put(
+                    key.removePrefix(prefix)
+                        .lowercase()
+                        .replace('_', '.'),
+                    value,
+                )
             }
 
         private val serializationDefaults = mapOf<String, Any>(
-            AbstractKafkaSchemaSerDeConfig.MAX_SCHEMAS_PER_SUBJECT_CONFIG to 10_000
+            AbstractKafkaSchemaSerDeConfig.MAX_SCHEMAS_PER_SUBJECT_CONFIG to 10_000,
         )
     }
 }

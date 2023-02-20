@@ -32,7 +32,9 @@ class SchemaRetrieverFactory(
         val headers = if (basicCredentials != null && basicCredentials.contains(':')) {
             val (username, password) = basicCredentials.split(':', limit = 2)
             headersOf("Authorization", Credentials.basic(username, password))
-        } else headersOf()
+        } else {
+            headersOf()
+        }
 
         return SchemaRetriever(
             RestClient.global()
@@ -45,8 +47,6 @@ class SchemaRetrieverFactory(
     }
 
     companion object {
-        private fun Any?.asNonEmptyString(): String? =
-            if (this is String && this.isNotEmpty()) this
-            else null
+        private fun Any?.asNonEmptyString(): String? = (this as? String)?.takeIf { it.isNotEmpty() }
     }
 }

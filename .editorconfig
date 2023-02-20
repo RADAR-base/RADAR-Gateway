@@ -18,6 +18,6 @@ indent_size = 2
 indent_size = 4
 
 [*.{kt,kts}]
-disabled_rules = no-wildcard-imports
 ij_kotlin_allow_trailing_comma_on_call_site = true
 ij_kotlin_allow_trailing_comma = true
+ktlint_standard_no-wildcard-imports = disabled

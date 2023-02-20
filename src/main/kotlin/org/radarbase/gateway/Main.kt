@@ -15,7 +15,7 @@ fun main(args: Array<String>) {
         ConfigLoader.loadConfig<GatewayConfig>(
             listOf(
                 "gateway.yml",
-                "/etc/radar-gateway/gateway.yml"
+                "/etc/radar-gateway/gateway.yml",
             ),
             args,
         ).withDefaults()

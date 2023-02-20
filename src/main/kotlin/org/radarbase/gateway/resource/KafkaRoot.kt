@@ -16,8 +16,11 @@ import org.radarbase.gateway.resource.KafkaTopics.Companion.PRODUCE_JSON
 class KafkaRoot {
     @GET
     @Produces(
-        PRODUCE_AVRO_V1_JSON, PRODUCE_AVRO_V2_JSON, PRODUCE_AVRO_V3_JSON,
-        PRODUCE_AVRO_NON_SPECIFIC, PRODUCE_JSON,
+        PRODUCE_AVRO_V1_JSON,
+        PRODUCE_AVRO_V2_JSON,
+        PRODUCE_AVRO_V3_JSON,
+        PRODUCE_AVRO_NON_SPECIFIC,
+        PRODUCE_JSON,
     )
     fun root() = mapOf<String, String>()
 }

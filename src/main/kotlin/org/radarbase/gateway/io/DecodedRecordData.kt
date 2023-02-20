@@ -48,7 +48,7 @@ class DecodedRecordData(
             keySchemaMetadata.schema,
             valueSchemaMetadata.schema,
             GenericRecord::class.java,
-            GenericRecord::class.java
+            GenericRecord::class.java,
         )
 
         key = createKey(keySchemaMetadata.schema, authId)

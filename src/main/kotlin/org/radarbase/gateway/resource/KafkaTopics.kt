@@ -51,7 +51,7 @@ class KafkaTopics(
         .header(
             "Accept",
             "$ACCEPT_JSON,$ACCEPT_BINARY_V1,$ACCEPT_AVRO_V2_JSON,$ACCEPT_AVRO_V1_JSON," +
-                "$ACCEPT_AVRO_V3_JSON,$ACCEPT_AVRO_NON_SPECIFIC,$ACCEPT_BINARY_NON_SPECIFIC"
+                "$ACCEPT_AVRO_V3_JSON,$ACCEPT_AVRO_NON_SPECIFIC,$ACCEPT_BINARY_NON_SPECIFIC",
         )
         .header("Accept-Encoding", "gzip,lzfse")
         .header("Accept-Charset", "utf-8")
@@ -61,10 +61,7 @@ class KafkaTopics(
     @Authenticated
     @Path("/{topic_name}")
     @POST
-    @Consumes(
-        ACCEPT_JSON, ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON, ACCEPT_AVRO_V3_JSON,
-        ACCEPT_AVRO_NON_SPECIFIC,
-    )
+    @Consumes(ACCEPT_JSON, ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON, ACCEPT_AVRO_V3_JSON, ACCEPT_AVRO_NON_SPECIFIC)
     @NeedsPermission(MEASUREMENT, CREATE)
     @ProcessAvro
     fun postToTopic(
@@ -72,7 +69,6 @@ class KafkaTopics(
         @PathParam("topic_name") topic: String,
         @Context avroProcessor: AvroProcessor,
     ): TopicPostResponse {
-
         val processingResult = avroProcessor.process(topic, tree)
         producerPool.produce(topic, processingResult.records)
         return TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
