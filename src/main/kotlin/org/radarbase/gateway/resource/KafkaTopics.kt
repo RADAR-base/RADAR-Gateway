@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.inject.Singleton
 import jakarta.ws.rs.*
+import jakarta.ws.rs.container.AsyncResponse
+import jakarta.ws.rs.container.Suspended
 import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.Response
 import org.radarbase.auth.authorization.Permission.MEASUREMENT_CREATE
@@ -14,6 +16,7 @@ import org.radarbase.gateway.kafka.KafkaAdminService
 import org.radarbase.gateway.kafka.ProducerPool
 import org.radarbase.jersey.auth.Authenticated
 import org.radarbase.jersey.auth.NeedsPermission
+import org.radarbase.jersey.coroutines.runAsCoroutine
 import org.radarbase.jersey.exception.HttpBadRequestException
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -34,14 +37,19 @@ class KafkaTopics(
     @Context private val producerPool: ProducerPool,
 ) {
     @GET
-    fun topics() = kafkaAdminService.listTopics()
+    fun topics(@Suspended asyncResponse: AsyncResponse) = asyncResponse.runAsCoroutine {
+        kafkaAdminService.listTopics()
+    }
 
     @Authenticated
     @Path("/{topic_name}")
     @GET
     fun topic(
         @PathParam("topic_name") topic: String,
-    ) = kafkaAdminService.topicInfo(topic)
+        @Suspended asyncResponse: AsyncResponse,
+    ) = asyncResponse.runAsCoroutine {
+        kafkaAdminService.topicInfo(topic)
+    }
 
     @Authenticated
     @OPTIONS
@@ -60,17 +68,18 @@ class KafkaTopics(
     @Authenticated
     @Path("/{topic_name}")
     @POST
-    @Consumes(ACCEPT_JSON, ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON, ACCEPT_AVRO_V3_JSON, ACCEPT_AVRO_NON_SPECIFIC,)
+    @Consumes(ACCEPT_JSON, ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON, ACCEPT_AVRO_V3_JSON, ACCEPT_AVRO_NON_SPECIFIC)
     @NeedsPermission(MEASUREMENT_CREATE)
     @ProcessAvro
     fun postToTopic(
         tree: JsonNode,
         @PathParam("topic_name") topic: String,
         @Context avroProcessor: AvroProcessor,
-    ): TopicPostResponse {
+        @Suspended asyncResponse: AsyncResponse,
+    ) = asyncResponse.runAsCoroutine {
         val processingResult = avroProcessor.process(topic, tree)
         producerPool.produce(topic, processingResult.records)
-        return TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
+        TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
     }
 
     @Authenticated
@@ -83,7 +92,8 @@ class KafkaTopics(
         input: InputStream,
         @Context binaryToAvroConverter: BinaryToAvroConverter,
         @PathParam("topic_name") topic: String,
-    ): TopicPostResponse {
+        @Suspended asyncResponse: AsyncResponse,
+    ) = asyncResponse.runAsCoroutine {
         val processingResult = try {
             binaryToAvroConverter.process(topic, input)
         } catch (ex: IOException) {
@@ -93,7 +103,7 @@ class KafkaTopics(
 
         producerPool.produce(topic, processingResult.records)
 
-        return TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
+        TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
     }
 
     data class TopicPostResponse(

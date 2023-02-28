@@ -13,8 +13,8 @@ import org.radarbase.jersey.exception.HttpInvalidContentException
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
-fun JsonNode.toAvro(to: Schema, context: AvroParsingContext, defaultVal: JsonNode? = null): Any? {
-    return if (isNull) {
+fun JsonNode.toAvro(to: Schema, context: AvroParsingContext, defaultVal: JsonNode? = null): Any? =
+    if (isNull) {
         when {
             to.type == Schema.Type.NULL -> null
             to.type == Schema.Type.UNION -> toAvroUnion(to, context, defaultVal)
@@ -27,10 +27,8 @@ fun JsonNode.toAvro(to: Schema, context: AvroParsingContext, defaultVal: JsonNod
     } else {
         when (to.type!!) {
             Schema.Type.RECORD -> toAvroObject(to, context)
-            Schema.Type.LONG, Schema.Type.FLOAT, Schema.Type.DOUBLE, Schema.Type.INT -> toAvroNumber(
-                to.type,
-                context,
-            )
+            Schema.Type.LONG, Schema.Type.FLOAT, Schema.Type.DOUBLE, Schema.Type.INT ->
+                toAvroNumber(to.type, context)
             Schema.Type.BOOLEAN -> toAvroBoolean(context)
             Schema.Type.ARRAY -> toAvroArray(to, context)
             Schema.Type.NULL -> null
@@ -42,13 +40,12 @@ fun JsonNode.toAvro(to: Schema, context: AvroParsingContext, defaultVal: JsonNod
             Schema.Type.UNION -> toAvroUnion(to, context, defaultVal)
         }
     }
-}
 
 fun JsonNode.toAvroObject(
     schema: Schema,
     context: AvroParsingContext,
 ): GenericRecord {
-    this as? ObjectNode ?: throw invalidContent("Cannot map non-object to object", context)
+    if (this !is ObjectNode) throw invalidContent("Cannot map non-object to object", context)
     val builder = GenericRecordBuilder(schema)
     for (field in schema.fields) {
         get(field.name())?.let { node ->

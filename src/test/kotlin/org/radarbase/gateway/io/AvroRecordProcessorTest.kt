@@ -7,7 +7,6 @@ import org.apache.avro.generic.GenericRecord
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
-import org.radarbase.jersey.auth.disabled.DisabledAuth
 import org.radarbase.producer.rest.AvroDataMapperFactory.IDENTITY_MAPPER
 import org.radarcns.active.questionnaire.Questionnaire
 import org.radarcns.passive.phone.PhoneBluetoothDevices
@@ -18,7 +17,7 @@ internal class AvroRecordProcessorTest {
         val objectMapper = ObjectMapper()
         val processor = AvroRecordProcessor(
             false,
-            DisabledAuth("test"),
+            mockAuthService(),
             objectMapper,
         )
 
@@ -56,7 +55,7 @@ internal class AvroRecordProcessorTest {
         val objectMapper = ObjectMapper()
         val processor = AvroRecordProcessor(
             false,
-            DisabledAuth("test"),
+            mockAuthService(),
             objectMapper,
         )
 

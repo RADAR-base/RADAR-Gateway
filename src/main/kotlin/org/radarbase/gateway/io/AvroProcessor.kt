@@ -2,15 +2,19 @@ package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import org.apache.avro.Schema
 import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.gateway.service.SchedulingService
-import org.radarbase.jersey.auth.Auth
+import org.radarbase.jersey.auth.AuthService
 import org.radarbase.jersey.exception.HttpApplicationException
 import org.radarbase.jersey.exception.HttpBadGatewayException
 import org.radarbase.jersey.exception.HttpInvalidContentException
-import org.radarbase.jersey.util.CacheConfig
-import org.radarbase.jersey.util.CachedValue
+import org.radarbase.kotlin.coroutines.CacheConfig
+import org.radarbase.kotlin.coroutines.CachedValue
 import org.radarbase.producer.rest.AvroDataMapper
 import org.radarbase.producer.rest.AvroDataMapperFactory
 import org.radarbase.producer.rest.RestException
@@ -21,6 +25,8 @@ import java.text.ParseException
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Reads messages as semantically valid and authenticated Avro for the RADAR platform. Amends
@@ -28,7 +34,7 @@ import java.util.concurrent.ConcurrentMap
  */
 class AvroProcessor(
     config: GatewayConfig,
-    auth: Auth,
+    authService: AuthService,
     private val schemaRetriever: SchemaRetriever,
     objectMapper: ObjectMapper,
     schedulingService: SchedulingService,
@@ -38,15 +44,23 @@ class AvroProcessor(
         ConcurrentHashMap()
     private val processor: AvroRecordProcessor = AvroRecordProcessor(
         config.auth.checkSourceId,
-        auth,
+        authService,
         objectMapper,
     )
 
     // Clean stale caches regularly. This reduces memory use for caches that aren't being used.
     private val cleanReference: SchedulingService.RepeatReference =
         schedulingService.repeat(SCHEMA_CLEAN, SCHEMA_CLEAN) {
-            idMapping.values.removeIf { it.isStale }
-            schemaMapping.values.removeIf { it.isStale }
+            runBlocking {
+                val idIterator = idMapping.values.iterator()
+                while (idIterator.hasNext()) {
+                    if (idIterator.next().isStale()) idIterator.remove()
+                }
+                val schemaIterator = schemaMapping.values.iterator()
+                while (schemaIterator.hasNext()) {
+                    if (schemaIterator.next().isStale()) schemaIterator.remove()
+                }
+            }
         }
 
     /**
@@ -61,7 +75,7 @@ class AvroProcessor(
      * @throws HttpInvalidContentException if the data does not contain semantically correct Kafka Avro data.
      * @throws IOException if the data cannot be read
      */
-    fun process(topic: String, root: JsonNode): AvroProcessingResult {
+    suspend fun process(topic: String, root: JsonNode): AvroProcessingResult {
         if (!root.isObject) {
             throw HttpInvalidContentException("Expecting JSON object in payload")
         }
@@ -72,15 +86,24 @@ class AvroProcessor(
             throw HttpInvalidContentException("Missing value schema")
         }
 
-        val keyMapping = schemaMapping(topic, false, root["key_schema_id"], root["key_schema"])
-        val valueMapping = schemaMapping(topic, true, root["value_schema_id"], root["value_schema"])
+        return coroutineScope {
+            val keyMappingJob = async(Dispatchers.IO) {
+                schemaMapping(topic, false, root["key_schema_id"], root["key_schema"])
+            }
+            val valueMappingJob = async(Dispatchers.IO) {
+                schemaMapping(topic, true, root["value_schema_id"], root["value_schema"])
+            }
 
-        val records = root["records"] ?: throw HttpInvalidContentException("Missing records")
-        return AvroProcessingResult(
-            keyMapping.targetSchemaId,
-            valueMapping.targetSchemaId,
-            processor.process(topic, records, keyMapping, valueMapping),
-        )
+            val keyMapping = keyMappingJob.await()
+            val valueMapping = valueMappingJob.await()
+
+            val records = root["records"] ?: throw HttpInvalidContentException("Missing records")
+            AvroProcessingResult(
+                keyMapping.targetSchemaId,
+                valueMapping.targetSchemaId,
+                processor.process(topic, records, keyMapping, valueMapping),
+            )
+        }
     }
 
     private fun createMapping(topic: String, ofValue: Boolean, sourceSchema: Schema): JsonToObjectMapping {
@@ -90,13 +113,13 @@ class AvroProcessor(
         return JsonToObjectMapping(sourceSchema, latestSchema.schema, latestSchema.id, schemaMapper)
     }
 
-    private fun schemaMapping(topic: String, ofValue: Boolean, id: JsonNode?, schema: JsonNode?): JsonToObjectMapping {
+    private suspend fun schemaMapping(topic: String, ofValue: Boolean, id: JsonNode?, schema: JsonNode?): JsonToObjectMapping {
         val subjectSuffix = if (ofValue) "value" else "key"
         val subject = "$topic-$subjectSuffix"
         return when {
             id?.isNumber == true -> {
                 idMapping.computeIfAbsent(Pair(subject, id.asInt())) {
-                    CachedValue(cacheConfig, {
+                    CachedValue(cacheConfig) {
                         val parsedSchema = try {
                             schemaRetriever.getBySubjectAndId(topic, ofValue, id.asInt())
                         } catch (ex: RestException) {
@@ -111,12 +134,12 @@ class AvroProcessor(
                             }
                         }
                         createMapping(topic, ofValue, parsedSchema.schema)
-                    })
+                    }
                 }.get()
             }
             schema?.isTextual == true -> {
                 schemaMapping.computeIfAbsent(Pair(subject, schema.asText())) {
-                    CachedValue(cacheConfig, {
+                    CachedValue(cacheConfig) {
                         try {
                             val parsedSchema = Schema.Parser().parse(schema.textValue())
                             createMapping(topic, ofValue, parsedSchema)
@@ -127,7 +150,7 @@ class AvroProcessor(
                                 "Schema ID not found in subject",
                             )
                         }
-                    })
+                    }
                 }.get()
             }
             else -> throw HttpInvalidContentException("No schema provided")
@@ -142,9 +165,8 @@ class AvroProcessor(
         private val SCHEMA_CLEAN = Duration.ofHours(2)
 
         private val cacheConfig = CacheConfig(
-            refreshDuration = Duration.ofHours(1),
-            retryDuration = Duration.ofMinutes(2),
-            staleThresholdDuration = Duration.ofMinutes(30),
+            refreshDuration = 1.hours,
+            retryDuration = 2.minutes,
             maxSimultaneousCompute = 3,
         )
 

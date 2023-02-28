@@ -19,6 +19,7 @@ version = "0.5.17-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    mavenLocal()
     maven(url = "https://packages.confluent.io/maven/")
     maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
 }
@@ -44,6 +45,7 @@ dependencies {
     implementation("org.radarbase:radar-jersey:$radarJerseyVersion")
     val radarAuthVersion: String by project
     implementation("org.radarbase:managementportal-client:$radarAuthVersion")
+    implementation("org.radarbase:kotlin-util:$radarAuthVersion")
     val lzfseVersion: String by project
     implementation("org.radarbase:lzfse-decode:$lzfseVersion")
 
