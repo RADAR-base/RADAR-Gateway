@@ -7,6 +7,10 @@ import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.MAX_SCHEMAS_PER_SUBJECT_CONFIG
 import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.Response
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consume
+import kotlinx.coroutines.channels.toList
+import kotlinx.coroutines.sync.Semaphore
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.common.KafkaException
 import org.apache.kafka.common.errors.*
@@ -15,16 +19,14 @@ import org.radarbase.jersey.exception.HttpApplicationException
 import org.radarbase.jersey.exception.HttpBadGatewayException
 import org.radarbase.jersey.exception.HttpBadRequestException
 import org.radarbase.jersey.exception.HttpInternalServerException
+import org.radarbase.kotlin.coroutines.forkJoin
 import org.slf4j.LoggerFactory
-import java.io.Closeable
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.Semaphore
 
 class ProducerPool(
     @Context private val config: GatewayConfig,
-) : Closeable {
+) {
     private val semaphore = Semaphore(config.server.maxRequests)
-    private val pool = ArrayBlockingQueue<KafkaAvroProducer>(config.kafka.poolSize)
+    private val pool = Channel<KafkaAvroProducer>(config.kafka.poolSize)
     private val schemaRegistryClient: SchemaRegistryClient
 
     init {
@@ -45,7 +47,7 @@ class ProducerPool(
         )
     }
 
-    fun produce(topic: String, records: List<Pair<GenericRecord, GenericRecord>>) {
+    suspend fun produce(topic: String, records: List<Pair<GenericRecord, GenericRecord>>) {
         if (!semaphore.tryAcquire()) {
             throw HttpApplicationException(
                 Response.Status.SERVICE_UNAVAILABLE,
@@ -53,7 +55,8 @@ class ProducerPool(
             )
         }
         try {
-            val producer = pool.poll() ?: KafkaAvroProducer(config, schemaRegistryClient)
+            val producer = pool.tryReceive().getOrNull()
+                ?: KafkaAvroProducer(config, schemaRegistryClient)
             var reuse = true
             try {
                 producer.produce(topic, records)
@@ -89,7 +92,7 @@ class ProducerPool(
                     }
                 }
             } finally {
-                if (reuse && pool.offer(producer)) {
+                if (reuse && pool.trySend(producer).isSuccess) {
                     // reused
                 } else {
                     producer.close()
@@ -100,9 +103,11 @@ class ProducerPool(
         }
     }
 
-    override fun close() {
-        generateSequence { pool.poll() }
-            .forEach { it.close() }
+    suspend fun close() {
+        pool.cancel()
+        pool.consume {
+            toList().forkJoin { it.close() }
+        }
     }
 
     companion object {

@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.TopicDescription
 import org.radarbase.gateway.config.GatewayConfig
+import org.radarbase.gateway.util.toCoroutine
 import org.radarbase.jersey.exception.HttpApplicationException
 import org.radarbase.jersey.exception.HttpNotFoundException
 import org.radarbase.kotlin.coroutines.CacheConfig
@@ -14,6 +15,7 @@ import org.radarbase.kotlin.coroutines.CachedSet
 import org.radarbase.kotlin.coroutines.CachedValue
 import org.slf4j.LoggerFactory
 import java.io.Closeable
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
@@ -24,15 +26,23 @@ class KafkaAdminService(@Context private val config: GatewayConfig) : Closeable 
     private val adminClient: AdminClient = AdminClient.create(config.kafka.admin)
 
     private val listCache = CachedSet<String>(listCacheConfig) {
-        withContext(Dispatchers.IO) {
-            try {
+        val topics = try {
+            withContext(Dispatchers.IO) {
                 adminClient.listTopics()
                     .names()
-                    .get(3L, TimeUnit.SECONDS)
-                    .filterTo(LinkedHashSet()) { !it.startsWith('_') }
-            } catch (ex: Exception) {
-                logger.error("Failed to list Kafka topics", ex)
-                throw KafkaUnavailableException(ex)
+                    .toCoroutine { get(3L, TimeUnit.SECONDS) }
+            }
+        } catch (ex: CancellationException) {
+            throw ex
+        } catch (ex: Exception) {
+            logger.error("Failed to list Kafka topics", ex)
+            throw KafkaUnavailableException(ex)
+        }
+        buildSet(topics.size) {
+            for (topic in topics) {
+                if (!topic.startsWith('_')) {
+                    add(topic)
+                }
             }
         }
     }
@@ -48,17 +58,18 @@ class KafkaAdminService(@Context private val config: GatewayConfig) : Closeable 
         }
         return topicInfo.computeIfAbsent(topic) {
             CachedValue(describeCacheConfig) {
-                val topicDescriptions = withContext(Dispatchers.IO) {
-                    try {
+                val topicDescriptions = try {
+                    withContext(Dispatchers.IO) {
                         adminClient.describeTopics(listOf(topic))
                             .allTopicNames()
-                            .get(3L, TimeUnit.SECONDS)
-                    } catch (ex: Exception) {
-                        logger.error("Failed to describe topics", ex)
-                        throw KafkaUnavailableException(ex)
+                            .toCoroutine { get(3L, TimeUnit.SECONDS) }
                     }
+                } catch (ex: CancellationException) {
+                    throw ex
+                } catch (ex: Exception) {
+                    logger.error("Failed to describe topics", ex)
+                    throw KafkaUnavailableException(ex)
                 }
-
                 topicDescriptions[topic]?.toTopicInfo()
                     ?: throw HttpNotFoundException("topic_not_found", "Topic $topic does not exist")
             }
@@ -81,9 +92,8 @@ class KafkaAdminService(@Context private val config: GatewayConfig) : Closeable 
             maxSimultaneousCompute = 2,
         )
 
-        private fun org.apache.kafka.common.TopicPartitionInfo.toTopicPartitionInfo(): TopicPartitionInfo {
-            return TopicPartitionInfo(partition = partition())
-        }
+        private fun org.apache.kafka.common.TopicPartitionInfo.toTopicPartitionInfo(): TopicPartitionInfo =
+            TopicPartitionInfo(partition = partition())
 
         private fun TopicDescription.toTopicInfo() = TopicInfo(
             name(),
