@@ -7,18 +7,17 @@ import kotlinx.coroutines.withContext
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.TopicDescription
 import org.radarbase.gateway.config.GatewayConfig
-import org.radarbase.gateway.util.toCoroutine
 import org.radarbase.jersey.exception.HttpApplicationException
 import org.radarbase.jersey.exception.HttpNotFoundException
 import org.radarbase.kotlin.coroutines.CacheConfig
 import org.radarbase.kotlin.coroutines.CachedSet
 import org.radarbase.kotlin.coroutines.CachedValue
+import org.radarbase.kotlin.coroutines.suspendGet
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -30,7 +29,7 @@ class KafkaAdminService(@Context private val config: GatewayConfig) : Closeable 
             withContext(Dispatchers.IO) {
                 adminClient.listTopics()
                     .names()
-                    .toCoroutine { get(3L, TimeUnit.SECONDS) }
+                    .suspendGet(3.seconds)
             }
         } catch (ex: CancellationException) {
             throw ex
@@ -62,7 +61,7 @@ class KafkaAdminService(@Context private val config: GatewayConfig) : Closeable 
                     withContext(Dispatchers.IO) {
                         adminClient.describeTopics(listOf(topic))
                             .allTopicNames()
-                            .toCoroutine { get(3L, TimeUnit.SECONDS) }
+                            .suspendGet(3.seconds)
                     }
                 } catch (ex: CancellationException) {
                     throw ex

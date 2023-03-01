@@ -9,14 +9,9 @@ import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.KafkaException
 import org.radarbase.gateway.config.GatewayConfig
-import org.radarbase.gateway.util.toCoroutine
 import org.radarbase.kotlin.coroutines.forkJoin
+import org.radarbase.kotlin.coroutines.suspendGet
 import org.slf4j.LoggerFactory
-import java.io.Closeable
-import java.util.concurrent.ExecutionException
-import kotlin.coroutines.coroutineContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 class KafkaAvroProducer(
     config: GatewayConfig,
@@ -40,7 +35,7 @@ class KafkaAvroProducer(
     @Throws(KafkaException::class)
     suspend fun produce(topic: String, records: List<Pair<GenericRecord, GenericRecord>>) = records
         .forkJoin(Dispatchers.IO) { (key, value) ->
-            producer.send(ProducerRecord(topic, key, value)).toCoroutine()
+            producer.send(ProducerRecord(topic, key, value)).suspendGet()
         }
 
     suspend fun close() = withContext(Dispatchers.IO) {
