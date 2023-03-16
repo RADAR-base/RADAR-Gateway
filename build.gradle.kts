@@ -15,10 +15,11 @@ plugins {
 
 description = "RADAR Gateway to handle secured data flow to backend."
 group = "org.radarbase"
-version = "0.5.17-SNAPSHOT"
+version = "0.6.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    mavenLocal()
     maven(url = "https://packages.confluent.io/maven/")
     maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
 }
@@ -183,19 +184,20 @@ tasks.register<Copy>("copyDependencies") {
     }
 }
 
-fun isNonStable(version: String): Boolean {
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA", "-CE").any { version.toUpperCase().contains(it) }
-    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
-    val isStable = stableKeyword || regex.matches(version)
-    return isStable.not()
-}
-
 tasks.withType<DependencyUpdatesTask> {
+    doFirst {
+        allprojects {
+            repositories.removeAll {
+                it is MavenArtifactRepository && it.url.toString().contains("snapshot")
+            }
+        }
+    }
+    val isStable = "(^[0-9,.v-]+(-r)?|RELEASE|FINAL|GA|-CE)$".toRegex(RegexOption.IGNORE_CASE)
     rejectVersionIf {
-        isNonStable(candidate.version)
+        !isStable.containsMatchIn(candidate.version)
     }
 }
 
 tasks.wrapper {
-    gradleVersion = "8.0.1"
+    gradleVersion = "8.0.2"
 }
