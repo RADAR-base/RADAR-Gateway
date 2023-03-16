@@ -60,7 +60,7 @@ class KafkaTopics(
     @Authenticated
     @Path("/{topic_name}")
     @POST
-    @Consumes(ACCEPT_JSON, ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON, ACCEPT_AVRO_V3_JSON, ACCEPT_AVRO_NON_SPECIFIC,)
+    @Consumes(ACCEPT_JSON, ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON, ACCEPT_AVRO_V3_JSON, ACCEPT_AVRO_NON_SPECIFIC)
     @NeedsPermission(MEASUREMENT_CREATE)
     @ProcessAvro
     fun postToTopic(
