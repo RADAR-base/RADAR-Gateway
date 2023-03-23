@@ -1,32 +1,36 @@
 package org.radarbase.gateway.resource
 
-import jakarta.ws.rs.core.Response.Status
-import okhttp3.OkHttpClient
-import org.junit.jupiter.api.BeforeAll
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import kotlinx.coroutines.runBlocking
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.equalTo
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.radarbase.gateway.resource.KafkaTopicsTest.Companion.call
 
 class KafkaRootTest {
+    private lateinit var httpClient: HttpClient
+
+    @BeforeEach
+    fun setUpClass() {
+        httpClient = HttpClient(CIO)
+    }
+
     @Test
-    fun queryRoot() {
-        httpClient.call(Status.OK) {
-            url(BASE_URI)
-        }
-        httpClient.call(Status.OK) {
-            url(BASE_URI)
-            head()
-        }
+    fun queryRoot() = runBlocking {
+        assertThat(
+            httpClient.get(url = Url(BASE_URI)).status,
+            equalTo(HttpStatusCode.OK),
+        )
+        assertThat(
+            httpClient.head(url = Url(BASE_URI)).status,
+            equalTo(HttpStatusCode.OK),
+        )
     }
 
     companion object {
-        private lateinit var httpClient: OkHttpClient
-
-        @BeforeAll
-        @JvmStatic
-        fun setUpClass() {
-            httpClient = OkHttpClient()
-        }
-
-        const val BASE_URI = "http://localhost:8092/radar-gateway"
+        const val BASE_URI = "http://localhost:8092/radar-gateway/"
     }
 }

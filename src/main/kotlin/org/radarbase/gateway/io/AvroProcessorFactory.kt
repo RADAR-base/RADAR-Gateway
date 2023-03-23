@@ -6,7 +6,7 @@ import org.glassfish.jersey.internal.inject.DisposableSupplier
 import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.gateway.service.SchedulingService
 import org.radarbase.jersey.auth.AuthService
-import org.radarbase.producer.rest.SchemaRetriever
+import org.radarbase.producer.schema.SchemaRetriever
 
 class AvroProcessorFactory(
     @Context private val config: GatewayConfig,

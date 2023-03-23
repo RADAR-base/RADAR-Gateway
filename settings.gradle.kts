@@ -1,14 +1,20 @@
 rootProject.name = "radar-gateway"
 
 pluginManagement {
-    val kotlinVersion: String by settings
-    val ktlintPluginVersion: String by settings
-    val dockerComposeVersion: String by settings
-    val dependencyUpdatesVersion: String by settings
-    plugins {
-        kotlin("jvm") version kotlinVersion
-        id("com.avast.gradle.docker-compose") version dockerComposeVersion
-        id("com.github.ben-manes.versions") version dependencyUpdatesVersion
-        id("org.jlleitschuh.gradle.ktlint") version ktlintPluginVersion
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven(url = "https://maven.pkg.github.com/radar-base/radar-commons") {
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                    ?: extra.properties["gpr.user"] as? String
+                    ?: extra.properties["public.gpr.user"] as? String
+                password = System.getenv("GITHUB_TOKEN")
+                    ?: extra.properties["gpr.token"] as? String
+                    ?: (extra.properties["public.gpr.token"] as? String)?.let {
+                        java.util.Base64.getDecoder().decode(it).decodeToString()
+                    }
+            }
+        }
     }
 }

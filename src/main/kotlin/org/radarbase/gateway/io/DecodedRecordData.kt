@@ -16,17 +16,20 @@ class DecodedRecordData(
     private val decoder: BinaryDecoder,
     @Volatile
     private var size: Int,
-    private val topic: AvroTopic<GenericRecord, GenericRecord>,
-    private val key: GenericRecord,
+    override val topic: AvroTopic<GenericRecord, GenericRecord>,
+    override val key: GenericRecord,
     private val valueReader: GenericDatumReader<GenericRecord>,
 ) : RecordData<GenericRecord, GenericRecord> {
     private var remaining: Int = size
     private var buffer: ByteBuffer? = null
     private var valueDecoder: BinaryDecoder? = null
 
-    override fun getKey() = key
+    override val sourceId: String?
+        get() = key.schema.getField("sourceId")
+            ?.let { key.get(it.pos()).toString() }
 
-    override fun isEmpty() = size == 0
+    override val isEmpty: Boolean
+        get() = size == 0
 
     override fun iterator(): MutableIterator<GenericRecord> {
         check(remaining != 0) { "Cannot read decoded record data twice." }
@@ -66,6 +69,4 @@ class DecodedRecordData(
     }
 
     override fun size() = size
-
-    override fun getTopic() = topic
 }

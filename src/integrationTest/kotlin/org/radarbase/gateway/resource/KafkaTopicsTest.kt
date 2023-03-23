@@ -1,87 +1,108 @@
 package org.radarbase.gateway.resource
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import jakarta.ws.rs.core.MediaType.APPLICATION_JSON
-import jakarta.ws.rs.core.Response.Status
-import okhttp3.Credentials
-import okhttp3.FormBody
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import okio.Buffer
-import org.hamcrest.CoreMatchers.hasItem
-import org.hamcrest.CoreMatchers.`is`
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.auth.*
+import io.ktor.client.plugins.auth.providers.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.util.*
+import io.ktor.utils.io.core.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.lastOrNull
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import org.hamcrest.CoreMatchers.*
 import org.hamcrest.MatcherAssert.assertThat
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.radarbase.config.ServerConfig
 import org.radarbase.data.AvroRecordData
 import org.radarbase.gateway.resource.KafkaRootTest.Companion.BASE_URI
 import org.radarbase.gateway.resource.KafkaTopics.Companion.ACCEPT_AVRO_V2_JSON
 import org.radarbase.jersey.auth.filter.AuthenticationFilter.Companion.BEARER
+import org.radarbase.kotlin.coroutines.forkJoin
+import org.radarbase.ktor.auth.OAuth2AccessToken
+import org.radarbase.ktor.auth.bearer
 import org.radarbase.producer.AuthenticationException
-import org.radarbase.producer.rest.RestClient
-import org.radarbase.producer.rest.RestSender
-import org.radarbase.producer.rest.SchemaRetriever
+import org.radarbase.producer.io.timeout
+import org.radarbase.producer.rest.ConnectionState
+import org.radarbase.producer.rest.RestKafkaSender.Companion.KAFKA_REST_BINARY_ENCODING
+import org.radarbase.producer.rest.RestKafkaSender.Companion.restKafkaSender
+import org.radarbase.producer.schema.SchemaRetriever
+import org.radarbase.producer.schema.SchemaRetriever.Companion.schemaRetriever
 import org.radarbase.topic.AvroTopic
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
-import java.net.URL
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
+import kotlin.time.Duration.Companion.seconds
 
 class KafkaTopicsTest {
-    private fun requestAccessToken(): String {
-        val clientToken = httpClient.call(Status.OK, "access_token") {
-            url("$MANAGEMENTPORTAL_URL/oauth/token")
-            addHeader("Authorization", Credentials.basic(MP_CLIENT, ""))
-            post(
-                FormBody.Builder().run {
-                    add("username", ADMIN_USER)
-                    add("password", ADMIN_PASSWORD)
-                    add("grant_type", "password")
-                    build()
-                },
-            )
-        }
+    private lateinit var httpClient: HttpClient
 
-        val tokenUrl = httpClient.call(Status.OK, "tokenUrl") {
-            addHeader("Authorization", BEARER + clientToken)
-            url(
-                MANAGEMENTPORTAL_URL.toHttpUrl().newBuilder("api/oauth-clients/pair")!!.run {
-                    addEncodedQueryParameter("clientId", REST_CLIENT)
-                    addEncodedQueryParameter("login", USER)
-                    addEncodedQueryParameter("persistent", "false")
-                    build()
-                },
-            )
-        }
-
-        val refreshToken = httpClient.call(Status.OK, "refreshToken") {
-            url(tokenUrl)
-        }
-
-        return httpClient.call(Status.OK, "access_token") {
-            url("$MANAGEMENTPORTAL_URL/oauth/token")
-            addHeader("Authorization", Credentials.basic(REST_CLIENT, ""))
-            post(
-                FormBody.Builder().run {
-                    add("grant_type", "refresh_token")
-                    add("refresh_token", refreshToken)
-                    build()
-                },
-            )
+    @BeforeEach
+    fun setUpClass() {
+        httpClient = HttpClient(CIO) {
+            install(ContentNegotiation) {
+                json(
+                    Json {
+                        ignoreUnknownKeys = true
+                        coerceInputValues = true
+                    },
+                )
+            }
         }
     }
 
+    private suspend fun requestAccessToken(): String {
+        val response = httpClient.post("$MANAGEMENTPORTAL_URL/oauth/token") {
+            basicAuth(username = MP_CLIENT, password = "")
+            setBody(
+                formData {
+                    append("username", ADMIN_USER)
+                    append("password", ADMIN_PASSWORD)
+                    append("grant_type", "password")
+                },
+            )
+        }
+        assertThat(response.status, equalTo(HttpStatusCode.OK))
+        val token = response.body<OAuth2AccessToken>()
+
+        val tokenUrl = httpClient.get(MANAGEMENTPORTAL_URL) {
+            url {
+                parameters.append("clientId", REST_CLIENT)
+                parameters.append("login", USER)
+                parameters.append("persistent", "false")
+            }
+            bearer(requireNotNull(token.accessToken))
+        }.body<MPPairResponse>().tokenUrl
+
+        val refreshToken = httpClient.get(tokenUrl).body<MPMetaToken>().refreshToken
+
+        return requireNotNull(httpClient.post {
+            url("$MANAGEMENTPORTAL_URL/oauth/token")
+            basicAuth(REST_CLIENT, "")
+            setBody(
+                formData {
+                    append("grant_type", "refresh_token")
+                    append("refresh_token", refreshToken)
+                },
+            )
+        }.body<OAuth2AccessToken>().accessToken)
+    }
+
     @Test
-    fun testListTopics() {
+    fun testListTopics() = runBlocking {
         val accessToken = requestAccessToken()
 
-        val retriever = SchemaRetriever(ServerConfig(URL(SCHEMA_REGISTRY_URL)), 10)
+        val retriever = schemaRetriever(SCHEMA_REGISTRY_URL) {
+            httpClient {
+                timeout(10.seconds)
+            }
+        }
 
         val topic = AvroTopic(
             "test",
@@ -96,11 +117,20 @@ class KafkaTopicsTest {
         val value = PhoneAcceleration(time, time, 0.1f, 0.1f, 0.1f)
 
         // initialize topic and schema
-        sendData(REST_PROXY_URL, retriever, topic, accessToken, key, value, binary = false, gzip = false)
+        sendData(
+            REST_PROXY_URL,
+            retriever,
+            topic,
+            accessToken,
+            key,
+            value,
+            binary = false,
+            gzip = false,
+        )
 
         println("Initialized kafka brokers")
 
-        Thread.sleep(2000)
+        delay(2.seconds)
 
         try {
             testTopicList(accessToken)
@@ -110,65 +140,105 @@ class KafkaTopicsTest {
         }
         val results = mutableListOf<String>()
         sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = true, gzip = true)
-        results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = true, gzip = true)
-        results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = true, gzip = false)
-        results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = true)
-        results += sendData(BASE_URI, retriever, topic, accessToken, key, value, binary = false, gzip = false)
+        results += sendData(
+            BASE_URI,
+            retriever,
+            topic,
+            accessToken,
+            key,
+            value,
+            binary = true,
+            gzip = true,
+        )
+        results += sendData(
+            BASE_URI,
+            retriever,
+            topic,
+            accessToken,
+            key,
+            value,
+            binary = true,
+            gzip = false,
+        )
+        results += sendData(
+            BASE_URI,
+            retriever,
+            topic,
+            accessToken,
+            key,
+            value,
+            binary = false,
+            gzip = true,
+        )
+        results += sendData(
+            BASE_URI,
+            retriever,
+            topic,
+            accessToken,
+            key,
+            value,
+            binary = false,
+            gzip = false,
+        )
         results.forEach { println(it) }
 
-        httpClient.call(Status.OK) {
-            url("$BASE_URI/topics")
-            head()
-            addHeader("Authorization", BEARER + accessToken)
+        httpClient.head("$BASE_URI/topics") {
+            bearer(accessToken)
+        }.let { response ->
+            assertThat(response.status, equalTo(HttpStatusCode.OK))
         }
 
-        httpClient.call(Status.UNAUTHORIZED) {
-            url("$BASE_URI/topics")
+        httpClient.get("$BASE_URI/topics").let { response ->
+            assertThat(response.status, equalTo(HttpStatusCode.Unauthorized))
         }
 
-        httpClient.call(Status.UNAUTHORIZED) {
-            url("$BASE_URI/topics").head()
+        httpClient.get("$BASE_URI/topics").let { response ->
+            assertThat(response.status, equalTo(HttpStatusCode.Unauthorized))
         }
 
-        httpClient.call(422) {
-            url("$BASE_URI/topics/test")
-            post("{}".toRequestBody(JSON_TYPE))
-            addHeader("Authorization", BEARER + accessToken)
+        httpClient.head("$BASE_URI/topics").let { response ->
+            assertThat(response.status, equalTo(HttpStatusCode.Unauthorized))
         }
 
-        httpClient.call(422) {
-            url("$BASE_URI/topics/test")
-            post("{}".toRequestBody(KAFKA_JSON_TYPE))
-            addHeader("Authorization", BEARER + accessToken)
+        httpClient.post("$BASE_URI/topics") {
+            bearer(accessToken)
+            setBody("{}")
+            contentType(ContentType.Application.Json)
+        }.let { response ->
+            assertThat(response.status, equalTo(HttpStatusCode.UnprocessableEntity))
         }
 
-        httpClient.call(Status.BAD_REQUEST) {
-            url("$BASE_URI/topics/test")
-            post("".toRequestBody(KAFKA_JSON_TYPE))
-            addHeader("Authorization", BEARER + accessToken)
+        httpClient.post("$BASE_URI/topics/test") {
+            bearer(accessToken)
+            setBody("{}")
+            contentType(ContentType.Application.Json)
+        }.let { response ->
+            assertThat(response.status, equalTo(HttpStatusCode.UnprocessableEntity))
+        }
+
+        httpClient.post("$BASE_URI/topics/test") {
+            bearer(accessToken)
+            setBody("{}")
+            contentType(KAFKA_JSON_TYPE)
+        }.let { response ->
+            assertThat(response.status, equalTo(HttpStatusCode.UnprocessableEntity))
+        }
+
+        httpClient.post("$BASE_URI/topics/test") {
+            bearer(accessToken)
+            setBody("")
+            contentType(KAFKA_JSON_TYPE)
+        }.let { response ->
+            assertThat(response.status, equalTo(HttpStatusCode.BadRequest))
         }
     }
 
-    private fun testTopicList(accessToken: String) {
-        val gatewayTopicList = httpClient.call(Status.OK) {
-            url("$BASE_URI/topics")
-            addHeader("Authorization", BEARER + accessToken)
-        }!!.elements().asSequence().mapTo(ArrayList()) { it.asText() }
+    private fun testTopicList(accessToken: String) = runBlocking {
+        val gatewayTopicList = httpClient.get("$BASE_URI/topics") {
+            bearer(accessToken)
+        }.body<List<String>>()
 
         assertThat(gatewayTopicList, hasItem("test"))
-    }
-
-    private class CallableThread(runnable: () -> Unit) : Thread(runnable) {
-        @Volatile
-        var exception: Exception? = null
-
-        override fun run() {
-            try {
-                super.run()
-            } catch (ex: Exception) {
-                exception = ex
-            }
-        }
     }
 
     private fun sendData(
@@ -181,62 +251,41 @@ class KafkaTopicsTest {
         binary: Boolean,
         gzip: Boolean,
     ): String {
-        val totalSize = LongAdder()
-
-        val restClient = RestClient.newClient()
-            .also { client ->
-                if (SHOW_DATA_SIZE) {
-                    client.httpClientBuilder()
-                        .addNetworkInterceptor { chain ->
-                            val request = chain.request()
-                            request.body?.let { body ->
-                                val sink = Buffer()
-                                body.writeTo(sink)
-                                totalSize.add(sink.size)
-                            }
-                            chain.proceed(request)
-                        }
-                }
+        val sender = restKafkaSender {
+            baseUrl = url
+            httpClient {
+                headers["Authorization"] = BEARER + accessToken
+                timeout(10.seconds)
             }
-            .server(ServerConfig(url))
-            .timeout(10, TimeUnit.SECONDS)
-            .gzipCompression(gzip)
-            .build()
-
-        val sender = RestSender.Builder()
-            .httpClient(restClient)
-            .schemaRetriever(retriever)
-            .useBinaryContent(binary)
-            .addHeader("Authorization", BEARER + accessToken)
-            .build()
+            if (gzip) {
+                contentEncoding = "gzip"
+            }
+            if (binary) {
+                contentType = KAFKA_REST_BINARY_ENCODING
+            }
+            schemaRetriever = retriever
+        }
 
         val numRequests = LongAdder()
         val numTime = LongAdder()
         val recordData = AvroRecordData(topic, key, List(1000) { value })
         val timeStart = System.nanoTime()
-        val senders = List(NUM_THREADS) {
-            CallableThread {
-                repeat(NUM_SENDS) {
-                    sender.sender(topic).use {
+        runBlocking {
+            (0 until 1)
+                .forkJoin {
+                    val topicSender = sender.sender(topic)
+                    repeat(2) {
                         val timeRequestStart = System.nanoTime()
-                        it.send(recordData)
+                        topicSender.send(recordData)
                         numRequests.increment()
                         numTime.add(System.nanoTime() - timeRequestStart)
                     }
                 }
 
-                assertThat(sender.isConnected, `is`(true))
-            }
+            assertThat(sender.connectionState.lastOrNull(), `is`(ConnectionState.State.CONNECTED))
         }
-        senders.forEach { it.start() }
-        senders.forEach { it.join() }
-        senders.mapNotNull { it.exception }
-            .reduceOrNull { acc, exception -> acc.apply { addSuppressed(exception) } }
-            ?.let { throw it }
-
         val timeEnd = System.nanoTime()
 
-        val dataSize = if (SHOW_DATA_SIZE) (totalSize.sum() / (NUM_SENDS * NUM_THREADS)).toString() else "not measured"
         val timePerRequest = numTime.sum() / (numRequests.sum() * 1_000_000)
         val totalTime = (timeEnd - timeStart) / 1_000_000_000.0
 
@@ -245,25 +294,13 @@ class KafkaTopicsTest {
             url: $url, binary: $binary, gzip: $gzip
             Time per request $timePerRequest milliseconds
             Time to send data: $totalTime seconds
-            Data size: $dataSize
         """.trimIndent()
     }
 
     companion object {
-        private lateinit var httpClient: OkHttpClient
-
-        @BeforeAll
-        @JvmStatic
-        fun setUpClass() {
-            httpClient = OkHttpClient()
-        }
-
         private const val MANAGEMENTPORTAL_URL = "http://localhost:8080"
         private const val SCHEMA_REGISTRY_URL = "http://localhost:8081/"
         private const val REST_PROXY_URL = "http://localhost:8082/"
-        private const val NUM_THREADS = 1
-        private const val NUM_SENDS = 1
-        private const val SHOW_DATA_SIZE = false
         const val MP_CLIENT = "ManagementPortalapp"
         const val REST_CLIENT = "pRMT"
         const val USER = "sub-1"
@@ -271,36 +308,6 @@ class KafkaTopicsTest {
         const val SOURCE = "03d28e5c-e005-46d4-a9b3-279c27fbbc83"
         const val ADMIN_USER = "admin"
         const val ADMIN_PASSWORD = "admin"
-        private val JSON_TYPE = APPLICATION_JSON.toMediaType()
-        private val KAFKA_JSON_TYPE = ACCEPT_AVRO_V2_JSON.toMediaType()
-
-        fun OkHttpClient.call(expectedStatus: Int, requestSupplier: Request.Builder.() -> Unit): JsonNode? {
-            val request = Request.Builder().apply(requestSupplier).build()
-            return newCall(request).execute().use { response ->
-                println("${request.method} ${request.url}")
-                assertThat(response.code, `is`(expectedStatus))
-                println(response.headers)
-                response.body?.let { responseBody ->
-                    val string = responseBody.string()
-                    println(string)
-                    mapper.readTree(string)
-                }
-            }
-        }
-
-        private val mapper = ObjectMapper()
-
-        fun OkHttpClient.call(expectedStatus: Status, requestSupplier: Request.Builder.() -> Unit): JsonNode? {
-            return call(expectedStatus.statusCode, requestSupplier)
-        }
-
-        fun OkHttpClient.call(
-            expectedStatus: Status,
-            stringProperty: String,
-            requestSupplier: Request.Builder.() -> Unit,
-        ): String {
-            return call(expectedStatus, requestSupplier)?.get(stringProperty)?.asText()
-                ?: throw AssertionError("String property $stringProperty not found")
-        }
+        private val KAFKA_JSON_TYPE = ContentType.parse(ACCEPT_AVRO_V2_JSON)
     }
 }

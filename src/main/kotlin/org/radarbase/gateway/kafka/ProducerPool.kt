@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.channels.toList
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.common.KafkaException
 import org.apache.kafka.common.errors.*
@@ -48,13 +49,7 @@ class ProducerPool(
     }
 
     suspend fun produce(topic: String, records: List<Pair<GenericRecord, GenericRecord>>) {
-        if (!semaphore.tryAcquire()) {
-            throw HttpApplicationException(
-                Response.Status.SERVICE_UNAVAILABLE,
-                "Too many open Kafka requests",
-            )
-        }
-        try {
+        semaphore.withPermit {
             val producer = pool.tryReceive().getOrNull()
                 ?: KafkaAvroProducer(config, schemaRegistryClient)
             var reuse = true
@@ -98,8 +93,6 @@ class ProducerPool(
                     producer.close()
                 }
             }
-        } finally {
-            semaphore.release()
         }
     }
 

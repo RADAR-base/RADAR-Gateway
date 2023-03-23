@@ -1,27 +1,26 @@
-import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.radarbase.gradle.plugin.radarKotlin
 import java.time.Duration
 
 plugins {
-    id("idea")
+    kotlin("plugin.serialization") version Versions.kotlin
     id("application")
-    kotlin("jvm")
-    id("com.avast.gradle.docker-compose")
-    id("com.github.ben-manes.versions")
-    id("org.jlleitschuh.gradle.ktlint")
+    id("org.radarbase.radar-root-project") version Versions.radarCommons
+    id("org.radarbase.radar-dependency-management") version Versions.radarCommons
+    id("org.radarbase.radar-kotlin") version Versions.radarCommons
+    id("com.avast.gradle.docker-compose") version Versions.dockerCompose
 }
 
 description = "RADAR Gateway to handle secured data flow to backend."
-group = "org.radarbase"
-version = "0.5.17-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-    mavenLocal()
-    maven(url = "https://packages.confluent.io/maven/")
-    maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
+radarRootProject {
+    projectVersion.set(Versions.project)
+}
+
+radarKotlin {
+    kotlinVersion.set(Versions.kotlin)
+    javaVersion.set(Versions.java)
+    log4j2Version.set(Versions.log4j2)
+    slf4jVersion.set(Versions.slf4j)
 }
 
 val integrationTestSourceSet = sourceSets.create("integrationTest") {
@@ -39,73 +38,43 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
 
-    val radarCommonsVersion: String by project
-    implementation("org.radarbase:radar-commons:$radarCommonsVersion")
-    val radarJerseyVersion: String by project
-    implementation("org.radarbase:radar-jersey:$radarJerseyVersion")
-    val radarAuthVersion: String by project
-    implementation("org.radarbase:managementportal-client:$radarAuthVersion")
-    implementation("org.radarbase:kotlin-util:$radarAuthVersion")
-    val lzfseVersion: String by project
-    implementation("org.radarbase:lzfse-decode:$lzfseVersion")
+    implementation("org.radarbase:radar-commons:${Versions.radarCommons}")
+    implementation("org.radarbase:radar-commons-kotlin:${Versions.radarCommons}")
+    implementation("org.radarbase:radar-jersey:${Versions.radarJersey}")
+    implementation("org.radarbase:managementportal-client:${Versions.radarAuth}")
+    implementation("org.radarbase:lzfse-decode:${Versions.lzfse}")
+    implementation("org.radarbase:radar-auth:${Versions.radarAuth}")
 
-    val kafkaVersion: String by project
-    implementation("org.apache.kafka:kafka-clients:$kafkaVersion")
-    val confluentVersion: String by project
-    implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
-    implementation("io.confluent:kafka-schema-registry-client:$confluentVersion")
+    implementation("org.apache.kafka:kafka-clients:${Versions.kafka}")
+    implementation("io.confluent:kafka-avro-serializer:${Versions.confluent}")
+    implementation("io.confluent:kafka-schema-registry-client:${Versions.confluent}")
 
-    val slf4jVersion: String by project
-    implementation("org.slf4j:slf4j-api:$slf4jVersion")
-
-    val jacksonVersion: String by project
-    implementation(platform("com.fasterxml.jackson:jackson-bom:$jacksonVersion"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:${Versions.jackson}"))
     implementation("com.fasterxml.jackson.core:jackson-databind")
 
-    val avroVersion: String by project
-    runtimeOnly("org.apache.avro:avro:$avroVersion")
+    implementation(platform("io.ktor:ktor-bom:${Versions.ktor}"))
+    implementation("io.ktor:ktor-client-auth")
 
-    val grizzlyVersion: String by project
-    runtimeOnly("org.glassfish.grizzly:grizzly-framework-monitoring:$grizzlyVersion")
-    runtimeOnly("org.glassfish.grizzly:grizzly-http-monitoring:$grizzlyVersion")
-    runtimeOnly("org.glassfish.grizzly:grizzly-http-server-monitoring:$grizzlyVersion")
+    runtimeOnly("org.apache.avro:avro:${Versions.avro}")
 
-    val log4j2Version: String by project
-    runtimeOnly("org.apache.logging.log4j:log4j-core:$log4j2Version")
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:$log4j2Version")
-    runtimeOnly("org.apache.logging.log4j:log4j-jul:$log4j2Version")
+    runtimeOnly("org.glassfish.grizzly:grizzly-framework-monitoring:${Versions.grizzly}")
+    runtimeOnly("org.glassfish.grizzly:grizzly-http-monitoring:${Versions.grizzly}")
+    runtimeOnly("org.glassfish.grizzly:grizzly-http-server-monitoring:${Versions.grizzly}")
 
-    val junitVersion: String by project
-    val okhttp3Version: String by project
-    val radarSchemasVersion: String by project
-    val mockitoKotlinVersion: String by project
-    val hamcrestVersion: String by project
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
-    testImplementation("com.squareup.okhttp3:mockwebserver:$okhttp3Version") {
-        exclude(group = "junit", module = "junit")
-    }
-    testImplementation("org.hamcrest:hamcrest:$hamcrestVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:${Versions.junit}")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:${Versions.mockitoKotlin}")
+    testImplementation("org.hamcrest:hamcrest:${Versions.hamcrest}")
 
-    testImplementation("org.radarbase:radar-schemas-commons:$radarSchemasVersion")
-    integrationTestImplementation("com.squareup.okhttp3:okhttp:$okhttp3Version")
-    integrationTestImplementation("org.radarbase:radar-schemas-commons:$radarSchemasVersion")
-    integrationTestImplementation("org.radarbase:radar-commons-testing:$radarCommonsVersion")
-}
+    integrationTestImplementation(platform("io.ktor:ktor-bom:${Versions.ktor}"))
+    integrationTestImplementation("io.ktor:ktor-client-content-negotiation")
+    integrationTestImplementation("io.ktor:ktor-client-content-negotiation")
+    integrationTestImplementation("io.ktor:ktor-serialization-kotlinx-json")
 
-val jvmTargetVersion = 17
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${Versions.junit}")
 
-tasks.withType<JavaCompile> {
-    options.release.set(jvmTargetVersion)
-}
-
-tasks.withType<KotlinCompile> {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.fromTarget(jvmTargetVersion.toString()))
-        apiVersion.set(KotlinVersion.KOTLIN_1_8)
-        languageVersion.set(KotlinVersion.KOTLIN_1_8)
-    }
+    testImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
+    integrationTestImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
+    integrationTestImplementation("org.radarbase:radar-commons-testing:${Versions.radarCommons}")
 }
 
 val integrationTest by tasks.registering(Test::class) {
@@ -115,14 +84,6 @@ val integrationTest by tasks.registering(Test::class) {
     classpath = integrationTestSourceSet.runtimeClasspath
     shouldRunAfter("test")
     outputs.upToDateWhen { false }
-}
-
-tasks.withType<Test> {
-    testLogging {
-        showStandardStreams = true
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-    }
-    useJUnitPlatform()
 }
 
 tasks.withType<Tar> {
@@ -157,47 +118,12 @@ dockerCompose {
     isRequiredBy(integrationTest)
 }
 
-idea {
-    module {
-        isDownloadSources = true
-    }
-}
-
-ktlint {
-    val ktlintVersion: String by project
-    version.set(ktlintVersion)
-}
-
-tasks.register("downloadDependencies") {
-    doFirst {
-        configurations["compileClasspath"].files
-        configurations["runtimeClasspath"].files
-        println("Downloaded all dependencies")
-    }
-    outputs.upToDateWhen { false }
-}
-
-tasks.register<Copy>("copyDependencies") {
-    from(configurations.runtimeClasspath.map { it.files })
-    into("$buildDir/third-party/")
+tasks.register("listrepos") {
     doLast {
-        println("Copied third-party runtime dependencies")
+        println("Repositories:")
+        project.repositories.map{it as MavenArtifactRepository}
+            .forEach{
+                println("Name: ${it.name}; url: ${it.url}")
+            }
     }
-}
-
-fun isNonStable(version: String): Boolean {
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA", "-CE").any { version.toUpperCase().contains(it) }
-    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
-    val isStable = stableKeyword || regex.matches(version)
-    return isStable.not()
-}
-
-tasks.withType<DependencyUpdatesTask> {
-    rejectVersionIf {
-        isNonStable(candidate.version)
-    }
-}
-
-tasks.wrapper {
-    gradleVersion = "8.0.1"
 }

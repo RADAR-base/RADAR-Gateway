@@ -2,7 +2,7 @@ package org.radarbase.gateway.io
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import kotlinx.coroutines.Dispatchers
+import io.ktor.http.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
@@ -15,10 +15,10 @@ import org.radarbase.jersey.exception.HttpBadGatewayException
 import org.radarbase.jersey.exception.HttpInvalidContentException
 import org.radarbase.kotlin.coroutines.CacheConfig
 import org.radarbase.kotlin.coroutines.CachedValue
-import org.radarbase.producer.rest.AvroDataMapper
-import org.radarbase.producer.rest.AvroDataMapperFactory
+import org.radarbase.producer.avro.AvroDataMapper
+import org.radarbase.producer.avro.AvroDataMapperFactory
 import org.radarbase.producer.rest.RestException
-import org.radarbase.producer.rest.SchemaRetriever
+import org.radarbase.producer.schema.SchemaRetriever
 import java.io.Closeable
 import java.io.IOException
 import java.text.ParseException
@@ -87,10 +87,10 @@ class AvroProcessor(
         }
 
         return coroutineScope {
-            val keyMappingJob = async(Dispatchers.IO) {
+            val keyMappingJob = async {
                 schemaMapping(topic, false, root["key_schema_id"], root["key_schema"])
             }
-            val valueMappingJob = async(Dispatchers.IO) {
+            val valueMappingJob = async {
                 schemaMapping(topic, true, root["value_schema_id"], root["value_schema"])
             }
 
@@ -106,10 +106,9 @@ class AvroProcessor(
         }
     }
 
-    private fun createMapping(topic: String, ofValue: Boolean, sourceSchema: Schema): JsonToObjectMapping {
-        val latestSchema = schemaRetriever.getBySubjectAndVersion(topic, ofValue, -1)
-        val schemaMapper = AvroDataMapperFactory.get()
-            .createMapper(sourceSchema, latestSchema.schema, null)
+    private suspend fun createMapping(topic: String, ofValue: Boolean, sourceSchema: Schema): JsonToObjectMapping {
+        val latestSchema = schemaRetriever.getByVersion(topic, ofValue, -1)
+        val schemaMapper = AvroDataMapperFactory.createMapper(sourceSchema, latestSchema.schema, null)
         return JsonToObjectMapping(sourceSchema, latestSchema.schema, latestSchema.id, schemaMapper)
     }
 
@@ -121,9 +120,9 @@ class AvroProcessor(
                 idMapping.computeIfAbsent(Pair(subject, id.asInt())) {
                     CachedValue(cacheConfig) {
                         val parsedSchema = try {
-                            schemaRetriever.getBySubjectAndId(topic, ofValue, id.asInt())
+                            schemaRetriever.getById(topic, ofValue, id.asInt())
                         } catch (ex: RestException) {
-                            if (ex.statusCode == 404) {
+                            if (ex.status == HttpStatusCode.NotFound) {
                                 throw HttpApplicationException(
                                     422,
                                     "schema_not_found",

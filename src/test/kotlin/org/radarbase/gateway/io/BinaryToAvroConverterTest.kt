@@ -1,7 +1,9 @@
 package org.radarbase.gateway.io
 
+import io.ktor.http.content.*
+import io.ktor.utils.io.*
+import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.runBlocking
-import okio.Buffer
 import org.apache.avro.generic.GenericRecordBuilder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -9,9 +11,9 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.radarbase.data.AvroRecordData
 import org.radarbase.gateway.config.GatewayConfig
-import org.radarbase.producer.rest.BinaryRecordRequest
-import org.radarbase.producer.rest.ParsedSchemaMetadata
-import org.radarbase.producer.rest.SchemaRetriever
+import org.radarbase.producer.rest.BinaryRecordContent
+import org.radarbase.producer.schema.ParsedSchemaMetadata
+import org.radarbase.producer.schema.SchemaRetriever
 import org.radarbase.topic.AvroTopic
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
@@ -39,15 +41,20 @@ class BinaryToAvroConverterTest {
             ),
         )
 
-        val requestBuffer = Buffer()
-        BinaryRecordRequest(topic).run {
-            prepare(keySchemaMetadata, valueSchemaMetadata, requestRecordData)
-            writeToSink(requestBuffer)
+        val requestBuffer = ByteChannel()
+        val content = BinaryRecordContent(
+            records = requestRecordData,
+            keySchemaMetadata = keySchemaMetadata,
+            valueSchemaMetadata = valueSchemaMetadata,
+        ).createContent() as OutgoingContent.WriteChannelContent
+
+        runBlocking {
+            content.writeTo(requestBuffer)
         }
 
         val schemaRetriever = mock<SchemaRetriever> {
-            on { getBySubjectAndVersion("test", false, 1) } doReturn keySchemaMetadata
-            on { getBySubjectAndVersion("test", true, 1) } doReturn valueSchemaMetadata
+            onBlocking { getByVersion("test", false, 1) } doReturn keySchemaMetadata
+            onBlocking { getByVersion("test", true, 1) } doReturn valueSchemaMetadata
         }
 
         val converter = BinaryToAvroConverter(schemaRetriever, mockAuthService(), GatewayConfig())
@@ -82,7 +89,7 @@ class BinaryToAvroConverterTest {
                         Pair(genericKey, genericValue2),
                     ),
                 ),
-                converter.process("test", requestBuffer.inputStream()),
+                converter.process("test", requestBuffer.toInputStream()),
             )
         }
     }

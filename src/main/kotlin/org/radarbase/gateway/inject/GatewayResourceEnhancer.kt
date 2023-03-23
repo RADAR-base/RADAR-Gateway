@@ -19,7 +19,7 @@ import org.radarbase.jersey.enhancer.JerseyResourceEnhancer
 import org.radarbase.jersey.filter.Filters
 import org.radarbase.jersey.service.HealthService
 import org.radarbase.jersey.service.ProjectService
-import org.radarbase.producer.rest.SchemaRetriever
+import org.radarbase.producer.schema.SchemaRetriever
 
 class GatewayResourceEnhancer(private val config: GatewayConfig) : JerseyResourceEnhancer {
     override val packages: Array<String> = arrayOf(

@@ -14,8 +14,8 @@ import org.radarbase.auth.authorization.EntityDetails
 import org.radarbase.auth.authorization.Permission
 import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.jersey.auth.AuthService
-import org.radarbase.producer.rest.ParsedSchemaMetadata
-import org.radarbase.producer.rest.SchemaRetriever
+import org.radarbase.producer.schema.ParsedSchemaMetadata
+import org.radarbase.producer.schema.SchemaRetriever
 import org.radarbase.topic.AvroTopic
 import java.io.InputStream
 
@@ -75,10 +75,10 @@ class BinaryToAvroConverter(
         val valueVersion = decoder.readInt()
 
         val keySchemaMetadataJob = async {
-            schemaRetriever.getBySubjectAndVersion(topic, false, keyVersion)
+            schemaRetriever.getByVersion(topic, false, keyVersion)
         }
         val valueSchemaMetadataJob = async {
-            schemaRetriever.getBySubjectAndVersion(topic, true, valueVersion)
+            schemaRetriever.getByVersion(topic, true, valueVersion)
         }
 
         val authId = EntityDetails(
