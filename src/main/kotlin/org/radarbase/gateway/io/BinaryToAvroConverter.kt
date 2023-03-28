@@ -12,6 +12,7 @@ import org.apache.avro.io.Decoder
 import org.apache.avro.io.DecoderFactory
 import org.radarbase.auth.authorization.EntityDetails
 import org.radarbase.auth.authorization.Permission
+import org.radarbase.auth.token.RadarToken
 import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.jersey.auth.AuthService
 import org.radarbase.producer.schema.ParsedSchemaMetadata
@@ -36,12 +37,15 @@ class BinaryToAvroConverter(
         val decoder = DecoderFactory.get().binaryDecoder(input, binaryDecoder)
             .also { binaryDecoder = it }
 
-        val metadata = decodeMetadata(decoder, topic)
+        val token = authService.requestScopedToken()
+
+        val metadata = decodeMetadata(decoder, topic, token)
 
         authService.checkPermission(
             Permission.MEASUREMENT_CREATE,
             if (config.auth.checkSourceId) metadata.authId else metadata.authId.copy(source = null),
-            "POST $topic",
+            token,
+            location = "POST $topic",
         )
 
         val recordData = DecodedRecordData(
@@ -70,7 +74,7 @@ class BinaryToAvroConverter(
         )
     }
 
-    private suspend fun decodeMetadata(decoder: Decoder, topic: String) = withContext(Dispatchers.IO) {
+    private suspend fun decodeMetadata(decoder: Decoder, topic: String, token: RadarToken) = withContext(Dispatchers.IO) {
         val keyVersion = decoder.readInt()
         val valueVersion = decoder.readInt()
 
@@ -82,8 +86,8 @@ class BinaryToAvroConverter(
         }
 
         val authId = EntityDetails(
-            project = if (decoder.readIndex() == 1) decoder.readString() else authService.activeParticipantProject(),
-            subject = if (decoder.readIndex() == 1) decoder.readString() else authService.token.subject,
+            project = if (decoder.readIndex() == 1) decoder.readString() else authService.activeParticipantProject(token),
+            subject = if (decoder.readIndex() == 1) decoder.readString() else token.subject,
             source = decoder.readString(),
         )
         val size = decoder.readArrayStart().toInt()

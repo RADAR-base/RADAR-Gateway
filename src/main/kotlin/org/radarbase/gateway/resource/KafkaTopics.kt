@@ -16,8 +16,8 @@ import org.radarbase.gateway.kafka.KafkaAdminService
 import org.radarbase.gateway.kafka.ProducerPool
 import org.radarbase.jersey.auth.Authenticated
 import org.radarbase.jersey.auth.NeedsPermission
-import org.radarbase.jersey.coroutines.runAsCoroutine
 import org.radarbase.jersey.exception.HttpBadRequestException
+import org.radarbase.jersey.service.AsyncCoroutineService
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
@@ -35,9 +35,10 @@ import java.io.InputStream
 class KafkaTopics(
     @Context private val kafkaAdminService: KafkaAdminService,
     @Context private val producerPool: ProducerPool,
+    @Context private val asyncService: AsyncCoroutineService,
 ) {
     @GET
-    fun topics(@Suspended asyncResponse: AsyncResponse) = asyncResponse.runAsCoroutine {
+    fun topics(@Suspended asyncResponse: AsyncResponse) = asyncService.runAsCoroutine(asyncResponse) {
         kafkaAdminService.listTopics()
     }
 
@@ -47,7 +48,7 @@ class KafkaTopics(
     fun topic(
         @PathParam("topic_name") topic: String,
         @Suspended asyncResponse: AsyncResponse,
-    ) = asyncResponse.runAsCoroutine {
+    ) = asyncService.runAsCoroutine(asyncResponse) {
         kafkaAdminService.topicInfo(topic)
     }
 
@@ -76,7 +77,7 @@ class KafkaTopics(
         @PathParam("topic_name") topic: String,
         @Context avroProcessor: AvroProcessor,
         @Suspended asyncResponse: AsyncResponse,
-    ) = asyncResponse.runAsCoroutine {
+    ) = asyncService.runAsCoroutine(asyncResponse) {
         val processingResult = avroProcessor.process(topic, tree)
         producerPool.produce(topic, processingResult.records)
         TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
@@ -93,7 +94,7 @@ class KafkaTopics(
         @Context binaryToAvroConverter: BinaryToAvroConverter,
         @PathParam("topic_name") topic: String,
         @Suspended asyncResponse: AsyncResponse,
-    ) = asyncResponse.runAsCoroutine {
+    ) = asyncService.runAsCoroutine(asyncResponse) {
         val processingResult = try {
             binaryToAvroConverter.process(topic, input)
         } catch (ex: IOException) {

@@ -20,7 +20,6 @@ ENV GRADLE_USER_HOME=/code/.gradlecache \
 COPY build.gradle.kts settings.gradle.kts gradle.properties /code/
 COPY buildSrc /code/buildSrc
 
-RUN gradle dependencies --configuration implementation
 RUN gradle downloadDependencies copyDependencies startScripts
 
 COPY src/ /code/src

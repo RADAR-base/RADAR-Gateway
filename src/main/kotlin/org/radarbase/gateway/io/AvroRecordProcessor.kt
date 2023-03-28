@@ -59,7 +59,7 @@ class AvroRecordProcessor(
                 authService.checkPermission(
                     Permission.MEASUREMENT_CREATE,
                     entity,
-                    "POST $topic",
+                    location = "POST $topic",
                 )
             }
 
@@ -67,7 +67,7 @@ class AvroRecordProcessor(
         }
     }
 
-    private fun mapRecord(
+    private suspend fun mapRecord(
         idx: Int,
         record: JsonNode,
         authChannel: SendChannel<EntityDetails>,
@@ -98,7 +98,7 @@ class AvroRecordProcessor(
 
     /** Parse single record key.  */
     @Throws(IOException::class)
-    fun processKey(
+    suspend fun processKey(
         key: JsonNode,
         keyMapping: AvroProcessor.JsonToObjectMapping,
         context: AvroParsingContext,
@@ -131,7 +131,7 @@ class AvroRecordProcessor(
         return valueMapping.jsonToAvro(value, context)
     }
 
-    private fun JsonNode.toEntityDetails(
+    private suspend fun JsonNode.toEntityDetails(
         context: AvroParsingContext,
     ): EntityDetails {
         val defaultProject = authService.activeParticipantProject()

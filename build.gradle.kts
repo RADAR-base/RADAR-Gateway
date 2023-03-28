@@ -117,13 +117,3 @@ dockerCompose {
     captureContainersOutputToFiles.set(project.file("build/container-logs"))
     isRequiredBy(integrationTest)
 }
-
-tasks.register("listrepos") {
-    doLast {
-        println("Repositories:")
-        project.repositories.map{it as MavenArtifactRepository}
-            .forEach{
-                println("Name: ${it.name}; url: ${it.url}")
-            }
-    }
-}

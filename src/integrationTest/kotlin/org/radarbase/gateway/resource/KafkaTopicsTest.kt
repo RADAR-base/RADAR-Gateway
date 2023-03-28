@@ -82,16 +82,18 @@ class KafkaTopicsTest {
 
         val refreshToken = httpClient.get(tokenUrl).body<MPMetaToken>().refreshToken
 
-        return requireNotNull(httpClient.post {
-            url("$MANAGEMENTPORTAL_URL/oauth/token")
-            basicAuth(REST_CLIENT, "")
-            setBody(
-                formData {
-                    append("grant_type", "refresh_token")
-                    append("refresh_token", refreshToken)
-                },
-            )
-        }.body<OAuth2AccessToken>().accessToken)
+        return requireNotNull(
+            httpClient.post {
+                url("$MANAGEMENTPORTAL_URL/oauth/token")
+                basicAuth(REST_CLIENT, "")
+                setBody(
+                    formData {
+                        append("grant_type", "refresh_token")
+                        append("refresh_token", refreshToken)
+                    },
+                )
+            }.body<OAuth2AccessToken>().accessToken,
+        )
     }
 
     @Test

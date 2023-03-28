@@ -9,6 +9,9 @@
 
 package org.radarbase.gateway.io
 
+import jakarta.ws.rs.container.AsyncResponse
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.radarbase.auth.authorization.AuthorityReference
 import org.radarbase.auth.authorization.Permission
 import org.radarbase.auth.authorization.RoleAuthority
@@ -16,8 +19,10 @@ import org.radarbase.auth.token.DataRadarToken
 import org.radarbase.jersey.auth.AuthService
 import org.radarbase.jersey.auth.disabled.DisabledAuthorizationOracle
 import org.radarbase.jersey.exception.HttpNotFoundException
+import org.radarbase.jersey.service.AsyncCoroutineService
 import org.radarbase.jersey.service.ProjectService
 import java.time.Instant
+import kotlin.time.Duration
 
 fun mockAuthService() = AuthService(
     DisabledAuthorizationOracle(),
@@ -33,6 +38,23 @@ fun mockAuthService() = AuthService(
         )
     },
     projectService = MockProjectService(mapOf("main" to listOf("p"))),
+    asyncService = object : AsyncCoroutineService {
+        override fun <T> runAsCoroutine(
+            asyncResponse: AsyncResponse,
+            timeout: Duration,
+            block: suspend () -> T,
+        ): Unit = kotlinx.coroutines.runBlocking {
+            asyncResponse.resume(block())
+        }
+
+        override fun <T> runBlocking(timeout: Duration, block: suspend () -> T): T = kotlinx.coroutines.runBlocking {
+            block()
+        }
+
+        override suspend fun <T> runInRequestScope(block: () -> T): T = block()
+
+        override suspend fun <T> suspendInRequestScope(block: (CancellableContinuation<T>) -> Unit): T = suspendCancellableCoroutine { block(it) }
+    },
 )
 
 class MockProjectService(
