@@ -3,6 +3,7 @@ package org.radarbase.gateway.resource
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.auth.*
 import io.ktor.client.plugins.auth.providers.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -53,25 +54,29 @@ class KafkaTopicsTest {
                         coerceInputValues = true
                     },
                 )
+
+                defaultRequest {
+                    url("$MANAGEMENTPORTAL_URL/")
+                }
             }
         }
     }
 
     private suspend fun requestAccessToken(): String {
-        val response = httpClient.post("$MANAGEMENTPORTAL_URL/oauth/token") {
+        val response = httpClient.submitForm(
+            url = "oauth/token",
+            formParameters = Parameters.build {
+                append("username", ADMIN_USER)
+                append("password", ADMIN_PASSWORD)
+                append("grant_type", "password")
+            },
+        ) {
             basicAuth(username = MP_CLIENT, password = "")
-            setBody(
-                formData {
-                    append("username", ADMIN_USER)
-                    append("password", ADMIN_PASSWORD)
-                    append("grant_type", "password")
-                },
-            )
         }
         assertThat(response.status, equalTo(HttpStatusCode.OK))
         val token = response.body<OAuth2AccessToken>()
 
-        val tokenUrl = httpClient.get(MANAGEMENTPORTAL_URL) {
+        val tokenUrl = httpClient.get("api/oauth-clients/pair") {
             url {
                 parameters.append("clientId", REST_CLIENT)
                 parameters.append("login", USER)
@@ -83,15 +88,14 @@ class KafkaTopicsTest {
         val refreshToken = httpClient.get(tokenUrl).body<MPMetaToken>().refreshToken
 
         return requireNotNull(
-            httpClient.post {
-                url("$MANAGEMENTPORTAL_URL/oauth/token")
+            httpClient.submitForm(
+                url = "oauth/token",
+                formParameters = Parameters.build {
+                    append("grant_type", "refresh_token")
+                    append("refresh_token", refreshToken)
+                },
+            ) {
                 basicAuth(REST_CLIENT, "")
-                setBody(
-                    formData {
-                        append("grant_type", "refresh_token")
-                        append("refresh_token", refreshToken)
-                    },
-                )
             }.body<OAuth2AccessToken>().accessToken,
         )
     }

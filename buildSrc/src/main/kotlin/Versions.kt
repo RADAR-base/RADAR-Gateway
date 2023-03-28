@@ -2,7 +2,7 @@ object Versions {
     const val project = "0.6.0-SNAPSHOT"
 
     const val java = 17
-    const val kotlin = "1.8.10"
+    val kotlin = KotlinVersion.CURRENT.toString()
     const val ktlint = "0.48.2"
     const val ktlintPlugin = "11.3.1"
     const val dockerCompose = "0.16.11"
