@@ -6,8 +6,7 @@ import jakarta.inject.Singleton
 import jakarta.ws.rs.*
 import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.Response
-import org.radarbase.auth.authorization.Permission.Entity.MEASUREMENT
-import org.radarbase.auth.authorization.Permission.Operation.CREATE
+import org.radarbase.auth.authorization.Permission.MEASUREMENT_CREATE
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.BinaryToAvroConverter
@@ -62,7 +61,7 @@ class KafkaTopics(
     @Path("/{topic_name}")
     @POST
     @Consumes(ACCEPT_JSON, ACCEPT_AVRO_V1_JSON, ACCEPT_AVRO_V2_JSON, ACCEPT_AVRO_V3_JSON, ACCEPT_AVRO_NON_SPECIFIC)
-    @NeedsPermission(MEASUREMENT, CREATE)
+    @NeedsPermission(MEASUREMENT_CREATE)
     @ProcessAvro
     fun postToTopic(
         tree: JsonNode,
@@ -79,7 +78,7 @@ class KafkaTopics(
     @POST
     @ProcessAvro
     @Consumes(ACCEPT_BINARY_NON_SPECIFIC, ACCEPT_BINARY_V1)
-    @NeedsPermission(MEASUREMENT, CREATE)
+    @NeedsPermission(MEASUREMENT_CREATE)
     fun postToTopicBinary(
         input: InputStream,
         @Context binaryToAvroConverter: BinaryToAvroConverter,
