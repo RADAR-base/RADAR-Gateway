@@ -15,7 +15,7 @@ plugins {
 
 description = "RADAR Gateway to handle secured data flow to backend."
 group = "org.radarbase"
-version = "0.6.0-SNAPSHOT"
+version = "0.6.0"
 
 repositories {
     mavenCentral()
