@@ -85,6 +85,10 @@ class AvroProcessor(
         if (root["value_schema_id"].isMissing && root["value_schema"].isMissing) {
             throw HttpInvalidContentException("Missing value schema")
         }
+        val records = root["records"]
+        if (records.isMissing) {
+            throw HttpInvalidContentException("Missing records")
+        }
 
         return coroutineScope {
             val keyMappingJob = async {
@@ -97,7 +101,6 @@ class AvroProcessor(
             val keyMapping = keyMappingJob.await()
             val valueMapping = valueMappingJob.await()
 
-            val records = root["records"] ?: throw HttpInvalidContentException("Missing records")
             AvroProcessingResult(
                 keyMapping.targetSchemaId,
                 valueMapping.targetSchemaId,

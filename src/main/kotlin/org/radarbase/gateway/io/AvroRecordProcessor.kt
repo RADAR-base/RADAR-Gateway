@@ -7,7 +7,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
@@ -42,38 +41,45 @@ class AvroRecordProcessor(
             val authChannel = Channel<EntityDetails>(UNLIMITED)
 
             val resultJob = async {
+                val defaultProject = authService.activeParticipantProject()
                 try {
-                    val authIds = mutableSetOf<EntityDetails>()
                     records
                         .takeWhile { isActive }
                         .mapIndexed { idx, record ->
-                            mapRecord(idx, record, authChannel, keyMapping, valueMapping, authIds)
+                            mapRecord(idx, record, authChannel, keyMapping, valueMapping,
+                                defaultProject)
                         }
                 } finally {
-                    authChannel.cancel()
+                    authChannel.close()
                 }
             }
 
-            authChannel.consumeEach { entity ->
-                // Only process distinct entities
-                authService.checkPermission(
-                    Permission.MEASUREMENT_CREATE,
-                    entity,
-                    location = "POST $topic",
-                )
+            authChannel.consume {
+                val entitiesChecked = HashSet<EntityDetails>()
+
+                for (entity in this) {
+                    // only check entities once
+                    if (!entitiesChecked.add(entity)) continue
+
+                    authService.checkPermission(
+                        Permission.MEASUREMENT_CREATE,
+                        entity,
+                        location = "POST $topic",
+                    )
+                }
             }
 
             resultJob.await()
         }
     }
 
-    private suspend fun mapRecord(
+    private fun mapRecord(
         idx: Int,
         record: JsonNode,
         authChannel: SendChannel<EntityDetails>,
         keyMapping: AvroProcessor.JsonToObjectMapping,
         valueMapping: AvroProcessor.JsonToObjectMapping,
-        authIds: MutableSet<EntityDetails>,
+        defaultProject: String?,
     ): Pair<GenericRecord, GenericRecord> {
         val context = AvroParsingContext(Schema.Type.ARRAY, "records[$idx]")
         val key = record["key"]
@@ -86,7 +92,7 @@ class AvroRecordProcessor(
                 keyMapping,
                 AvroParsingContext(Schema.Type.MAP, "key", context),
                 authChannel,
-                authIds,
+                defaultProject,
             ),
             processValue(
                 value,
@@ -98,21 +104,18 @@ class AvroRecordProcessor(
 
     /** Parse single record key.  */
     @Throws(IOException::class)
-    suspend fun processKey(
+    fun processKey(
         key: JsonNode,
         keyMapping: AvroProcessor.JsonToObjectMapping,
         context: AvroParsingContext,
         authChannel: SendChannel<EntityDetails>,
-        authIds: MutableSet<EntityDetails>,
+        defaultProject: String?,
     ): GenericRecord {
         if (!key.isObject) {
             throw invalidContent("Field key must be a JSON object", context)
         }
 
-        val entity = key.toEntityDetails(context)
-        if (authIds.add(entity)) {
-            authChannel.trySend(entity)
-        }
+        authChannel.trySend(key.toEntityDetails(context, defaultProject))
 
         return keyMapping.jsonToAvro(key, context)
     }
@@ -131,15 +134,15 @@ class AvroRecordProcessor(
         return valueMapping.jsonToAvro(value, context)
     }
 
-    private suspend fun JsonNode.toEntityDetails(
+    private fun JsonNode.toEntityDetails(
         context: AvroParsingContext,
+        defaultProject: String?,
     ): EntityDetails {
-        val defaultProject = authService.activeParticipantProject()
         return entityDetails {
-            project = defaultProject
             val jsonProject = get("projectId")
-            if (jsonProject != null) {
-                if (jsonProject.isNull) {
+            project = when {
+                jsonProject == null -> defaultProject
+                jsonProject.isNull -> {
                     // no project ID was provided, fill it in for the sender
                     (this@toEntityDetails as ObjectNode).set<JsonNode>(
                         "projectId",
@@ -147,15 +150,14 @@ class AvroRecordProcessor(
                             put("string", defaultProject)
                         },
                     )
-                } else {
-                    // project ID was provided, it should match one of the validated project IDs.
-                    project = jsonProject["string"]?.asText() ?: throw invalidContent(
-                        "Project ID should be wrapped in string union type",
-                        context,
-                    )
+                    defaultProject
                 }
-            }
-            user = get("userId")?.asText()
+                else -> jsonProject["string"]?.asText() ?: throw invalidContent(
+                    "Project ID should be wrapped in string union type",
+                    context,
+                )
+            } ?: throw invalidContent("Missing project ID", context)
+            subject = get("userId")?.asText()
             if (checkSourceId) {
                 source = get("sourceId")?.asText()
             }
