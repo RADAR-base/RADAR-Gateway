@@ -81,23 +81,23 @@ class AvroRecordProcessor(
         valueMapping: AvroProcessor.JsonToObjectMapping,
         defaultProject: String?,
     ): Pair<GenericRecord, GenericRecord> {
-        val context = AvroParsingContext(Schema.Type.ARRAY, "records[$idx]")
+        val context = avroParsingContext(Schema.Type.ARRAY, "records[$idx]")
         val key = record["key"]
-            ?: throw invalidContent("Missing key field in record", context)
+            ?: throw context.invalidContent("Missing key field in record")
         val value = record["value"]
-            ?: throw invalidContent("Missing value field in record", context)
+            ?: throw context.invalidContent("Missing value field in record")
         return Pair(
             processKey(
                 key,
                 keyMapping,
-                AvroParsingContext(Schema.Type.MAP, "key", context),
+                context.child(Schema.Type.MAP, "key"),
                 authChannel,
                 defaultProject,
             ),
             processValue(
                 value,
                 valueMapping,
-                AvroParsingContext(Schema.Type.MAP, "value", context),
+                context.child(Schema.Type.MAP, "value"),
             ),
         )
     }
@@ -112,7 +112,7 @@ class AvroRecordProcessor(
         defaultProject: String?,
     ): GenericRecord {
         if (!key.isObject) {
-            throw invalidContent("Field key must be a JSON object", context)
+            throw context.invalidContent("Field key must be a JSON object")
         }
 
         authChannel.trySend(key.toEntityDetails(context, defaultProject))
@@ -128,7 +128,7 @@ class AvroRecordProcessor(
         context: AvroParsingContext,
     ): GenericRecord {
         if (!value.isObject) {
-            throw invalidContent("Field value must be a JSON object", context)
+            throw context.invalidContent("Field value must be a JSON object")
         }
 
         return valueMapping.jsonToAvro(value, context)
@@ -152,11 +152,10 @@ class AvroRecordProcessor(
                     )
                     defaultProject
                 }
-                else -> jsonProject["string"]?.asText() ?: throw invalidContent(
+                else -> jsonProject["string"]?.asText() ?: throw context.invalidContent(
                     "Project ID should be wrapped in string union type",
-                    context,
                 )
-            } ?: throw invalidContent("Missing project ID", context)
+            } ?: throw context.invalidContent("Missing project ID")
             subject = get("userId")?.asText()
             if (checkSourceId) {
                 source = get("sourceId")?.asText()
