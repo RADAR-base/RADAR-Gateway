@@ -3,7 +3,8 @@ package org.radarbase.gateway.io
 import org.apache.avro.Schema
 import org.radarbase.jersey.exception.HttpInvalidContentException
 
-fun avroParsingContext(type: Schema.Type, name: String): AvroParsingContext = RootAvroParsingContext(type, name)
+fun avroParsingContext(type: Schema.Type, name: String): AvroParsingContext =
+    RootAvroParsingContext(type, name)
 
 sealed class AvroParsingContext(
     val type: Schema.Type,
@@ -14,7 +15,8 @@ sealed class AvroParsingContext(
 
     override fun toString(): String = toString(null)
 
-    fun child(type: Schema.Type, name: String): AvroParsingContext = ChildAvroParsingContext(type, name, this)
+    fun child(type: Schema.Type, name: String): AvroParsingContext =
+        ChildAvroParsingContext(type, name, this)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
