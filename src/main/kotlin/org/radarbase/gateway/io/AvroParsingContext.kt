@@ -35,7 +35,7 @@ sealed class AvroParsingContext(
     }
 
     fun invalidContent(message: String): HttpInvalidContentException {
-        return HttpInvalidContentException("$message (context ${this})")
+        return HttpInvalidContentException("$message (context $this)")
     }
 }
 

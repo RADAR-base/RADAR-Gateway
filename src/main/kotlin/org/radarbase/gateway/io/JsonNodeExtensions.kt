@@ -9,7 +9,6 @@ import org.apache.avro.generic.GenericFixed
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.jsonDefaultValue
-import org.radarbase.jersey.exception.HttpInvalidContentException
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 

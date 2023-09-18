@@ -46,8 +46,14 @@ class AvroRecordProcessor(
                     records
                         .takeWhile { isActive }
                         .mapIndexed { idx, record ->
-                            mapRecord(idx, record, authChannel, keyMapping, valueMapping,
-                                defaultProject)
+                            mapRecord(
+                                idx,
+                                record,
+                                authChannel,
+                                keyMapping,
+                                valueMapping,
+                                defaultProject,
+                            )
                         }
                 } finally {
                     authChannel.close()
