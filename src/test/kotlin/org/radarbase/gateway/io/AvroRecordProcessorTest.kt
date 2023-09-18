@@ -7,8 +7,7 @@ import org.apache.avro.generic.GenericRecord
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
-import org.radarbase.jersey.auth.disabled.DisabledAuth
-import org.radarbase.producer.rest.AvroDataMapperFactory.IDENTITY_MAPPER
+import org.radarbase.producer.avro.AvroDataMapperFactory.IDENTITY_MAPPER
 import org.radarcns.active.questionnaire.Questionnaire
 import org.radarcns.passive.phone.PhoneBluetoothDevices
 
@@ -18,7 +17,7 @@ internal class AvroRecordProcessorTest {
         val objectMapper = ObjectMapper()
         val processor = AvroRecordProcessor(
             false,
-            DisabledAuth("test"),
+            mockAuthService(),
             objectMapper,
         )
 
@@ -41,7 +40,8 @@ internal class AvroRecordProcessorTest {
                 targetSchemaId = 100,
                 mapper = IDENTITY_MAPPER,
             ),
-            AvroParsingContext(Schema.Type.MAP, "value", AvroParsingContext(Schema.Type.ARRAY, "records[0]")),
+            avroParsingContext(Schema.Type.ARRAY, "records[0]")
+                .child(Schema.Type.MAP, "value"),
         )
 
         assertThat(result.get("time"), `is`(1.0))
@@ -56,7 +56,7 @@ internal class AvroRecordProcessorTest {
         val objectMapper = ObjectMapper()
         val processor = AvroRecordProcessor(
             false,
-            DisabledAuth("test"),
+            mockAuthService(),
             objectMapper,
         )
 
@@ -87,7 +87,8 @@ internal class AvroRecordProcessorTest {
                 targetSchemaId = 101,
                 mapper = IDENTITY_MAPPER,
             ),
-            AvroParsingContext(Schema.Type.MAP, "value", AvroParsingContext(Schema.Type.ARRAY, "records[0]")),
+            avroParsingContext(Schema.Type.ARRAY, "records[0]")
+                .child(Schema.Type.MAP, "value"),
         )
 
         assertThat(result.get("time"), `is`(1.0))

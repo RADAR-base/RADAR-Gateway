@@ -19,7 +19,7 @@ import org.radarbase.jersey.enhancer.JerseyResourceEnhancer
 import org.radarbase.jersey.filter.Filters
 import org.radarbase.jersey.service.HealthService
 import org.radarbase.jersey.service.ProjectService
-import org.radarbase.producer.rest.SchemaRetriever
+import org.radarbase.producer.schema.SchemaRetriever
 
 class GatewayResourceEnhancer(private val config: GatewayConfig) : JerseyResourceEnhancer {
     override val packages: Array<String> = arrayOf(
@@ -81,14 +81,14 @@ class GatewayResourceEnhancer(private val config: GatewayConfig) : JerseyResourc
 
     /** Project service without validation of the project's existence. */
     class UnverifiedProjectService : ProjectService {
-        override fun ensureOrganization(organizationId: String) = Unit
+        override suspend fun ensureOrganization(organizationId: String) = Unit
 
-        override fun ensureProject(projectId: String) = Unit
+        override suspend fun ensureProject(projectId: String) = Unit
 
-        override fun ensureSubject(projectId: String, userId: String) = Unit
+        override suspend fun ensureSubject(projectId: String, userId: String) = Unit
 
-        override fun listProjects(organizationId: String): List<String> = emptyList()
+        override suspend fun listProjects(organizationId: String): List<String> = emptyList()
 
-        override fun projectOrganization(projectId: String): String = "main"
+        override suspend fun projectOrganization(projectId: String): String = "main"
     }
 }
