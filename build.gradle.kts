@@ -96,7 +96,6 @@ application {
     mainClass.set("org.radarbase.gateway.MainKt")
 
     applicationDefaultJvmArgs = listOf(
-        "-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager",
         "-Dcom.sun.management.jmxremote",
         "-Dcom.sun.management.jmxremote.local.only=false",
         "-Dcom.sun.management.jmxremote.port=9010",
