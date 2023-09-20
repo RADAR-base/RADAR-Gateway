@@ -33,13 +33,11 @@ import org.junit.jupiter.api.Test
 import org.radarbase.data.AvroRecordData
 import org.radarbase.gateway.resource.KafkaRootTest.Companion.BASE_URI
 import org.radarbase.gateway.resource.KafkaTopics.Companion.ACCEPT_AVRO_V2_JSON
-import org.radarbase.jersey.auth.filter.AuthenticationFilter.Companion.BEARER
 import org.radarbase.kotlin.coroutines.forkJoin
 import org.radarbase.ktor.auth.OAuth2AccessToken
 import org.radarbase.ktor.auth.bearer
 import org.radarbase.producer.AuthenticationException
 import org.radarbase.producer.io.timeout
-import org.radarbase.producer.rest.AvroContentConverter
 import org.radarbase.producer.rest.ConnectionState
 import org.radarbase.producer.rest.RestKafkaSender.Companion.KAFKA_REST_BINARY_ENCODING
 import org.radarbase.producer.rest.RestKafkaSender.Companion.restKafkaSender
@@ -90,6 +88,14 @@ class KafkaTopicsTest {
             ObservationKey::class.java,
             PhoneAcceleration::class.java,
         )
+        val schemaJobs = listOf(
+            async(Dispatchers.IO) {
+                retriever.addSchema(topic.name, false, topic.keySchema)
+            },
+            async(Dispatchers.IO) {
+                retriever.addSchema(topic.name, true, topic.valueSchema)
+            },
+        )
 
         val time = System.currentTimeMillis() / 1000.0
         val key = ObservationKey(PROJECT, USER, SOURCE)
@@ -103,6 +109,9 @@ class KafkaTopicsTest {
             key,
             value,
         )
+
+        schemaJobs.awaitAll()
+
         // initialize topic and schema
         val restProxyResult = restProxyContext.sendData(
             binary = false,
@@ -249,21 +258,9 @@ class KafkaTopicsTest {
     ): String {
         val sender = restKafkaSender {
             baseUrl = url
+            headers["Authorization"] = "Bearer $accessToken"
             httpClient {
-                headers["Authorization"] = BEARER + accessToken
                 timeout(10.seconds)
-                install(ContentNegotiation) {
-                    val avroConverter = AvroContentConverter(retriever, binary = false)
-
-                    this.register(
-                        KAFKA_ACCEPT_TYPE,
-                        avroConverter,
-                    )
-                    this.register(
-                        KAFKA_CONTENT_TYPE,
-                        avroConverter,
-                    )
-                }
             }
             if (gzip) {
                 contentEncoding = "gzip"
@@ -332,6 +329,5 @@ class KafkaTopicsTest {
         const val ADMIN_PASSWORD = "admin"
         private val KAFKA_JSON_TYPE = ContentType.parse(ACCEPT_AVRO_V2_JSON)
         private val KAFKA_CONTENT_TYPE = ContentType("application", "vnd.kafka.avro.v2+json")
-        private val KAFKA_ACCEPT_TYPE = ContentType("application", "vnd.kafka.v2+json")
     }
 }
