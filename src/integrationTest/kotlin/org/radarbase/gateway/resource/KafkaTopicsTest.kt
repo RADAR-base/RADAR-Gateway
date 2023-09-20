@@ -46,7 +46,9 @@ import org.radarbase.producer.schema.SchemaRetriever.Companion.schemaRetriever
 import org.radarbase.topic.AvroTopic
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
-import java.util.concurrent.atomic.LongAdder
+import kotlin.system.measureNanoTime
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 class KafkaTopicsTest {
@@ -273,37 +275,37 @@ class KafkaTopicsTest {
             schemaRetriever = retriever
         }
 
-        val numRequests = LongAdder()
-        val numTime = LongAdder()
         val recordData = AvroRecordData(topic, key, List(1000) { value })
-        val timeStart = System.nanoTime()
         val numThreads = 1
         val numRepeat = 2
-        (0 until numThreads)
-            .forkJoin {
-                val topicSender = sender.sender(topic)
-                repeat(numRepeat) {
-                    val timeRequestStart = System.nanoTime()
-                    withContext(Dispatchers.IO) {
-                        topicSender.send(recordData)
+        val totalRequestTime: Duration
+
+        val totalWallTime = measureNanoTime {
+            totalRequestTime = (0 until numThreads)
+                .forkJoin {
+                    val topicSender = sender.sender(topic)
+                    (0 until numRepeat).sumOf {
+                        measureNanoTime {
+                            withContext(Dispatchers.IO) {
+                                topicSender.send(recordData)
+                            }
+                        }
                     }
-                    numRequests.increment()
-                    numTime.add(System.nanoTime() - timeRequestStart)
                 }
-            }
+                .sum()
+                .nanoseconds
 
-        assertThat(sender.connectionState.firstOrNull(), `is`(ConnectionState.State.CONNECTED))
-        val timeEnd = System.nanoTime()
+            assertThat(sender.connectionState.firstOrNull(), `is`(ConnectionState.State.CONNECTED))
+        }.nanoseconds
 
-        val totalRequests = numRequests.sum()
-        val timePerRequest = numTime.sum() / (totalRequests * 1_000_000)
-        val totalTime = (timeEnd - timeStart) / 1_000_000_000.0
+        val totalRequests = numThreads * numRepeat
+        val timePerRequest = totalRequestTime / totalRequests
 
         return """
             =============================================
             url: $url, binary: $binary, gzip: $gzip, threads: $numThreads, requests: $totalRequests
-            Time per request $timePerRequest milliseconds
-            Time to send data: $totalTime seconds
+            Time per request $timePerRequest
+            Time to send data: $totalWallTime
         """.trimIndent()
     }
 
