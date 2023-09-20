@@ -21,16 +21,16 @@ class KafkaRootTest {
     @Test
     fun queryRoot() = runBlocking {
         assertThat(
-            httpClient.get(url = Url(BASE_URI)).status,
+            httpClient.get(url = Url("$BASE_URI/")).status,
             equalTo(HttpStatusCode.OK),
         )
         assertThat(
-            httpClient.head(url = Url(BASE_URI)).status,
+            httpClient.head(url = Url("$BASE_URI/")).status,
             equalTo(HttpStatusCode.OK),
         )
     }
 
     companion object {
-        const val BASE_URI = "http://localhost:8092/radar-gateway/"
+        const val BASE_URI = "http://localhost:8092/radar-gateway"
     }
 }

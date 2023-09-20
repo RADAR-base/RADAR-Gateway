@@ -83,13 +83,9 @@ val integrationTest by tasks.registering(Test::class) {
     group = "verification"
     testClassesDirs = integrationTestSourceSet.output.classesDirs
     classpath = integrationTestSourceSet.runtimeClasspath
+    testLogging.showStandardStreams = true
     shouldRunAfter("test")
     outputs.upToDateWhen { false }
-}
-
-tasks.withType<Tar> {
-    compression = Compression.GZIP
-    archiveExtension.set("tar.gz")
 }
 
 application {

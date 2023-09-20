@@ -3,6 +3,7 @@ package org.radarbase.gateway.io
 import io.ktor.http.content.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.jvm.javaio.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.apache.avro.generic.GenericRecordBuilder
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -12,6 +13,7 @@ import org.mockito.kotlin.mock
 import org.radarbase.data.AvroRecordData
 import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.producer.rest.BinaryRecordContent
+import org.radarbase.producer.rest.RestKafkaSender
 import org.radarbase.producer.schema.ParsedSchemaMetadata
 import org.radarbase.producer.schema.SchemaRetriever
 import org.radarbase.topic.AvroTopic
@@ -20,7 +22,7 @@ import org.radarcns.passive.phone.PhoneAcceleration
 
 class BinaryToAvroConverterTest {
     @Test
-    fun testConversion() {
+    fun testConversion() = runBlocking(Dispatchers.Unconfined) {
         val topic = AvroTopic(
             "test",
             ObservationKey.getClassSchema(),
@@ -46,11 +48,9 @@ class BinaryToAvroConverterTest {
             records = requestRecordData,
             keySchemaMetadata = keySchemaMetadata,
             valueSchemaMetadata = valueSchemaMetadata,
-        ).createContent() as OutgoingContent.WriteChannelContent
+        ).createContent(RestKafkaSender.KAFKA_REST_BINARY_ENCODING) as OutgoingContent.WriteChannelContent
 
-        runBlocking {
-            content.writeTo(requestBuffer)
-        }
+        content.writeTo(requestBuffer)
 
         val schemaRetriever = mock<SchemaRetriever> {
             onBlocking { getByVersion("test", false, 1) } doReturn keySchemaMetadata
@@ -79,18 +79,16 @@ class BinaryToAvroConverterTest {
             set("z", 2.4f)
         }.build()
 
-        runBlocking {
-            assertEquals(
-                AvroProcessingResult(
-                    keySchemaId = 1,
-                    valueSchemaId = 2,
-                    records = listOf(
-                        Pair(genericKey, genericValue1),
-                        Pair(genericKey, genericValue2),
-                    ),
+        assertEquals(
+            AvroProcessingResult(
+                keySchemaId = 1,
+                valueSchemaId = 2,
+                records = listOf(
+                    Pair(genericKey, genericValue1),
+                    Pair(genericKey, genericValue2),
                 ),
-                converter.process("test", requestBuffer.toInputStream()),
-            )
-        }
+            ),
+            converter.process("test", requestBuffer.toInputStream()),
+        )
     }
 }

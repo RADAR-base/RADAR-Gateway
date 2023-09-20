@@ -8,4 +8,4 @@ kafka:
     schema.registry.url: http://schema-registry:8081
 
 auth:
-  managementPortalUrl: http://managementportal-app:8080
+  managementPortalUrl: http://managementportal-app:8080/managementportal

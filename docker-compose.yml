@@ -58,8 +58,7 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:postgresql://mp-postgresql:5432/managementportal
+      SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_USERNAME: radarcns
       SPRING_DATASOURCE_PASSWORD: radarcns
       MANAGEMENTPORTAL_FRONTEND_CLIENT_SECRET: "testMe"
@@ -68,16 +67,10 @@ services:
       MANAGEMENTPORTAL_OAUTH_CLIENTS_FILE: /mp-includes/config/oauth_client_details.csv
       MANAGEMENTPORTAL_CATALOGUE_SERVER_ENABLE_AUTO_IMPORT: 'false'
       SERVER_SERVLET_SESSION_COOKIE_SECURE: "false"
+      SERVER_SERVLET_CONTEXT_PATH: /managementportal
       JAVA_OPTS: -Xmx256m  # maximum heap size for the JVM running ManagementPortal, increase this as necessary
     volumes:
       - ./src/integrationTest/docker/etc/:/mp-includes/
-
-  mp-postgresql:
-    image: bitnami/postgresql:15
-    environment:
-      - POSTGRESQL_USERNAME=radarcns
-      - POSTGRESQL_PASSWORD=radarcns
-      - POSTGRESQL_DATABASE=managementportal
 
   gateway:
       build: .

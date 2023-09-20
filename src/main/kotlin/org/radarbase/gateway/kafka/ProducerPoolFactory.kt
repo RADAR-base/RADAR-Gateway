@@ -1,6 +1,7 @@
 package org.radarbase.gateway.kafka
 
 import jakarta.ws.rs.core.Context
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.glassfish.jersey.internal.inject.DisposableSupplier
 import org.radarbase.gateway.config.GatewayConfig
@@ -12,7 +13,7 @@ class ProducerPoolFactory(
 
     override fun dispose(instance: ProducerPool?) {
         instance ?: return
-        runBlocking {
+        runBlocking(Dispatchers.Unconfined) {
             instance.close()
         }
     }

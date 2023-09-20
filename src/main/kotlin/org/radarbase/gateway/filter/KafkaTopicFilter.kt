@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutionException
 @ProcessAvro
 @Priority(Priorities.USER)
 @Singleton
-class KafkaTopicFilter constructor(
+class KafkaTopicFilter(
     @Context private val kafkaAdmin: KafkaAdminService,
 ) : ContainerRequestFilter {
     override fun filter(requestContext: ContainerRequestContext) {
