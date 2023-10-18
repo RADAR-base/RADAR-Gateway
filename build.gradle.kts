@@ -62,7 +62,6 @@ dependencies {
     runtimeOnly("org.glassfish.grizzly:grizzly-http-monitoring:${Versions.grizzly}")
     runtimeOnly("org.glassfish.grizzly:grizzly-http-server-monitoring:${Versions.grizzly}")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:${Versions.junit}")
     testImplementation("org.mockito.kotlin:mockito-kotlin:${Versions.mockitoKotlin}")
     testImplementation("org.hamcrest:hamcrest:${Versions.hamcrest}")
 
@@ -70,8 +69,6 @@ dependencies {
     integrationTestImplementation("io.ktor:ktor-client-content-negotiation")
     integrationTestImplementation("io.ktor:ktor-client-content-negotiation")
     integrationTestImplementation("io.ktor:ktor-serialization-kotlinx-json")
-
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${Versions.junit}")
 
     testImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
     integrationTestImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
