@@ -50,6 +50,10 @@ dependencies {
     implementation("io.confluent:kafka-avro-serializer:${Versions.confluent}")
     implementation("io.confluent:kafka-schema-registry-client:${Versions.confluent}")
 
+    // Fix snyk issue part of confluent dependencies
+    // https://security.snyk.io/vuln/SNYK-JAVA-ORGXERIALSNAPPY-5918282
+    runtimeOnly("org.xerial.snappy:snappy-java:${Versions.snappy}")
+
     implementation(platform("com.fasterxml.jackson:jackson-bom:${Versions.jackson}"))
     implementation("com.fasterxml.jackson.core:jackson-databind")
 
