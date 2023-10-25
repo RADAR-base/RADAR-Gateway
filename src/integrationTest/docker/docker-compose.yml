@@ -77,10 +77,12 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       MANAGEMENTPORTAL_FRONTEND_CLIENT_SECRET: ""
-      MANAGEMENTPORTAL_COMMON_BASE_URL: http://localhost:8080
-      MANAGEMENTPORTAL_COMMON_MANAGEMENT_PORTAL_BASE_URL: http://localhost:8080
+      MANAGEMENTPORTAL_COMMON_BASE_URL: http://localhost:8080/managementportal
+      MANAGEMENTPORTAL_COMMON_MANAGEMENT_PORTAL_BASE_URL: http://localhost:8080/managementportal
       MANAGEMENTPORTAL_OAUTH_CLIENTS_FILE: /mp-includes/config/oauth_client_details.csv
       MANAGEMENTPORTAL_CATALOGUE_SERVER_ENABLE_AUTO_IMPORT: 'false'
+      SERVER_SERVLET_SESSION_COOKIE_SECURE: "false"
+      SERVER_SERVLET_CONTEXT_PATH: /managementportal
       JAVA_OPTS: -Xmx256m  # maximum heap size for the JVM running ManagementPortal, increase this as necessary
     volumes:
       - ./etc/:/mp-includes/

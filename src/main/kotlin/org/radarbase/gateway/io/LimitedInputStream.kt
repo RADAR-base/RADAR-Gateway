@@ -5,7 +5,10 @@ import java.io.InputStream
 import kotlin.math.max
 import kotlin.math.min
 
-internal class LimitedInputStream(private val subStream: InputStream, private val limit: Long) : InputStream() {
+internal class LimitedInputStream(
+    private val subStream: InputStream,
+    private val limit: Long,
+) : InputStream() {
     private var count: Long = 0
 
     override fun available() = min(subStream.available(), (limit - count).toInt())

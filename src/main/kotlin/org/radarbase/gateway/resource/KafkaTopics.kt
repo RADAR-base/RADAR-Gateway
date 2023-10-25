@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.inject.Singleton
 import jakarta.ws.rs.*
+import jakarta.ws.rs.container.AsyncResponse
+import jakarta.ws.rs.container.Suspended
 import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.Response
 import org.radarbase.auth.authorization.Permission.MEASUREMENT_CREATE
@@ -15,6 +17,7 @@ import org.radarbase.gateway.kafka.ProducerPool
 import org.radarbase.jersey.auth.Authenticated
 import org.radarbase.jersey.auth.NeedsPermission
 import org.radarbase.jersey.exception.HttpBadRequestException
+import org.radarbase.jersey.service.AsyncCoroutineService
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
@@ -32,16 +35,22 @@ import java.io.InputStream
 class KafkaTopics(
     @Context private val kafkaAdminService: KafkaAdminService,
     @Context private val producerPool: ProducerPool,
+    @Context private val asyncService: AsyncCoroutineService,
 ) {
     @GET
-    fun topics() = kafkaAdminService.listTopics()
+    fun topics(@Suspended asyncResponse: AsyncResponse) = asyncService.runAsCoroutine(asyncResponse) {
+        kafkaAdminService.listTopics()
+    }
 
     @Authenticated
     @Path("/{topic_name}")
     @GET
     fun topic(
         @PathParam("topic_name") topic: String,
-    ) = kafkaAdminService.topicInfo(topic)
+        @Suspended asyncResponse: AsyncResponse,
+    ) = asyncService.runAsCoroutine(asyncResponse) {
+        kafkaAdminService.topicInfo(topic)
+    }
 
     @Authenticated
     @OPTIONS
@@ -64,13 +73,20 @@ class KafkaTopics(
     @NeedsPermission(MEASUREMENT_CREATE)
     @ProcessAvro
     fun postToTopic(
-        tree: JsonNode,
+        tree: JsonNode?,
         @PathParam("topic_name") topic: String,
         @Context avroProcessor: AvroProcessor,
-    ): TopicPostResponse {
-        val processingResult = avroProcessor.process(topic, tree)
-        producerPool.produce(topic, processingResult.records)
-        return TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
+        @Suspended asyncResponse: AsyncResponse,
+    ) {
+        if (tree == null) {
+            asyncResponse.resume(HttpBadRequestException("missing_body", "Missing contents in body"))
+            return
+        }
+        asyncService.runAsCoroutine(asyncResponse) {
+            val processingResult = avroProcessor.process(topic, tree)
+            producerPool.produce(topic, processingResult.records)
+            TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
+        }
     }
 
     @Authenticated
@@ -80,20 +96,27 @@ class KafkaTopics(
     @Consumes(ACCEPT_BINARY_NON_SPECIFIC, ACCEPT_BINARY_V1)
     @NeedsPermission(MEASUREMENT_CREATE)
     fun postToTopicBinary(
-        input: InputStream,
+        input: InputStream?,
         @Context binaryToAvroConverter: BinaryToAvroConverter,
         @PathParam("topic_name") topic: String,
-    ): TopicPostResponse {
-        val processingResult = try {
-            binaryToAvroConverter.process(topic, input)
-        } catch (ex: IOException) {
-            logger.error("Invalid RecordSet content: {}", ex.toString())
-            throw HttpBadRequestException("bad_content", "Content is not a valid binary RecordSet")
+        @Suspended asyncResponse: AsyncResponse,
+    ) {
+        if (input == null) {
+            asyncResponse.resume(HttpBadRequestException("missing_body", "Missing contents in body"))
+            return
         }
+        asyncService.runAsCoroutine(asyncResponse) {
+            val processingResult = try {
+                binaryToAvroConverter.process(topic, input)
+            } catch (ex: IOException) {
+                logger.error("Invalid RecordSet content: {}", ex.toString())
+                throw HttpBadRequestException("bad_content", "Content is not a valid binary RecordSet")
+            }
 
-        producerPool.produce(topic, processingResult.records)
+            producerPool.produce(topic, processingResult.records)
 
-        return TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
+            TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
+        }
     }
 
     data class TopicPostResponse(

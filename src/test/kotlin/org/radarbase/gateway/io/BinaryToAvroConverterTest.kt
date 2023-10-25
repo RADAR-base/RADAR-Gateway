@@ -1,28 +1,28 @@
 package org.radarbase.gateway.io
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.NullNode
-import okio.Buffer
+import io.ktor.http.content.*
+import io.ktor.utils.io.*
+import io.ktor.utils.io.jvm.javaio.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.apache.avro.generic.GenericRecordBuilder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
-import org.radarbase.auth.authorization.Permission
-import org.radarbase.auth.token.RadarToken
 import org.radarbase.data.AvroRecordData
 import org.radarbase.gateway.config.GatewayConfig
-import org.radarbase.jersey.auth.Auth
-import org.radarbase.producer.rest.BinaryRecordRequest
-import org.radarbase.producer.rest.ParsedSchemaMetadata
-import org.radarbase.producer.rest.SchemaRetriever
+import org.radarbase.producer.rest.BinaryRecordContent
+import org.radarbase.producer.rest.RestKafkaSender
+import org.radarbase.producer.schema.ParsedSchemaMetadata
+import org.radarbase.producer.schema.SchemaRetriever
 import org.radarbase.topic.AvroTopic
 import org.radarcns.kafka.ObservationKey
 import org.radarcns.passive.phone.PhoneAcceleration
 
 class BinaryToAvroConverterTest {
     @Test
-    fun testConversion() {
+    fun testConversion() = runBlocking(Dispatchers.Unconfined) {
         val topic = AvroTopic(
             "test",
             ObservationKey.getClassSchema(),
@@ -42,31 +42,22 @@ class BinaryToAvroConverterTest {
                 PhoneAcceleration(2.0, 2.1, 2.2f, 2.3f, 2.4f),
             ),
         )
-        val binaryRequest = BinaryRecordRequest(topic)
-        binaryRequest.prepare(keySchemaMetadata, valueSchemaMetadata, requestRecordData)
-        val requestBuffer = Buffer()
-        binaryRequest.writeToSink(requestBuffer)
+
+        val requestBuffer = ByteChannel()
+        val content = BinaryRecordContent(
+            records = requestRecordData,
+            keySchemaMetadata = keySchemaMetadata,
+            valueSchemaMetadata = valueSchemaMetadata,
+        ).createContent(RestKafkaSender.KAFKA_REST_BINARY_ENCODING) as OutgoingContent.WriteChannelContent
+
+        content.writeTo(requestBuffer)
 
         val schemaRetriever = mock<SchemaRetriever> {
-            on { getBySubjectAndVersion("test", false, 1) } doReturn keySchemaMetadata
-            on { getBySubjectAndVersion("test", true, 1) } doReturn valueSchemaMetadata
+            onBlocking { getByVersion("test", false, 1) } doReturn keySchemaMetadata
+            onBlocking { getByVersion("test", true, 1) } doReturn valueSchemaMetadata
         }
 
-        val token = mock<RadarToken> {
-            on { hasPermissionOnSource(Permission.MEASUREMENT_CREATE, "p", "u", "s") } doReturn true
-        }
-
-        val auth = object : Auth {
-            override val token: RadarToken = token
-
-            override fun getClaim(name: String): JsonNode = NullNode.getInstance()
-
-            override val defaultProject: String = "p"
-            override val userId: String = "u"
-
-            override fun hasRole(projectId: String, role: String) = true
-        }
-        val converter = BinaryToAvroConverter(schemaRetriever, auth, GatewayConfig())
+        val converter = BinaryToAvroConverter(schemaRetriever, mockAuthService(), GatewayConfig())
 
         val genericKey = GenericRecordBuilder(ObservationKey.getClassSchema()).apply {
             this["projectId"] = "p"
@@ -97,7 +88,7 @@ class BinaryToAvroConverterTest {
                     Pair(genericKey, genericValue2),
                 ),
             ),
-            converter.process("test", requestBuffer.inputStream()),
+            converter.process("test", requestBuffer.toInputStream()),
         )
     }
 }

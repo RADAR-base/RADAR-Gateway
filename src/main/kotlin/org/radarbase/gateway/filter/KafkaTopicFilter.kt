@@ -8,6 +8,7 @@ import jakarta.ws.rs.container.ContainerRequestFilter
 import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.Response
 import jakarta.ws.rs.ext.Provider
+import kotlinx.coroutines.runBlocking
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.gateway.kafka.KafkaAdminService
 import org.radarbase.jersey.exception.HttpApplicationException
@@ -22,20 +23,25 @@ import java.util.concurrent.ExecutionException
 @ProcessAvro
 @Priority(Priorities.USER)
 @Singleton
-class KafkaTopicFilter constructor(
+class KafkaTopicFilter(
     @Context private val kafkaAdmin: KafkaAdminService,
 ) : ContainerRequestFilter {
     override fun filter(requestContext: ContainerRequestContext) {
         val topic = requestContext.uriInfo.pathParameters.getFirst("topic_name")
 
-        try {
-            // topic exists or exists after an update
-            if (!kafkaAdmin.containsTopic(topic)) {
-                throw HttpNotFoundException("not_found", "Topic $topic not present in Kafka.")
+        runBlocking {
+            try {
+                // topic exists or exists after an update
+                if (!kafkaAdmin.containsTopic(topic)) {
+                    throw HttpNotFoundException("not_found", "Topic $topic not present in Kafka.")
+                }
+            } catch (ex: ExecutionException) {
+                logger.error("Failed to list topics", ex)
+                throw HttpApplicationException(
+                    Response.Status.SERVICE_UNAVAILABLE,
+                    "Cannot complete topic list operation",
+                )
             }
-        } catch (ex: ExecutionException) {
-            logger.error("Failed to list topics", ex)
-            throw HttpApplicationException(Response.Status.SERVICE_UNAVAILABLE, "Cannot complete topic list operation")
         }
     }
 

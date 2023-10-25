@@ -18,7 +18,7 @@ import org.radarbase.gateway.inject.ProcessAvro
 @Singleton
 @Priority(Priorities.ENTITY_CODER + 100)
 class SizeLimitInterceptor(@Context private val config: GatewayConfig) : ReaderInterceptor {
-    override fun aroundReadFrom(context: ReaderInterceptorContext): Any {
+    override fun aroundReadFrom(context: ReaderInterceptorContext): Any? {
         context.inputStream = LimitedInputStream(context.inputStream, config.server.maxRequestSize)
         return context.proceed()
     }

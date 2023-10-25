@@ -1,74 +1,35 @@
 package org.radarbase.gateway.io
 
-import org.apache.avro.Schema
+import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream
+import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.io.BinaryDecoder
+import org.apache.avro.io.Decoder
+import org.apache.avro.io.DecoderFactory
 import org.radarbase.data.RecordData
-import org.radarbase.jersey.auth.Auth
-import org.radarbase.producer.rest.ParsedSchemaMetadata
-import org.radarbase.producer.rest.SchemaRetriever
+import org.radarbase.jersey.exception.HttpInvalidContentException
 import org.radarbase.topic.AvroTopic
+import java.io.IOException
+import java.nio.ByteBuffer
 
 class DecodedRecordData(
-    topicName: String,
     private val decoder: BinaryDecoder,
-    schemaRetriever: SchemaRetriever,
-    auth: Auth,
-    private val readContext: BinaryToAvroConverter.ReadContext,
-    checkSources: Boolean,
+    @Volatile
+    private var size: Int,
+    override val topic: AvroTopic<GenericRecord, GenericRecord>,
+    override val key: GenericRecord,
+    private val valueReader: GenericDatumReader<GenericRecord>,
 ) : RecordData<GenericRecord, GenericRecord> {
+    private var remaining: Int = size
+    private var buffer: ByteBuffer? = null
+    private var valueDecoder: BinaryDecoder? = null
 
-    private val key: GenericRecord
-    private var size: Int
-    private var remaining: Int
-    private val topic: AvroTopic<GenericRecord, GenericRecord>
+    override val sourceId: String?
+        get() = key.schema.getField("sourceId")
+            ?.let { key.get(it.pos()).toString() }
 
-    val keySchemaMetadata: ParsedSchemaMetadata
-    val valueSchemaMetadata: ParsedSchemaMetadata
-
-    init {
-        val keyVersion = decoder.readInt()
-        val valueVersion = decoder.readInt()
-        val authId = AuthId(
-            projectId = if (decoder.readIndex() == 1) decoder.readString() else auth.defaultProject,
-            userId = if (decoder.readIndex() == 1) decoder.readString() else auth.userId,
-            sourceId = decoder.readString(),
-        )
-        authId.checkPermission(auth, checkSources, topicName)
-
-        remaining = decoder.readArrayStart().toInt()
-        size = remaining
-
-        keySchemaMetadata = schemaRetriever.getBySubjectAndVersion(topicName, false, keyVersion)
-        valueSchemaMetadata = schemaRetriever.getBySubjectAndVersion(topicName, true, valueVersion)
-
-        topic = AvroTopic(
-            topicName,
-            keySchemaMetadata.schema,
-            valueSchemaMetadata.schema,
-            GenericRecord::class.java,
-            GenericRecord::class.java,
-        )
-
-        key = createKey(keySchemaMetadata.schema, authId)
-        readContext.init(valueSchemaMetadata.schema)
-    }
-
-    private fun createKey(
-        schema: Schema,
-        authId: AuthId,
-    ): GenericRecord {
-        return GenericRecordBuilder(schema).apply {
-            schema.getField("projectId")?.let { set(it, authId.projectId) }
-            schema.getField("userId")?.let { set(it, authId.userId) }
-            schema.getField("sourceId")?.let { set(it, authId.sourceId) }
-        }.build()
-    }
-
-    override fun getKey() = key
-
-    override fun isEmpty() = size == 0
+    override val isEmpty: Boolean
+        get() = size == 0
 
     override fun iterator(): MutableIterator<GenericRecord> {
         check(remaining != 0) { "Cannot read decoded record data twice." }
@@ -79,7 +40,7 @@ class DecodedRecordData(
             override fun next(): GenericRecord {
                 if (!hasNext()) throw NoSuchElementException()
 
-                val result = readContext.decodeValue(decoder)
+                val result = decodeValue(decoder)
                 remaining--
                 if (remaining == 0) {
                     remaining = decoder.arrayNext().toInt()
@@ -94,7 +55,18 @@ class DecodedRecordData(
         }
     }
 
-    override fun size() = size
+    private fun decodeValue(decoder: Decoder): GenericRecord {
+        try {
+            buffer = decoder.readBytes(buffer)
+            return ByteBufferBackedInputStream(buffer).use { input ->
+                valueDecoder = DecoderFactory.get().binaryDecoder(input, valueDecoder)
+                valueReader.read(null, valueDecoder)
+                    ?: throw HttpInvalidContentException("No record in data")
+            }
+        } catch (ex: IOException) {
+            throw HttpInvalidContentException("Malformed record contents: ${ex.message}")
+        }
+    }
 
-    override fun getTopic() = topic
+    override fun size() = size
 }
