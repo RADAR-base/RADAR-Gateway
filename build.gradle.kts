@@ -24,7 +24,7 @@ radarKotlin {
     slf4jVersion.set(Versions.slf4j)
 }
 
-val integrationTestSourceSet = sourceSets.create("integrationTest") {
+val integrationTestSourceSet: SourceSet = sourceSets.create("integrationTest") {
     compileClasspath += sourceSets.main.get().output
     runtimeClasspath += sourceSets.main.get().output
 }
