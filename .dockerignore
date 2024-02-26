@@ -1,5 +1,5 @@
-/src/integrationTest
-/src/test
+/radar-gateway/src/integrationTest
+/radar-gateway/src/test
 /build
 /out
 /.git
