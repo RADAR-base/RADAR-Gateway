@@ -89,7 +89,7 @@ services:
 
   gateway:
     build:
-      context: ../../..
+      context: ../../../..
     image: radarbase/radar-gateway:${RADAR_GATEWAY_TAG}
     depends_on:
       - kafka-1
