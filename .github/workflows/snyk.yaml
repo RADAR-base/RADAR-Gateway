@@ -1,8 +1,7 @@
 name: Snyk test
 on:
   pull_request:
-    branches:
-      - main
+    branches: [ main, dev ]
 
 jobs:
   security:
