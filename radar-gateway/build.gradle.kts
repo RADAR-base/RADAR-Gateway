@@ -94,4 +94,3 @@ dependencies {
     integrationTestImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
     integrationTestImplementation("org.radarbase:radar-commons-testing:${Versions.radarCommons}")
 }
-
