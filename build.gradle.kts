@@ -9,16 +9,17 @@ plugins {
     id("com.avast.gradle.docker-compose") version Versions.dockerCompose apply false
 }
 
+repositories {
+    // Use jcenter for resolving dependencies.
+    // You can declare any Maven/Ivy/file repository here.
+    mavenCentral()
+}
+
 radarRootProject {
     projectVersion.set(Versions.project)
 }
 
-configure(
-    listOf(
-        project(":radar-gateway"),
-    )
-)
-{
+subprojects {
     apply(plugin = "org.radarbase.radar-kotlin")
 
     radarKotlin {

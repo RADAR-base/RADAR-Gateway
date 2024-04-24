@@ -17,18 +17,19 @@ WORKDIR /code
 ENV GRADLE_USER_HOME=/code/.gradlecache \
    GRADLE_OPTS="-Djdk.lang.Process.launchMechanism=vfork -Dorg.gradle.vfs.watch=false"
 
-COPY radar-gateway/build.gradle.kts settings.gradle.kts gradle.properties /code/
-COPY buildSrc /code/buildSrc
+COPY ./buildSrc /code/buildSrc
+COPY ./build.gradle.kts ./settings.gradle.kts ./gradle.properties /code/
+COPY radar-gateway/build.gradle.kts /code/radar-gateway/
 
 RUN gradle downloadDependencies copyDependencies startScripts
 
-COPY radar-gateway/src/ /code/src
+COPY radar-gateway/src/ /code/radar-gateway/src
 
 RUN gradle jar
 
 FROM eclipse-temurin:17-jre
 
-MAINTAINER @blootsvoets
+MAINTAINER @bdegraaf1234
 
 LABEL description="RADAR-base Gateway docker container"
 
@@ -36,9 +37,9 @@ LABEL description="RADAR-base Gateway docker container"
 ENV JAVA_OPTS="" \
     RADAR_GATEWAY_OPTS=""
 
-COPY --from=builder /code/build/scripts/* /usr/bin/
-COPY --from=builder /code/build/third-party/* /usr/lib/
-COPY --from=builder /code/build/libs/*.jar /usr/lib/
+COPY --from=builder /code/radar-gateway/build/scripts/* /usr/bin/
+COPY --from=builder /code/radar-gateway/build/third-party/* /usr/lib/
+COPY --from=builder /code/radar-gateway/build/libs/*.jar /usr/lib/
 
 USER 101
 

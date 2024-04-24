@@ -1,4 +1,4 @@
-rootProject.name = "radar-gateway-root"
+rootProject.name = "radar-gateway"
 
 include(":radar-gateway")
 
@@ -13,4 +13,3 @@ pluginManagement {
         }
     }
 }
-
