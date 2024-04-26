@@ -2,6 +2,7 @@ import java.time.Duration
 
 plugins {
     application
+    kotlin("plugin.serialization") version Versions.kotlin
     id("com.avast.gradle.docker-compose") version Versions.dockerCompose
 }
 
