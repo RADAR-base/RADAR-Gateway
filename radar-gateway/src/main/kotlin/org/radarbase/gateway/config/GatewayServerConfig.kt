@@ -4,7 +4,7 @@ import java.net.URI
 
 data class GatewayServerConfig(
     /** Base URL to serve data with. This will determine the base path and the port. */
-    val baseUri: URI = URI.create("http://0.0.0.0:8090/radar-gateway/"),
+    val baseUri: URI = URI.create("http://0.0.0.0:8090/kafka/"),
     /** Maximum number of simultaneous requests. */
     val maxRequests: Int = 200,
     /**

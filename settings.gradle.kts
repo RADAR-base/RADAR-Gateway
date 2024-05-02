@@ -1,5 +1,7 @@
 rootProject.name = "radar-gateway"
 
+include(":radar-gateway")
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
