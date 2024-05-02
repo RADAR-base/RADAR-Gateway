@@ -37,7 +37,9 @@ fun mockAuthService() = AuthService(
             grantType = "refresh_token",
         )
     },
+
     projectService = MockProjectService(mapOf("main" to listOf("p"))),
+
     asyncService = object : AsyncCoroutineService {
         override fun <T> runAsCoroutine(
             asyncResponse: AsyncResponse,
@@ -54,6 +56,8 @@ fun mockAuthService() = AuthService(
         override suspend fun <T> runInRequestScope(block: () -> T): T = block()
 
         override suspend fun <T> suspendInRequestScope(block: (CancellableContinuation<T>) -> Unit): T = suspendCancellableCoroutine { block(it) }
+
+        override suspend fun <T> withContext(name: String, block: suspend () -> T): T = block()
     },
 )
 

@@ -66,7 +66,7 @@ services:
       SERVER_SERVLET_CONTEXT_PATH: /managementportal
       JAVA_OPTS: -Xmx256m  # maximum heap size for the JVM running ManagementPortal, increase this as necessary
     volumes:
-      - ./src/integrationTest/docker/etc/:/mp-includes/
+      - ./radar-gateway/src/integrationTest/docker/etc/:/mp-includes/
 
   gateway:
       build: .
