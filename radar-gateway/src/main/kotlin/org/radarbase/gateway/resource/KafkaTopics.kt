@@ -73,14 +73,20 @@ class KafkaTopics(
     @NeedsPermission(MEASUREMENT_CREATE)
     @ProcessAvro
     fun postToTopic(
-        tree: JsonNode,
+        tree: JsonNode?,
         @PathParam("topic_name") topic: String,
         @Context avroProcessor: AvroProcessor,
         @Suspended asyncResponse: AsyncResponse,
-    ) = asyncService.runAsCoroutine(asyncResponse) {
-        val processingResult = avroProcessor.process(topic, tree)
-        producerPool.produce(topic, processingResult.records)
-        TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
+    ) {
+        if (tree == null) {
+            asyncResponse.resume(HttpBadRequestException("missing_body", "Missing contents in body"))
+            return
+        }
+        asyncService.runAsCoroutine(asyncResponse) {
+            val processingResult = avroProcessor.process(topic, tree)
+            producerPool.produce(topic, processingResult.records)
+            TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
+        }
     }
 
     @Authenticated
@@ -90,21 +96,27 @@ class KafkaTopics(
     @Consumes(ACCEPT_BINARY_NON_SPECIFIC, ACCEPT_BINARY_V1)
     @NeedsPermission(MEASUREMENT_CREATE)
     fun postToTopicBinary(
-        input: InputStream,
+        input: InputStream?,
         @Context binaryToAvroConverter: BinaryToAvroConverter,
         @PathParam("topic_name") topic: String,
         @Suspended asyncResponse: AsyncResponse,
-    ) = asyncService.runAsCoroutine(asyncResponse) {
-        val processingResult = try {
-            binaryToAvroConverter.process(topic, input)
-        } catch (ex: IOException) {
-            logger.error("Invalid RecordSet content: {}", ex.toString())
-            throw HttpBadRequestException("bad_content", "Content is not a valid binary RecordSet")
+    ) {
+        if (input == null) {
+            asyncResponse.resume(HttpBadRequestException("missing_body", "Missing contents in body"))
+            return
         }
+        asyncService.runAsCoroutine(asyncResponse) {
+            val processingResult = try {
+                binaryToAvroConverter.process(topic, input)
+            } catch (ex: IOException) {
+                logger.error("Invalid RecordSet content: {}", ex.toString())
+                throw HttpBadRequestException("bad_content", "Content is not a valid binary RecordSet")
+            }
 
-        producerPool.produce(topic, processingResult.records)
+            producerPool.produce(topic, processingResult.records)
 
-        TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
+            TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
+        }
     }
 
     data class TopicPostResponse(

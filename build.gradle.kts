@@ -9,11 +9,7 @@ plugins {
     id("com.avast.gradle.docker-compose") version Versions.dockerCompose apply false
 }
 
-repositories {
-    // Use jcenter for resolving dependencies.
-    // You can declare any Maven/Ivy/file repository here.
-    mavenCentral()
-}
+description = "RADAR Gateway to handle secured data flow to backend."
 
 radarRootProject {
     projectVersion.set(Versions.project)
