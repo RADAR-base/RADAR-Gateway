@@ -160,18 +160,14 @@ class KafkaTopicsTest {
             assertThat(response.status, equalTo(HttpStatusCode.OK))
         }
 
-        httpClient.get("$BASE_URI/topics").let { response ->
-            assertThat(response.status, equalTo(HttpStatusCode.Unauthorized))
-        }
-
-        httpClient.get("$BASE_URI/topics").let { response ->
-            assertThat(response.status, equalTo(HttpStatusCode.Unauthorized))
-        }
-
         httpClient.head("$BASE_URI/topics").let { response ->
             assertThat(response.status, equalTo(HttpStatusCode.Unauthorized))
         }
 
+        httpClient.get("$BASE_URI/topics").let { response ->
+            assertThat(response.status, equalTo(HttpStatusCode.Unauthorized))
+        }
+
         httpClient.post("$BASE_URI/topics/test") {
             bearer(gatewayContext.accessToken)
             setBody("{}")
@@ -182,10 +178,10 @@ class KafkaTopicsTest {
 
         httpClient.post("$BASE_URI/topics/test") {
             bearer(gatewayContext.accessToken)
-            setBody("{}")
+            setBody("")
             contentType(ContentType.Application.Json)
         }.let { response ->
-            assertThat(response.status, equalTo(HttpStatusCode.UnprocessableEntity))
+            assertThat(response.status, equalTo(HttpStatusCode.BadRequest))
         }
 
         httpClient.post("$BASE_URI/topics/test") {
