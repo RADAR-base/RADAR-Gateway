@@ -1,8 +1,8 @@
 package org.radarbase.gateway.io
 
-import io.ktor.http.content.*
-import io.ktor.utils.io.*
-import io.ktor.utils.io.jvm.javaio.*
+import io.ktor.http.content.OutgoingContent
+import io.ktor.utils.io.ByteChannel
+import io.ktor.utils.io.jvm.javaio.toInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.apache.avro.generic.GenericRecordBuilder

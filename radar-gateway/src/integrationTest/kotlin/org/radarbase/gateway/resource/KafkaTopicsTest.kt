@@ -78,7 +78,7 @@ class KafkaTopicsTest {
         }
 
         val retriever = schemaRetriever(SCHEMA_REGISTRY_URL) {
-            httpClient {
+            httpClient = HttpClient(CIO) {
                 timeout(10.seconds)
             }
         }
