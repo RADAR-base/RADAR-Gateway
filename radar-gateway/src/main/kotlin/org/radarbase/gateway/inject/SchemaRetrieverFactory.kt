@@ -3,9 +3,11 @@ package org.radarbase.gateway.inject
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig.USER_INFO_CONFIG
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_USER_INFO_CONFIG
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.auth.*
-import io.ktor.client.plugins.auth.providers.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.BasicAuthCredentials
+import io.ktor.client.plugins.auth.providers.basic
 import jakarta.ws.rs.core.Context
 import org.radarbase.config.ServerConfig
 import org.radarbase.gateway.config.GatewayConfig
@@ -32,20 +34,18 @@ class SchemaRetrieverFactory(
                 ?: config.kafka.serialization[USER_INFO_CONFIG].asNonEmptyString()
 
         return schemaRetriever(baseUrl = server.urlString) {
-            httpClient {
+            httpClient = HttpClient(CIO) {
+                timeout(30.seconds)
                 if (basicCredentials != null && basicCredentials.contains(':')) {
+                    val (apiKey, apiSecret) = basicCredentials.split(':', limit = 2)
                     install(Auth) {
                         basic {
+                            sendWithoutRequest { true }
                             credentials {
-                                val (username, password) = basicCredentials.split(':', limit = 2)
-                                BasicAuthCredentials(
-                                    username = username,
-                                    password = password,
-                                )
+                                BasicAuthCredentials(username = apiKey, password = apiSecret)
                             }
                         }
                     }
-                    timeout(30.seconds)
                 }
             }
         }

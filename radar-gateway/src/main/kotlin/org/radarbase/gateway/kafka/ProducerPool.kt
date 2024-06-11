@@ -14,7 +14,12 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.common.KafkaException
-import org.apache.kafka.common.errors.*
+import org.apache.kafka.common.errors.AuthenticationException
+import org.apache.kafka.common.errors.AuthorizationException
+import org.apache.kafka.common.errors.OutOfOrderSequenceException
+import org.apache.kafka.common.errors.ProducerFencedException
+import org.apache.kafka.common.errors.SerializationException
+import org.apache.kafka.common.errors.TimeoutException
 import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.jersey.exception.HttpApplicationException
 import org.radarbase.jersey.exception.HttpBadGatewayException
