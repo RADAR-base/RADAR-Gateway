@@ -12,7 +12,11 @@ import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.AvroProcessorFactory
 import org.radarbase.gateway.io.BinaryToAvroConverter
 import org.radarbase.gateway.io.LzfseEncoder
-import org.radarbase.gateway.kafka.*
+import org.radarbase.gateway.kafka.KafkaAdminService
+import org.radarbase.gateway.kafka.KafkaAdminServiceFactory
+import org.radarbase.gateway.kafka.KafkaHealthMetric
+import org.radarbase.gateway.kafka.ProducerPool
+import org.radarbase.gateway.kafka.ProducerPoolFactory
 import org.radarbase.gateway.service.SchedulingService
 import org.radarbase.gateway.service.SchedulingServiceFactory
 import org.radarbase.jersey.enhancer.JerseyResourceEnhancer
