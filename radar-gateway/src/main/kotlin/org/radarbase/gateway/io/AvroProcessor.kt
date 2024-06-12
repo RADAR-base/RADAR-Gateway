@@ -132,7 +132,7 @@ class AvroProcessor(
                                     "Schema ID not found in subject",
                                 )
                             } else {
-                                throw HttpBadGatewayException("cannot get data from schema registry: ${ex.javaClass.simpleName}")
+                                throw HttpBadGatewayException("cannot get data from schema registry: $ex")
                             }
                         }
                         createMapping(topic, ofValue, parsedSchema.schema)
