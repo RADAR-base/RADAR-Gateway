@@ -85,9 +85,9 @@ dependencies {
 
     testImplementation("org.mockito.kotlin:mockito-kotlin:${Versions.mockitoKotlin}")
     testImplementation("org.hamcrest:hamcrest:${Versions.hamcrest}")
+    testImplementation("com.squareup.okhttp3:mockwebserver:${Versions.okHttp}")
 
     integrationTestImplementation(platform("io.ktor:ktor-bom:${Versions.ktor}"))
-    integrationTestImplementation("io.ktor:ktor-client-content-negotiation")
     integrationTestImplementation("io.ktor:ktor-client-content-negotiation")
     integrationTestImplementation("io.ktor:ktor-serialization-kotlinx-json")
 
