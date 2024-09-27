@@ -40,3 +40,44 @@ Finally, the gateway accepts a custom binary format for data ingestion. The data
 [REST Proxy documentation]: https://docs.confluent.io/current/kafka-rest/api.html
 [RADAR-Auth]: https://github.com/RADAR-base/ManagementPortal/tree/master/radar-auth
 [ManagementPortal]: https://github.com/RADAR-base/ManagementPortal
+
+## Flow
+
+The gateway is a simple component which forwards requests to Kafka. It requires an access token with `MEASUREMENT.CREATE` scope for the `res_gateway` resource. The flow is as follows:
+
+### Initialization
+
+Initialization is limited to startup of the container and loading/validating configurations such as the Kafka configuration and the RADAR-Auth configuration.
+
+```mermaid
+sequenceDiagram
+    participant gateway as RADAR-Gateway
+    
+    gateway ->> gateway: Verify Auth configuration
+    gateway ->> gateway: Verify Kafka configuration
+    gateway ->> gateway: Start server
+```
+
+### Regular operation
+
+Data ingestion is done by posting data to the gateway. The gateway will validate the data and forward it to Kafka, after optional decompressing
+
+```mermaid
+sequenceDiagram
+    participant subject as Subject-App
+    
+    participant gateway as RADAR-Gateway
+    participant auth as RADAR-Auth
+    participant schemas as Schema-Registry
+    participant kafka as Kafka
+
+
+    subject -->> gateway: Post data to /topics/<topic> with access token
+    gateway -->> auth: Validate token
+    gateway -->> schemas: Get schema
+    gateway -->> gateway: Validate data using schema
+    gateway -->> gateway: Decompress data (optional)
+    gateway -->> kafka: Send data
+    kafka -->> gateway: 200 OK
+    gateway -->> subject: 200 OK
+```
