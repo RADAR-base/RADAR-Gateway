@@ -19,6 +19,7 @@ class EcdsaJwtEnhancerFactory(private val config: GatewayConfig) : EnhancerFacto
             jwtKeystoreAlias = config.auth.keyStore.alias,
             jwtKeystorePassword = config.auth.keyStore.password,
             jwtKeystorePath = config.auth.keyStore.path.toString(),
+            jwksUrls = config.auth.publicKeyUrls ?: emptyList(),
         )
         return listOf(
             GatewayResourceEnhancer(config),

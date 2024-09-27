@@ -21,11 +21,13 @@ data class AuthConfig(
     val keyStore: KeyStoreConfig = KeyStoreConfig(),
     /** Public keys for checking the digital signature of OAuth 2.0 JWTs. */
     val publicKeys: KeyConfig = KeyConfig(),
+    /** Public key URLs for checking the digital signature of OAuth 2.0 JWTs. */
+    val publicKeyUrls: List<String>? = null,
 ) {
     fun validate() {
         keyStore.validate()
-        check(managementPortalUrl != null || keyStore.isConfigured || publicKeys.isConfigured) {
-            "At least one of auth.keyStore, auth.publicKeys or auth.managementPortalUrl must be configured"
+        check(managementPortalUrl != null || keyStore.isConfigured || publicKeys.isConfigured || !publicKeyUrls.isNullOrEmpty()) {
+            "At least one of auth.keyStore, auth.publicKeys, auth.publicKeyUrls or auth.managementPortalUrl must be configured"
         }
     }
 }
