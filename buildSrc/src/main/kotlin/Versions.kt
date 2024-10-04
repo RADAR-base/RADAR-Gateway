@@ -8,10 +8,9 @@ object Versions {
 
     const val ktor = "2.3.10"
     const val radarJersey = "0.11.1"
-    const val radarCommons = "1.1.2"
+    const val radarCommons = "1.1.3"
     const val radarSchemas = "0.8.9"
     const val jackson = "2.15.3"
-    const val slf4j = "2.0.13"
     const val log4j2 = "2.23.1"
     const val lzfse = "0.1.1"
     const val radarAuth = "2.1.1"
