@@ -15,7 +15,7 @@ object Versions {
     const val log4j2 = "2.23.1"
     const val lzfse = "0.1.1"
     const val radarAuth = "2.1.1"
-    const val avro = "1.11.3"
+    const val avro = "1.11.4"
     const val confluent = "7.6.0"
     const val kafka = "$confluent-ce"
 
