@@ -16,6 +16,7 @@ class ManagementPortalEnhancerFactory(private val config: GatewayConfig) : Enhan
             ),
             jwtResourceName = config.auth.resourceName,
             jwtIssuer = config.auth.issuer,
+            jwksUrls = config.auth.publicKeyUrls ?: emptyList(),
         )
         return listOf(
             GatewayResourceEnhancer(config),

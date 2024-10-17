@@ -53,3 +53,5 @@ auth:
         #ecdsa: []
         # RSA public keys
         #rsa: []
+    # jwks URLs to fetch public keys from
+    #publicKeyUrls: []
