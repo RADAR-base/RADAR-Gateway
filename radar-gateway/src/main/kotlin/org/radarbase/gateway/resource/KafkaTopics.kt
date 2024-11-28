@@ -91,7 +91,6 @@ class KafkaTopics(
         tree: JsonNode?,
         @PathParam("topic_name") topic: String,
         @Context avroProcessor: AvroProcessor,
-        @Context config: GatewayConfig,
         @Suspended asyncResponse: AsyncResponse,
     ) {
         if (tree == null) {
@@ -115,7 +114,6 @@ class KafkaTopics(
         input: InputStream?,
         @Context binaryToAvroConverter: BinaryToAvroConverter,
         @PathParam("topic_name") topic: String,
-        @Context config: GatewayConfig,
         @Suspended asyncResponse: AsyncResponse,
     ) {
         if (input == null) {
