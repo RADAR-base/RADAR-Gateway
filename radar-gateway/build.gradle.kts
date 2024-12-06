@@ -3,6 +3,7 @@ import java.time.Duration
 plugins {
     application
     kotlin("plugin.serialization") version Versions.kotlin
+    id("org.radarbase.radar-kotlin") version Versions.radarCommons
     id("com.avast.gradle.docker-compose") version Versions.dockerCompose
 }
 
@@ -94,4 +95,10 @@ dependencies {
     testImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
     integrationTestImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
     integrationTestImplementation("org.radarbase:radar-commons-testing:${Versions.radarCommons}")
+}
+
+radarKotlin {
+    javaVersion.set(Versions.java)
+    log4j2Version.set(Versions.log4j2)
+    sentryEnabled.set(true)
 }

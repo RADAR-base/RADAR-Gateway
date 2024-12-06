@@ -79,3 +79,8 @@ services:
         - "127.0.0.1:8090:8090"
       volumes:
         - ./gateway.yml:/etc/radar-gateway/gateway.yml
+      # environment:
+      #   SENTRY_LOG_LEVEL: 'ERROR'
+      #   SENTRY_DSN: 'https://000000000000.ingest.de.sentry.io/000000000000'
+      #   SENTRY_ATTACHSTACKTRACE: true
+      #   SENTRY_STACKTRACE_APP_PACKAGES: org.radarbase.gateway
