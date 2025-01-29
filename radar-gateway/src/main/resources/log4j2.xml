@@ -17,7 +17,7 @@
   ~  */
   -->
 
-<configuration status="INFO">
+<configuration status="WARN">
     <appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout
