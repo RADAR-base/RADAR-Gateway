@@ -1,9 +1,30 @@
 package org.radarbase.gateway.config
 
+import org.radarbase.gateway.utils.Env.S3_ACCESS_KEY
+import org.radarbase.gateway.utils.Env.S3_BUCKET_NAME
+import org.radarbase.gateway.utils.Env.S3_SECRET_KEY
+import org.radarbase.gateway.utils.Env.S3_SERVICE_URL
+
 data class S3StorageConfig(
-    val url: String = "http://localhost:9000",
-    val accessKey: String = "access-key",
-    val secretKey: String = "secret-key",
-    val bucketName: String = "radar",
-    val path: S3StoragePathConfig = S3StoragePathConfig(),
-)
+    var url: String? = null,
+    var accessKey: String? = null,
+    var secretKey: String? = null,
+    var bucketName: String? = null,
+    var path: S3StoragePathConfig = S3StoragePathConfig(),
+) {
+    fun checkEnvironmentVars() {
+        url ?: run {
+            url = System.getenv(S3_SERVICE_URL)
+        }
+        accessKey ?: run {
+            accessKey = System.getenv(S3_ACCESS_KEY)
+        }
+        secretKey ?: run {
+            secretKey = System.getenv(S3_SECRET_KEY)
+        }
+        bucketName ?: run {
+            bucketName = System.getenv(S3_BUCKET_NAME)
+        }
+        path.checkEnvironmentVars()
+    }
+}

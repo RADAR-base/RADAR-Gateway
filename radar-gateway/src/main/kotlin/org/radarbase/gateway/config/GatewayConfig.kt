@@ -28,4 +28,8 @@ data class GatewayConfig(
         kafka.validate()
         auth.validate()
     }
+
+    fun checkEnvironmentVars() {
+        s3.checkEnvironmentVars()
+    }
 }
