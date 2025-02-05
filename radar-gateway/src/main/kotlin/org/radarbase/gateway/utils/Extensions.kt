@@ -1,5 +1,6 @@
 package org.radarbase.gateway.utils
 
+import org.radarbase.gateway.exception.InvalidFileDetailsException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -25,4 +26,19 @@ fun <T: CharSequence?>requireNotNullAndBlank(data: T, message: () -> String): T 
         return data
     }
     throw IllegalArgumentException(message())
+}
+
+/**
+ * Ensures that all elements in the given list are non-null and not blank.
+ *
+ * @param names The list of strings to validate.
+ * @param lazyMessage A lambda function that provides the error message if validation fails.
+ * @throws InvalidFileDetailsException If any element in the list is null or blank.
+ */
+@OptIn(ExperimentalContracts::class)
+fun requiresListNonNullOrBlank(names: List<String?>, lazyMessage: () -> String) {
+
+    if (names.any { it.isNullOrBlank() }) {
+        throw InvalidFileDetailsException(lazyMessage())
+    }
 }
