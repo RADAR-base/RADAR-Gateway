@@ -30,14 +30,14 @@ class S3StorageService(
         }
 
         try {
-            val filePath = StoragePath.builder()
-                .prefix(s3StorageConfig.path.prefix)
-                .projectId(projectId!!)
-                .subjectId(subjectId!!)
-                .topicId(topicId!!)
-                .collectPerDay(s3StorageConfig.path.collectPerDay)
-                .filename(filename!!)
-                .build()
+            val filePath = StoragePath(
+                prefix = s3StorageConfig.path.prefix ?: "",
+                projectId = projectId!!,
+                subjectId = subjectId!!,
+                topicId = topicId!!,
+                collectPerDay = s3StorageConfig.path.collectPerDay,
+                filename = filename!!,
+            )
 
             logger.debug("Attempt storing file at path: {}", filePath.fullPath)
 

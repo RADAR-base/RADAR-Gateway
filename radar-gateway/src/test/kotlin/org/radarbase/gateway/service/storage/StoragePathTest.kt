@@ -19,12 +19,12 @@ class StoragePathTest {
 
     @Test
     fun minimalValidPath() {
-        val path = StoragePath.builder()
-            .filename(FILENAME)
-            .projectId(PROJECT_ID)
-            .subjectId(SUBJECT_ID)
-            .topicId(TOPIC_ID)
-            .build()
+        val path = StoragePath(
+            filename = FILENAME,
+            projectId = PROJECT_ID,
+            subjectId = SUBJECT_ID,
+            topicId = TOPIC_ID,
+        )
 
         assertTrue(path.fullPath.matches(Regex("project1/subjectA/topicX/[0-9]+_[a-z0-9-]+\\.txt")))
         assertTrue(path.pathInTopicDirectory.matches(Regex(SIMPLE_LOCAL_FILE_PATTERN)))
@@ -32,13 +32,13 @@ class StoragePathTest {
 
     @Test
     fun includeDayFolder() {
-        val path = StoragePath.builder()
-            .filename(FILENAME)
-            .projectId(PROJECT_ID)
-            .subjectId(SUBJECT_ID)
-            .topicId(TOPIC_ID)
-            .collectPerDay(true)
-            .build()
+        val path = StoragePath(
+            filename = FILENAME,
+            projectId = PROJECT_ID,
+            subjectId = SUBJECT_ID,
+            topicId = TOPIC_ID,
+            collectPerDay = true,
+        )
 
         assertTrue(path.fullPath.matches(Regex("project1/subjectA/topicX/[0-9]+/[0-9]+_[a-z0-9-]+\\.txt")))
         assertTrue(path.pathInTopicDirectory.matches(Regex("[0-9]+/[0-9]+_[a-z0-9-]+\\.txt")))
@@ -46,13 +46,13 @@ class StoragePathTest {
 
     @Test
     fun includePrefix() {
-        val path = StoragePath.builder()
-            .prefix(PREFIX)
-            .filename(FILENAME)
-            .projectId(PROJECT_ID)
-            .subjectId(SUBJECT_ID)
-            .topicId(TOPIC_ID)
-            .build()
+        val path = StoragePath(
+            prefix = PREFIX,
+            projectId = PROJECT_ID,
+            subjectId = SUBJECT_ID,
+            topicId = TOPIC_ID,
+            filename = FILENAME,
+        )
 
         assertTrue(path.fullPath.matches(Regex("prefix/project1/subjectA/topicX/[0-9]+_[a-z0-9-]+\\.txt")))
         assertTrue(path.pathInTopicDirectory.matches(Regex(SIMPLE_LOCAL_FILE_PATTERN)))
@@ -60,12 +60,12 @@ class StoragePathTest {
 
     @Test
     fun testLowercaseExtension() {
-        val path = StoragePath.builder()
-            .filename("example.TXT")
-            .projectId(PROJECT_ID)
-            .subjectId(SUBJECT_ID)
-            .topicId(TOPIC_ID)
-            .build()
+        val path = StoragePath(
+            filename = "example.TXT",
+            projectId = PROJECT_ID,
+            subjectId = SUBJECT_ID,
+            topicId = TOPIC_ID,
+        )
 
         assertTrue(path.fullPath.matches(Regex("project1/subjectA/topicX/[0-9]+_[a-z0-9-]+\\.txt")))
         assertTrue(path.pathInTopicDirectory.matches(Regex(SIMPLE_LOCAL_FILE_PATTERN)))
@@ -73,14 +73,14 @@ class StoragePathTest {
 
     @Test
     fun testAllCombined() {
-        val path = StoragePath.builder()
-            .prefix(PREFIX)
-            .filename("example.TXT")
-            .projectId(PROJECT_ID)
-            .subjectId(SUBJECT_ID)
-            .topicId(TOPIC_ID)
-            .collectPerDay(true)
-            .build()
+        val path = StoragePath(
+            prefix = PREFIX,
+            filename = "example.TXT",
+            projectId = PROJECT_ID,
+            subjectId = SUBJECT_ID,
+            topicId = TOPIC_ID,
+            collectPerDay = true,
+        )
 
         assertTrue(path.fullPath.matches(Regex("prefix/project1/subjectA/topicX/[0-9]+/[0-9]+_[a-z0-9-]+\\.txt")))
         assertTrue(path.pathInTopicDirectory.matches(Regex("[0-9]+/[0-9]+_[a-z0-9-]+\\.txt")))
@@ -88,12 +88,12 @@ class StoragePathTest {
 
     @Test
     fun testDotsInFileName() {
-        val path = StoragePath.builder()
-            .filename("example.com.txt")
-            .projectId(PROJECT_ID)
-            .subjectId(SUBJECT_ID)
-            .topicId(TOPIC_ID)
-            .build()
+        val path = StoragePath(
+            filename = "example.com.txt",
+            projectId = PROJECT_ID,
+            subjectId = SUBJECT_ID,
+            topicId = TOPIC_ID,
+        )
 
         assertTrue(path.fullPath.matches(Regex("project1/subjectA/topicX/[0-9]+_[a-z0-9-]+\\.txt")))
         assertTrue(path.pathInTopicDirectory.matches(Regex(SIMPLE_LOCAL_FILE_PATTERN)))
@@ -102,32 +102,32 @@ class StoragePathTest {
     @Test
     fun testThrowsIllegalArgumentException() {
         assertThrows(IllegalArgumentException::class.java) {
-            StoragePath.builder()
-                .projectId(PROJECT_ID)
-                .subjectId(SUBJECT_ID)
-                .topicId(TOPIC_ID)
-                .build()
+            StoragePath(
+                projectId = PROJECT_ID,
+                subjectId = SUBJECT_ID,
+                topicId = TOPIC_ID,
+            )
         }
         assertThrows(IllegalArgumentException::class.java) {
-            StoragePath.builder()
-                .filename(FILENAME)
-                .subjectId(SUBJECT_ID)
-                .topicId(TOPIC_ID)
-                .build()
+            StoragePath(
+                subjectId = SUBJECT_ID,
+                topicId = TOPIC_ID,
+                filename = FILENAME,
+            )
         }
         assertThrows(IllegalArgumentException::class.java) {
-            StoragePath.builder()
-                .filename(FILENAME)
-                .projectId(PROJECT_ID)
-                .topicId(TOPIC_ID)
-                .build()
+            StoragePath(
+                filename = FILENAME,
+                projectId = PROJECT_ID,
+                topicId = TOPIC_ID,
+            )
         }
         assertThrows(IllegalArgumentException::class.java) {
-            StoragePath.builder()
-                .filename(FILENAME)
-                .projectId(PROJECT_ID)
-                .subjectId(SUBJECT_ID)
-                .build()
+            StoragePath(
+                projectId = PROJECT_ID,
+                subjectId = SUBJECT_ID,
+                filename = FILENAME,
+            )
         }
     }
 }

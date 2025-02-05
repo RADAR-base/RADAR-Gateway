@@ -9,136 +9,109 @@ import java.util.*
 /**
  * Represents a path on Object Storage for uploaded files.
  *
- * The storage path is constructed to include required arguments (projectId, subjectId, topicId, and filename)
- * and optional arguments (prefix, collectPerDay, folderTimestampPattern, fileTimestampPattern).
+ * The storage path is constructed using required parameters (`projectId`, `subjectId`, `topicId`, and `filename`)
+ * and optional parameters (`prefix`, `collectPerDay`, `folderPattern`, `filePattern`).
  *
- * The path will follow the format: `prefix/projectId/subjectId/topicId/[day folder]/timestamp_filename.extension`.
+ * The path follows the format:
+ * ```
+ * prefix/projectId/subjectId/topicId/[day folder]/timestamp_filename.extension
+ * ```
  *
- * - The day folder is included if `collectPerDay` is set to `true`.
- * - File extensions are converted to lowercase.
+ * - The **day folder** is included if `collectPerDay` is `true`.
+ * - The filename is automatically assigned a **timestamp and UUID** to prevent overwriting.
  *
  * ### Usage Example:
  * ```kotlin
- * val path = StoragePath.builder()
- *     .prefix("uploads")
- *     .projectId("project1")
- *     .subjectId("subjectA")
- *     .topicId("topicX")
- *     .collectPerDay(true)
- *     .fileName("example.txt")
- *     .build()
+ * val path = StoragePath(
+ *     filename = "example.txt",
+ *     projectId = "project1",
+ *     subjectId = "subjectA",
+ *     topicId = "topicX",
+ *     prefix = "uploads",
+ *     collectPerDay = true
+ * )
  *
  * println(path.fullPath)
- * // Output: uploads/project1/subjectA/topicX/20250205/20250205_example.txt
+ * // Output: uploads/project1/subjectA/topicX/20250205/20250205_<UUID>.txt
  *
  * println(path.pathInTopicDirectory)
- * // Output: 20250205/20250205_example.txt
+ * // Output: 20250205/20250205_<UUID>.txt
  * ```
+ *
+ * ### Parameters:
+ * @property filename The name of the uploaded file (required).
+ * @property projectId The project ID associated with the file.
+ * @property subjectId The subject ID associated with the file.
+ * @property topicId The topic name under which the file is stored.
+ * @property prefix Directory prefix for the storage path.
+ * @property collectPerDay If `true`, stores files under a daily folder.
+ * @property folderPattern The pattern for daily folder naming.
+ * @property filePattern The pattern for filename timestamps.
+ * @property directorySeparator The separator used in the generated path.
+ *
+ * @property fullPath The complete storage path including project, subject, topic, and timestamped filename.
+ * @property pathInTopicDirectory The relative path inside the topic directory, including the timestamped filename.
  */
-@Suppress("unused")
-class StoragePath(
-    val fullPath: String,
-    val pathInTopicDirectory: String,
+data class StoragePath(
+    private val filename: String = "",
+    private val projectId: String = "",
+    private val subjectId: String = "",
+    private val topicId: String = "",
+    private val prefix: String = "",
+    private val collectPerDay: Boolean = false,
+    private val folderPattern: String = "yyyyMMdd",
+    private val filePattern: String = "yyyyMMddHHmmss",
+    private val directorySeparator: String = "/",
 ) {
+    val pathInTopicDirectory: String = buildPathInTopicDir()
+    val fullPath: String = buildFullPath()
 
-    class Builder {
-        private var pathPrefix: String = ""
-        private var file: String = ""
-        private var doCollectPerDay: Boolean = false
-        private var project: String = ""
-        private var subject: String = ""
-        private var topic: String = ""
-        private var folderPattern = "yyyyMMdd"
-        private var filePattern = "yyyyMMddHHmmss"
-        private var directorySeparator: String = "/"
-
-        fun filename(filename: String) = apply {
-            file = filename
-        }
-
-        fun prefix(prefix: String) = apply {
-            this.pathPrefix = prefix
-        }
-
-        fun collectPerDay(collectPerDay: Boolean) = apply {
-            this.doCollectPerDay = collectPerDay
-        }
-
-        fun projectId(projectId: String) = apply {
-            this.project = projectId
-        }
-
-        fun subjectId(subjectId: String) = apply {
-            this.subject = subjectId
-        }
-
-        fun topicId(topicId: String) = apply {
-            this.topic = topicId
-        }
-
-        fun dayFolderPattern(folderPattern: String) = apply {
-            this.folderPattern = folderPattern
-        }
-
-        fun fileTimeStampPattern(fileTimeStampPattern: String) = apply {
-            this.filePattern = fileTimeStampPattern
-        }
-
-        fun build(): StoragePath {
-            requireNotNullAndBlank(file) { "File name should be set" }
-            requireNotNullAndBlank(project) { "Project Id should be set" }
-            requireNotNullAndBlank(subject) { "Subject Id should be set" }
-            requireNotNullAndBlank(topic) { "Topic Id should be set" }
-
-            val pathInTopicDir = buildPathInTopicDir()
-
-            val fullPath = listOf(
-                pathPrefix,
-                project,
-                subject,
-                topic,
-                pathInTopicDir,
-            ).filter {
-                it.isNotBlank()
-            }.joinToString(directorySeparator)
-
-            return StoragePath(fullPath, pathInTopicDir)
-        }
-
-        /**
-         * Storing files under their original filename is a security risk, as it can be used to
-         * overwrite existing files. We generate a random filename server-side to mitigate this risk.
-         *
-         * See https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload
-         */
-        private fun buildPathInTopicDir(): String {
-            return listOfNotNull(
-                if (doCollectPerDay) getDayFolder() else null,
-                generateRandomFilename(file),
-            ).filter { it.isNotBlank() }
-                .joinToString(directorySeparator)
-        }
-
-        private fun generateRandomFilename(originalFileName: String): String {
-            val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(filePattern))
-            return "${timeStamp}_${UUID.randomUUID()}${getFileExtension(originalFileName)}"
-        }
-
-        private fun getDayFolder(): String {
-            return LocalDate.now().format(DateTimeFormatter.ofPattern(folderPattern))
-        }
-
-        private fun getFileExtension(originalFileName: String): String {
-            val lastDot = originalFileName.lastIndexOf('.')
-            return if (lastDot >= 0) {
-                originalFileName.substring(lastDot).lowercase(Locale.ENGLISH)
-            } else {
-                ""
-            }
-        }
+    init {
+        requireNotNullAndBlank(filename) { "File name should be set" }
+        requireNotNullAndBlank(projectId) { "Project Id should be set" }
+        requireNotNullAndBlank(subjectId) { "Subject Id should be set" }
+        requireNotNullAndBlank(topicId) { "Topic Id should be set" }
     }
 
-    companion object {
-        fun builder(): Builder = Builder()
+    /**
+     * Storing files under their original filename is a security risk, as it can be used to
+     * overwrite existing files. We generate a random filename server-side to mitigate this risk.
+     *
+     * [OWASP Unrestricted File Upload](https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload)
+     */
+    private fun buildFullPath(): String {
+        return listOf(
+            prefix,
+            projectId,
+            subjectId,
+            topicId,
+            pathInTopicDirectory,
+        ).filter { it.isNotBlank() }
+            .joinToString(directorySeparator)
+    }
+
+    private fun buildPathInTopicDir(): String {
+        return listOfNotNull(
+            if (collectPerDay) getDayFolder() else null,
+            generateRandomFilename(filename),
+        ).filter { it.isNotBlank() }.joinToString(directorySeparator)
+    }
+
+    private fun generateRandomFilename(originalFileName: String): String {
+        val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(filePattern))
+        return "${timeStamp}_${UUID.randomUUID()}${getFileExtension(originalFileName)}"
+    }
+
+    private fun getDayFolder(): String {
+        return LocalDate.now().format(DateTimeFormatter.ofPattern(folderPattern))
+    }
+
+    private fun getFileExtension(originalFileName: String): String {
+        val lastDot = originalFileName.lastIndexOf('.')
+        return if (lastDot >= 0) {
+            originalFileName.substring(lastDot).lowercase(Locale.ENGLISH)
+        } else {
+            ""
+        }
     }
 }
