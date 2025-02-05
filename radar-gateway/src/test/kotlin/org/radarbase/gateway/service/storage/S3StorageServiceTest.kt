@@ -1,12 +1,12 @@
 package org.radarbase.gateway.service.storage
 
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.assertj.core.api.Assertions.assertThat
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.radarbase.gateway.config.S3StorageConfig

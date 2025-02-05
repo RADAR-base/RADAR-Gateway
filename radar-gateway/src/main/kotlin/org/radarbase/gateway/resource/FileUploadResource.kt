@@ -9,12 +9,12 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition
 import org.glassfish.jersey.media.multipart.FormDataParam
 import org.radarbase.gateway.inject.ProcessFileUpload
 import org.radarbase.gateway.service.storage.StorageService
-import org.slf4j.LoggerFactory
 import org.radarbase.gateway.utils.Paths.FILE_PATH
 import org.radarbase.gateway.utils.Paths.PROJECT_PATH
 import org.radarbase.gateway.utils.Paths.TOPIC_PATH
 import org.radarbase.gateway.utils.Paths.UPLOAD_PATH
 import org.radarbase.gateway.utils.Paths.USER_PATH
+import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.net.URI
 

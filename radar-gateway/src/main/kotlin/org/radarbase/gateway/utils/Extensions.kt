@@ -16,8 +16,7 @@ import kotlin.contracts.contract
  * @throws IllegalArgumentException if [data] is `null` or blank.
  */
 @OptIn(ExperimentalContracts::class)
-fun <T: CharSequence?>requireNotNullAndBlank(data: T, message: () -> String): T {
-
+fun <T : CharSequence?>requireNotNullAndBlank(data: T, message: () -> String): T {
     contract {
         returns() implies (data != null)
     }
@@ -37,7 +36,6 @@ fun <T: CharSequence?>requireNotNullAndBlank(data: T, message: () -> String): T 
  */
 @OptIn(ExperimentalContracts::class)
 fun requiresListNonNullOrBlank(names: List<String?>, lazyMessage: () -> String) {
-
     if (names.any { it.isNullOrBlank() }) {
         throw InvalidFileDetailsException(lazyMessage())
     }

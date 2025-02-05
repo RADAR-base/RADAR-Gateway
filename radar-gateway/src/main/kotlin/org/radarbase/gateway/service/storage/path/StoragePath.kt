@@ -87,7 +87,7 @@ class StoragePath(
         fun build(): StoragePath {
             requireNotNullAndBlank(file) { "File name should be set" }
             requireNotNullAndBlank(project) { "Project Id should be set" }
-            requireNotNullAndBlank(subject) { "Subject Id should be set"  }
+            requireNotNullAndBlank(subject) { "Subject Id should be set" }
             requireNotNullAndBlank(topic) { "Topic Id should be set" }
 
             val pathInTopicDir = buildPathInTopicDir()
@@ -97,7 +97,7 @@ class StoragePath(
                 project,
                 subject,
                 topic,
-                pathInTopicDir
+                pathInTopicDir,
             ).filter {
                 it.isNotBlank()
             }.joinToString(directorySeparator)
@@ -114,7 +114,7 @@ class StoragePath(
         private fun buildPathInTopicDir(): String {
             return listOfNotNull(
                 if (doCollectPerDay) getDayFolder() else null,
-                generateRandomFilename(file)
+                generateRandomFilename(file),
             ).filter { it.isNotBlank() }
                 .joinToString(directorySeparator)
         }
@@ -132,7 +132,9 @@ class StoragePath(
             val lastDot = originalFileName.lastIndexOf('.')
             return if (lastDot >= 0) {
                 originalFileName.substring(lastDot).lowercase(Locale.ENGLISH)
-            } else ""
+            } else {
+                ""
+            }
         }
     }
 

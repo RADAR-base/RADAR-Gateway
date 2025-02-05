@@ -8,6 +8,6 @@ interface StorageService {
         filename: String?,
         projectId: String?,
         subjectId: String?,
-        topicId: String?
+        topicId: String?,
     ): String
 }

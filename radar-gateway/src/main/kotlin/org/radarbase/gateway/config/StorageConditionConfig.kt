@@ -1,6 +1,6 @@
 package org.radarbase.gateway.config
 
-data class StorageConditionConfig (
+data class StorageConditionConfig(
     val fileUploadEnabled: Boolean = true,
-    val radarStorageType: String = "s3"
+    val radarStorageType: String = "s3",
 )
