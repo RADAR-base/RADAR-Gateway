@@ -17,6 +17,8 @@ object Versions {
     const val avro = "1.11.4"
     const val confluent = "7.6.0"
     const val kafka = "$confluent-ce"
+    const val minio = "8.5.10"
+    const val multipart = "3.1.10"
 
     const val mockitoKotlin = "5.3.1"
     const val grizzly = "4.0.2"
