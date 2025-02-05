@@ -39,7 +39,7 @@ class StoragePathTest {
             .topicId(TOPIC_ID)
             .collectPerDay(true)
             .build()
-        
+
         assertTrue(path.fullPath.matches(Regex("project1/subjectA/topicX/[0-9]+/[0-9]+_[a-z0-9-]+\\.txt")))
         assertTrue(path.pathInTopicDirectory.matches(Regex("[0-9]+/[0-9]+_[a-z0-9-]+\\.txt")))
     }
@@ -53,7 +53,7 @@ class StoragePathTest {
             .subjectId(SUBJECT_ID)
             .topicId(TOPIC_ID)
             .build()
-        
+
         assertTrue(path.fullPath.matches(Regex("prefix/project1/subjectA/topicX/[0-9]+_[a-z0-9-]+\\.txt")))
         assertTrue(path.pathInTopicDirectory.matches(Regex(SIMPLE_LOCAL_FILE_PATTERN)))
     }
@@ -66,7 +66,7 @@ class StoragePathTest {
             .subjectId(SUBJECT_ID)
             .topicId(TOPIC_ID)
             .build()
-        
+
         assertTrue(path.fullPath.matches(Regex("project1/subjectA/topicX/[0-9]+_[a-z0-9-]+\\.txt")))
         assertTrue(path.pathInTopicDirectory.matches(Regex(SIMPLE_LOCAL_FILE_PATTERN)))
     }
@@ -81,7 +81,7 @@ class StoragePathTest {
             .topicId(TOPIC_ID)
             .collectPerDay(true)
             .build()
-        
+
         assertTrue(path.fullPath.matches(Regex("prefix/project1/subjectA/topicX/[0-9]+/[0-9]+_[a-z0-9-]+\\.txt")))
         assertTrue(path.pathInTopicDirectory.matches(Regex("[0-9]+/[0-9]+_[a-z0-9-]+\\.txt")))
     }
@@ -94,7 +94,7 @@ class StoragePathTest {
             .subjectId(SUBJECT_ID)
             .topicId(TOPIC_ID)
             .build()
-        
+
         assertTrue(path.fullPath.matches(Regex("project1/subjectA/topicX/[0-9]+_[a-z0-9-]+\\.txt")))
         assertTrue(path.pathInTopicDirectory.matches(Regex(SIMPLE_LOCAL_FILE_PATTERN)))
     }

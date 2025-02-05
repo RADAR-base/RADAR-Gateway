@@ -2,9 +2,11 @@ package org.radarbase.gateway.service.storage
 
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.assertj.core.api.Assertions.assertThat
-import io.mockk.*
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.radarbase.gateway.config.S3StorageConfig
@@ -18,7 +20,7 @@ class S3StorageServiceTest {
     private val minioClient: MinioClient = mockk()
     private val s3StorageService = S3StorageService(
         s3StorageConfig = S3StorageConfig(path = S3StoragePathConfig(prefix = "my-sub-path")),
-        minioClientLoader = minioInit
+        minioClientLoader = minioInit,
     )
 
     private val multipartFile = ByteArrayInputStream("radar-file-content".toByteArray())
