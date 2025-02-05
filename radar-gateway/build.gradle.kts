@@ -96,6 +96,8 @@ dependencies {
     integrationTestImplementation("io.ktor:ktor-serialization-kotlinx-json")
 
     testImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
+    testImplementation("org.assertj:assertj-core:${Versions.assertJ}")
+    testImplementation("io.mockk:mockk:${Versions.mockk}")
     integrationTestImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
     integrationTestImplementation("org.radarbase:radar-commons-testing:${Versions.radarCommons}")
 }

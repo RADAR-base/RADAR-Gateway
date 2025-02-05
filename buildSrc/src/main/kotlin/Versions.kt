@@ -10,6 +10,8 @@ object Versions {
     const val radarJersey = "0.11.1"
     const val radarCommons = "1.1.3"
     const val radarSchemas = "0.8.9"
+    const val assertJ = "3.27.3"
+    const val mockk = "1.13.16"
     const val jackson = "2.15.3"
     const val log4j2 = "2.23.1"
     const val lzfse = "0.1.1"
