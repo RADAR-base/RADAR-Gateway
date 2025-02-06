@@ -3,6 +3,7 @@ package org.radarbase.gateway.resource
 import jakarta.ws.rs.Consumes
 import jakarta.ws.rs.POST
 import jakarta.ws.rs.Path
+import jakarta.ws.rs.PathParam
 import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
@@ -14,20 +15,21 @@ import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.net.URI
 
-@Path("/upload")
+@Path("")
 class FileUploadResource(
     @Context private val storageService: StorageService? = null,
 ) {
 
     @ProcessFileUpload
     @POST
+    @Path("/{projectId}/{subjectId}/{topicId}/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     fun uploadFileForSubject(
         @FormDataParam("file") fileInputStream: InputStream,
         @FormDataParam("file") fileInfo: FormDataContentDisposition,
-        @FormDataParam("projectId") projectId: String,
-        @FormDataParam("subjectId") subjectId: String,
-        @FormDataParam("topicId") topicId: String,
+        @PathParam("projectId") projectId: String,
+        @PathParam("subjectId") subjectId: String,
+        @PathParam("topicId") topicId: String,
     ): Response {
         if (storageService == null) {
             logger.debug("File uploading is disabled")
