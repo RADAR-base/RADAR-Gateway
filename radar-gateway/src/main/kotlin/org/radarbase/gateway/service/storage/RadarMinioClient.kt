@@ -2,19 +2,24 @@ package org.radarbase.gateway.service.storage
 
 import io.minio.BucketExistsArgs
 import io.minio.MinioClient
-import jakarta.ws.rs.core.Context
 import org.radarbase.gateway.config.S3StorageConfig
 
-class MinioClientLoaderImpl(
-    @Context private val s3StorageConfig: S3StorageConfig,
-) : MinioClientLoader {
+class RadarMinioClient(
+    private val s3StorageConfig: S3StorageConfig,
+) {
 
     private var minioClient: MinioClient? = null
-    private var bucketName: String? = null
+    var bucketName: String? = null
+        private set
+        get() = if (minioClient != null) field!!
+        else {
+            minioClient = initMinioClient()
+            field!!
+        }
 
-    private fun initMinioClient() {
-        try {
-            minioClient = MinioClient.Builder()
+    private fun initMinioClient(): MinioClient {
+        return try {
+            MinioClient.Builder()
                 .endpoint(s3StorageConfig.url)
                 .credentials(s3StorageConfig.accessKey, s3StorageConfig.secretKey)
                 .build().also { minio ->
@@ -34,11 +39,13 @@ class MinioClientLoaderImpl(
         }
     }
 
-    override fun loadClient(): MinioClient {
-        return minioClient ?: initMinioClient().run {
-            minioClient!!
-        }
+    fun loadClient(): MinioClient {
+        minioClient = initMinioClient()
+        return minioClient!!
     }
 
-    override fun getBucketName(): String = bucketName!!
+    fun close() {
+        minioClient?.close()
+    }
+
 }

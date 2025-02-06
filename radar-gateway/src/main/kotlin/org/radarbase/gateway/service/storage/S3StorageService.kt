@@ -12,7 +12,7 @@ import java.io.InputStream
 
 class S3StorageService(
     @Context private val s3StorageConfig: S3StorageConfig,
-    @Context private val minioClientLoader: MinioClientLoader,
+    @Context private val client: RadarMinioClient,
 ) : StorageService {
 
     override fun store(
@@ -41,10 +41,10 @@ class S3StorageService(
 
             logger.debug("Attempt storing file at path: {}", filePath.fullPath)
 
-            minioClientLoader
-                .loadClient().putObject(
+            client.loadClient()
+                .putObject(
                     PutObjectArgs.builder()
-                        .bucket(minioClientLoader.getBucketName())
+                        .bucket(client.bucketName)
                         .`object`(filePath.fullPath)
                         .stream(fileInputStream, fileInputStream.available().toLong(), -1)
                         .build(),

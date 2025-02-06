@@ -16,12 +16,14 @@ import java.io.ByteArrayInputStream
 
 class S3StorageServiceTest {
 
-    private val minioInit: MinioClientLoader = mockk()
+    private val client: RadarMinioClient = mockk()
     private val minioClient: MinioClient = mockk()
-    private val s3StorageService = S3StorageService(
-        s3StorageConfig = S3StorageConfig(path = S3StoragePathConfig(prefix = "my-sub-path")),
-        minioClientLoader = minioInit,
-    )
+    private val s3StorageService by lazy {
+        S3StorageService(
+            s3StorageConfig = S3StorageConfig(path = S3StoragePathConfig(prefix = "my-sub-path")),
+            client = client,
+        )
+    }
 
     private val multipartFile = ByteArrayInputStream("radar-file-content".toByteArray())
 
@@ -34,8 +36,8 @@ class S3StorageServiceTest {
 
     @BeforeEach
     fun setUp() {
-        every { minioInit.getBucketName() } returns "radar-bucket"
-        every { minioInit.loadClient() } returns minioClient
+        every { client.bucketName } returns "radar-bucket"
+        every { client.loadClient() } returns minioClient
         every { minioClient.putObject(any<PutObjectArgs>()) } returns mockk()
     }
 
