@@ -11,8 +11,9 @@ class RadarMinioClient(
     private var minioClient: MinioClient? = null
     var bucketName: String? = null
         private set
-        get() = if (minioClient != null) field!!
-        else {
+        get() = if (minioClient != null) {
+            field!!
+        } else {
             minioClient = initMinioClient()
             field!!
         }
@@ -47,5 +48,4 @@ class RadarMinioClient(
     fun close() {
         minioClient?.close()
     }
-
 }

@@ -5,8 +5,8 @@ import org.glassfish.jersey.internal.inject.AbstractBinder
 import org.glassfish.jersey.media.multipart.MultiPartFeature
 import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.gateway.config.S3StorageConfig
-import org.radarbase.gateway.service.storage.RadarMinioClientFactory
 import org.radarbase.gateway.service.storage.RadarMinioClient
+import org.radarbase.gateway.service.storage.RadarMinioClientFactory
 import org.radarbase.gateway.service.storage.S3StorageService
 import org.radarbase.gateway.service.storage.StorageService
 import org.radarbase.jersey.enhancer.JerseyResourceEnhancer
