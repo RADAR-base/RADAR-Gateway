@@ -9,8 +9,11 @@ import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition
 import org.glassfish.jersey.media.multipart.FormDataParam
+import org.radarbase.auth.authorization.Permission
 import org.radarbase.gateway.inject.ProcessFileUpload
 import org.radarbase.gateway.service.storage.StorageService
+import org.radarbase.jersey.auth.Authenticated
+import org.radarbase.jersey.auth.NeedsPermission
 import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.net.URI
@@ -24,6 +27,8 @@ class FileUploadResource(
     @POST
     @Path("/{projectId}/{subjectId}/{topicId}/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Authenticated
+    @NeedsPermission(Permission.MEASUREMENT_CREATE, "projectId", "subjectId")
     fun uploadFileForSubject(
         @FormDataParam("file") fileInputStream: InputStream,
         @FormDataParam("file") fileInfo: FormDataContentDisposition,
