@@ -61,12 +61,15 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
 
+    implementation("org.glassfish.jersey.media:jersey-media-multipart:${Versions.multipart}")
+
     implementation("org.radarbase:radar-commons:${Versions.radarCommons}")
     implementation("org.radarbase:radar-commons-kotlin:${Versions.radarCommons}")
     implementation("org.radarbase:radar-jersey:${Versions.radarJersey}")
     implementation("org.radarbase:managementportal-client:${Versions.radarAuth}")
     implementation("org.radarbase:lzfse-decode:${Versions.lzfse}")
     implementation("org.radarbase:radar-auth:${Versions.radarAuth}")
+    implementation("io.minio:minio:${Versions.minio}")
 
     implementation("org.apache.kafka:kafka-clients:${Versions.kafka}")
     implementation("io.confluent:kafka-avro-serializer:${Versions.confluent}")
@@ -93,6 +96,8 @@ dependencies {
     integrationTestImplementation("io.ktor:ktor-serialization-kotlinx-json")
 
     testImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
+    testImplementation("org.assertj:assertj-core:${Versions.assertJ}")
+    testImplementation("io.mockk:mockk:${Versions.mockk}")
     integrationTestImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
     integrationTestImplementation("org.radarbase:radar-commons-testing:${Versions.radarCommons}")
 }

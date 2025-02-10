@@ -18,12 +18,15 @@ class ManagementPortalEnhancerFactory(private val config: GatewayConfig) : Enhan
             jwtIssuer = config.auth.issuer,
             jwksUrls = config.auth.publicKeyUrls ?: emptyList(),
         )
-        return listOf(
-            GatewayResourceEnhancer(config),
-            Enhancers.radar(authConfig),
-            Enhancers.managementPortal(authConfig),
-            Enhancers.health,
-            Enhancers.exception,
-        )
+        return buildList {
+            add(GatewayResourceEnhancer(config))
+            add(Enhancers.radar(authConfig))
+            add(Enhancers.managementPortal(authConfig))
+            add(Enhancers.health)
+            add(Enhancers.exception)
+            if (config.storageCondition.fileUploadEnabled) {
+                add(FileStorageEnhancer(config))
+            }
+        }
     }
 }

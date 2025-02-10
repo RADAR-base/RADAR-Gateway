@@ -27,6 +27,7 @@ fun main(args: Array<String>) {
 
     try {
         config.validate()
+        config.checkEnvironmentVars()
     } catch (ex: IllegalStateException) {
         logger.error("Configuration incomplete: {}", ex.message)
         exitProcess(1)

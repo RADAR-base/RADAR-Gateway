@@ -9,3 +9,29 @@ kafka:
 
 auth:
   managementPortalUrl: http://managementportal-app:8080/managementportal
+# Storage settings for the application
+storageCondition:
+  # Enables or disables file upload functionality in the application
+  fileUploadEnabled: false
+  # Specifies the type of storage used for storing uploaded files.
+  radarStorageType: s3
+# Amazon S3 storage configurations
+s3:
+  # The endpoint URL for the S3-compatible storage service.
+  # This can be a local MinIO server (e.g., http://localhost:9000) or AWS S3.
+  url: http://localhost:9000
+  # The access key used for authentication with the S3 storage.
+  #  accessKey: access-key
+  # The secret key used for authentication with the S3 storage.
+  #  secretKey: secret-key
+  # The name of the S3 bucket where files will be uploaded.
+  #  bucketName: radar
+  # Path-related settings for organizing stored files.
+  # specifies the region for the bucket
+  # region: eu-west-2
+  path:
+    # A prefix to be added to the stored file paths (optional).
+    #    prefix:
+    # Determines whether files should be organized into daily subdirectories.
+    # If true, files will be stored in a structure like "bucketName/yyyy-MM-dd/".
+    collectPerDay: true
