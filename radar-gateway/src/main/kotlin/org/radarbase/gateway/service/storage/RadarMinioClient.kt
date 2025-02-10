@@ -23,6 +23,7 @@ class RadarMinioClient(
             MinioClient.Builder()
                 .endpoint(s3StorageConfig.url)
                 .credentials(s3StorageConfig.accessKey, s3StorageConfig.secretKey)
+                .region(s3StorageConfig.region)
                 .build().also { minio ->
                     s3StorageConfig.bucketName.let {
                         BucketExistsArgs.builder().bucket(it).build().run(minio::bucketExists)

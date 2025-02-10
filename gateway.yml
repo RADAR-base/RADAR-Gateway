@@ -72,6 +72,8 @@ s3:
   secretKey: secret-key
   # The name of the S3 bucket where files will be uploaded.
   bucketName: radar
+  # specifies the region for the bucket
+  region: eu-west-2
   # Path-related settings for organizing stored files.
   path:
     # A prefix to be added to the stored file paths (optional).

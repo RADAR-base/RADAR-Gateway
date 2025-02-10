@@ -27,6 +27,8 @@ s3:
   # The name of the S3 bucket where files will be uploaded.
   #  bucketName: radar
   # Path-related settings for organizing stored files.
+  # specifies the region for the bucket
+  # region: eu-west-2
   path:
     # A prefix to be added to the stored file paths (optional).
     #    prefix:
