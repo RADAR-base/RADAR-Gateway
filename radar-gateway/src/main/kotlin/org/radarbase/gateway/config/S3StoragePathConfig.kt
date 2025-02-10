@@ -1,6 +1,6 @@
 package org.radarbase.gateway.config
 
-import org.radarbase.gateway.utils.Env.S3_PATH_PREFIX
+import org.radarbase.gateway.utils.Env.AWS_S3_PATH_PREFIX
 
 data class S3StoragePathConfig(
     var prefix: String? = null,
@@ -8,7 +8,7 @@ data class S3StoragePathConfig(
 ) {
     fun checkEnvironmentVars() {
         prefix ?: run {
-            prefix = System.getenv(S3_PATH_PREFIX)
+            prefix = System.getenv(AWS_S3_PATH_PREFIX)
         }
     }
 }

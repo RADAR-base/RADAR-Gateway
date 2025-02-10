@@ -1,10 +1,10 @@
 package org.radarbase.gateway.config
 
-import org.radarbase.gateway.utils.Env.S3_ACCESS_KEY
-import org.radarbase.gateway.utils.Env.S3_BUCKET_NAME
-import org.radarbase.gateway.utils.Env.S3_REGION
-import org.radarbase.gateway.utils.Env.S3_SECRET_KEY
-import org.radarbase.gateway.utils.Env.S3_SERVICE_URL
+import org.radarbase.gateway.utils.Env.AWS_ACCESS_KEY_ID
+import org.radarbase.gateway.utils.Env.AWS_S3_BUCKET_NAME
+import org.radarbase.gateway.utils.Env.AWS_DEFAULT_REGION
+import org.radarbase.gateway.utils.Env.AWS_SECRET_ACCESS_KEY
+import org.radarbase.gateway.utils.Env.AWS_ENDPOINT_URL_S3
 
 data class S3StorageConfig(
     var url: String? = null,
@@ -16,19 +16,19 @@ data class S3StorageConfig(
 ) {
     fun checkEnvironmentVars() {
         url ?: run {
-            url = System.getenv(S3_SERVICE_URL)
+            url = System.getenv(AWS_ENDPOINT_URL_S3)
         }
         accessKey ?: run {
-            accessKey = System.getenv(S3_ACCESS_KEY)
+            accessKey = System.getenv(AWS_ACCESS_KEY_ID)
         }
         secretKey ?: run {
-            secretKey = System.getenv(S3_SECRET_KEY)
+            secretKey = System.getenv(AWS_SECRET_ACCESS_KEY)
         }
         bucketName ?: run {
-            bucketName = System.getenv(S3_BUCKET_NAME)
+            bucketName = System.getenv(AWS_S3_BUCKET_NAME)
         }
         region ?: run {
-            region = System.getenv(S3_REGION)
+            region = System.getenv(AWS_DEFAULT_REGION)
         }
         path.checkEnvironmentVars()
     }
