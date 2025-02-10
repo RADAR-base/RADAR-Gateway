@@ -1,10 +1,10 @@
 package org.radarbase.gateway.config
 
 import org.radarbase.gateway.utils.Env.AWS_ACCESS_KEY_ID
-import org.radarbase.gateway.utils.Env.AWS_S3_BUCKET_NAME
 import org.radarbase.gateway.utils.Env.AWS_DEFAULT_REGION
-import org.radarbase.gateway.utils.Env.AWS_SECRET_ACCESS_KEY
 import org.radarbase.gateway.utils.Env.AWS_ENDPOINT_URL_S3
+import org.radarbase.gateway.utils.Env.AWS_S3_BUCKET_NAME
+import org.radarbase.gateway.utils.Env.AWS_SECRET_ACCESS_KEY
 
 data class S3StorageConfig(
     var url: String? = null,
