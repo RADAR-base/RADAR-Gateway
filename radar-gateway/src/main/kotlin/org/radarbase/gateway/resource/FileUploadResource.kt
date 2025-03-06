@@ -12,6 +12,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam
 import org.radarbase.auth.authorization.Permission
 import org.radarbase.gateway.inject.ProcessFileUpload
 import org.radarbase.gateway.service.storage.StorageService
+import org.radarbase.gateway.service.storage.path.StoragePath
 import org.radarbase.jersey.auth.Authenticated
 import org.radarbase.jersey.auth.NeedsPermission
 import org.slf4j.LoggerFactory
@@ -25,7 +26,7 @@ class FileUploadResource(
 
     @ProcessFileUpload
     @POST
-    @Path("/{projectId}/{subjectId}/{topicId}/upload")
+    @Path("/{projectId}/{subjectId}/{topic}/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Authenticated
     @NeedsPermission(Permission.MEASUREMENT_CREATE, "projectId", "subjectId")
@@ -34,18 +35,22 @@ class FileUploadResource(
         @FormDataParam("file") fileInfo: FormDataContentDisposition,
         @PathParam("projectId") projectId: String,
         @PathParam("subjectId") subjectId: String,
-        @PathParam("topicId") topicId: String,
+        @PathParam("topic") topicId: String,
     ): Response {
         if (storageService == null) {
             logger.debug("File uploading is disabled")
             return Response.noContent().build()
         }
+        val pathInfo = StoragePath(
+            filename = fileInfo.fileName,
+            projectId = projectId,
+            subjectId = subjectId,
+            topicId = topicId,
+        )
+
         val filePath = storageService.store(
             fileInputStream,
-            fileInfo.fileName,
-            projectId,
-            subjectId,
-            topicId,
+            pathInfo,
         )
         logger.debug(
             "Storing file for project: {}, subject: {}, topic: {}",

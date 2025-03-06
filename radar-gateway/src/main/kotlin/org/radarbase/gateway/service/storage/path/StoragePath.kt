@@ -53,10 +53,10 @@ import java.util.*
  * @property pathInTopicDirectory The relative path inside the topic directory, including the timestamped filename.
  */
 data class StoragePath(
-    private val filename: String = "",
-    private val projectId: String = "",
-    private val subjectId: String = "",
-    private val topicId: String = "",
+    val filename: String = "",
+    val projectId: String = "",
+    val subjectId: String = "",
+    val topicId: String = "",
     private val prefix: String = "",
     private val collectPerDay: Boolean = false,
     private val folderPattern: String = "yyyyMMdd",
@@ -66,7 +66,7 @@ data class StoragePath(
     val pathInTopicDirectory: String = buildPathInTopicDir()
     val fullPath: String = buildFullPath()
 
-    init {
+    fun verifyPath() {
         requireNotNullAndBlank(filename) { "File name should be set" }
         requireNotNullAndBlank(projectId) { "Project Id should be set" }
         requireNotNullAndBlank(subjectId) { "Subject Id should be set" }

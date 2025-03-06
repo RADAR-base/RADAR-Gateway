@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.radarbase.gateway.config.S3StorageConfig
 import org.radarbase.gateway.config.S3StoragePathConfig
 import org.radarbase.gateway.exception.InvalidFileDetailsException
+import org.radarbase.gateway.service.storage.path.StoragePath
 import java.io.ByteArrayInputStream
 
 class S3StorageServiceTest {
@@ -44,73 +45,106 @@ class S3StorageServiceTest {
     @Test
     fun shouldThrowExceptionsForIllegalArguments() {
         assertThrows(IllegalArgumentException::class.java) {
+            val storagePath = StoragePath(
+                projectId = PROJECT_ID,
+                subjectId = SUBJECT_ID,
+                topicId = TOPIC_ID,
+                filename = FILE_NAME,
+            )
+
             s3StorageService.store(
                 null,
-                FILE_NAME,
-                PROJECT_ID,
-                SUBJECT_ID,
-                TOPIC_ID,
+                storagePath,
             )
         }
         assertThrows(InvalidFileDetailsException::class.java) {
+            val storagePath = StoragePath(
+                filename = FILE_NAME,
+                projectId = "",
+                subjectId = SUBJECT_ID,
+                topicId = TOPIC_ID,
+            )
             s3StorageService.store(
                 multipartFile,
-                FILE_NAME,
-                null,
-                SUBJECT_ID,
-                TOPIC_ID,
+                storagePath,
             )
         }
         assertThrows(InvalidFileDetailsException::class.java) {
+            val storagePath = StoragePath(
+                filename = FILE_NAME,
+                projectId = PROJECT_ID,
+                subjectId = "",
+                topicId = TOPIC_ID,
+            )
             s3StorageService.store(
                 multipartFile,
-                FILE_NAME,
-                PROJECT_ID,
-                null,
-                TOPIC_ID,
+                storagePath,
             )
         }
         assertThrows(InvalidFileDetailsException::class.java) {
+            val storagePath = StoragePath(
+                filename = FILE_NAME,
+                projectId = PROJECT_ID,
+                subjectId = SUBJECT_ID,
+                topicId = "",
+            )
+
             s3StorageService.store(
                 multipartFile,
-                FILE_NAME,
-                PROJECT_ID,
-                SUBJECT_ID,
-                null,
+                storagePath,
             )
         }
         assertThrows(InvalidFileDetailsException::class.java) {
+            val storagePath = StoragePath(
+                filename = FILE_NAME,
+                projectId = " ", // Empty but not blank
+                subjectId = SUBJECT_ID,
+                topicId = TOPIC_ID,
+            )
+
             s3StorageService.store(
                 multipartFile,
-                FILE_NAME,
-                "",
-                SUBJECT_ID,
-                TOPIC_ID,
+                storagePath,
             )
         }
         assertThrows(InvalidFileDetailsException::class.java) {
+            val storagePath = StoragePath(
+                filename = FILE_NAME,
+                projectId = PROJECT_ID,
+                subjectId = " ",
+                topicId = TOPIC_ID,
+            )
+
             s3StorageService.store(
                 multipartFile,
-                FILE_NAME,
-                PROJECT_ID,
-                "",
-                TOPIC_ID,
+                storagePath,
             )
         }
         assertThrows(InvalidFileDetailsException::class.java) {
+            val storagePath = StoragePath(
+                filename = FILE_NAME,
+                projectId = PROJECT_ID,
+                subjectId = SUBJECT_ID,
+                topicId = " ",
+            )
+
             s3StorageService.store(
                 multipartFile,
-                FILE_NAME,
-                PROJECT_ID,
-                SUBJECT_ID,
-                "",
+                storagePath,
             )
         }
     }
 
     @Test
     fun `should store file and return valid path`() {
-        val path = s3StorageService.store(multipartFile, FILE_NAME, PROJECT_ID, SUBJECT_ID, TOPIC_ID)
+        val storagePath = StoragePath(
+            filename = FILE_NAME,
+            projectId = PROJECT_ID,
+            subjectId = SUBJECT_ID,
+            topicId = TOPIC_ID,
+        )
+
+        val path = s3StorageService.store(multipartFile, storagePath)
 
         verify { minioClient.putObject(any<PutObjectArgs>()) }
 

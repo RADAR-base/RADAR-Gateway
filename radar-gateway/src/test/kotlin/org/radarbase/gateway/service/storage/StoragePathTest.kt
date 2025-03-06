@@ -106,28 +106,28 @@ class StoragePathTest {
                 projectId = PROJECT_ID,
                 subjectId = SUBJECT_ID,
                 topicId = TOPIC_ID,
-            )
+            ).apply { verifyPath() }
         }
         assertThrows(IllegalArgumentException::class.java) {
             StoragePath(
                 subjectId = SUBJECT_ID,
                 topicId = TOPIC_ID,
                 filename = FILENAME,
-            )
+            ).apply { verifyPath() }
         }
         assertThrows(IllegalArgumentException::class.java) {
             StoragePath(
                 filename = FILENAME,
                 projectId = PROJECT_ID,
                 topicId = TOPIC_ID,
-            )
+            ).apply { verifyPath() }
         }
         assertThrows(IllegalArgumentException::class.java) {
             StoragePath(
                 projectId = PROJECT_ID,
                 subjectId = SUBJECT_ID,
                 filename = FILENAME,
-            )
+            ).apply { verifyPath() }
         }
     }
 }

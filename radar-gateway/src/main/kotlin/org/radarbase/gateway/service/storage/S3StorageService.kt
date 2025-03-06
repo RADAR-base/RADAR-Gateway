@@ -17,14 +17,11 @@ class S3StorageService(
 
     override fun store(
         fileInputStream: InputStream?,
-        filename: String?,
-        projectId: String?,
-        subjectId: String?,
-        topicId: String?,
+        path: StoragePath,
     ): String {
         requireNotNull(fileInputStream) { "fileStream must not be null" }
         requiresListNonNullOrBlank(
-            listOf(filename, projectId, subjectId, topicId),
+            listOf(path.filename, path.projectId, path.subjectId, path.topicId),
         ) {
             "File, project, subject and topic id must not be null or blank"
         }
@@ -32,11 +29,11 @@ class S3StorageService(
         try {
             val filePath = StoragePath(
                 prefix = s3StorageConfig.path.prefix ?: "",
-                projectId = projectId!!,
-                subjectId = subjectId!!,
-                topicId = topicId!!,
+                projectId = path.projectId,
+                subjectId = path.subjectId,
+                topicId = path.topicId,
                 collectPerDay = s3StorageConfig.path.collectPerDay,
-                filename = filename!!,
+                filename = path.filename,
             )
 
             logger.debug("Attempt storing file at path: {}", filePath.fullPath)
