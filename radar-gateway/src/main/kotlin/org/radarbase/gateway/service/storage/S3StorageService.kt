@@ -2,22 +2,43 @@ package org.radarbase.gateway.service.storage
 
 import io.minio.PutObjectArgs
 import jakarta.ws.rs.core.Context
-import org.radarbase.gateway.config.S3StorageConfig
+import org.apache.avro.generic.GenericRecordBuilder
 import org.radarbase.gateway.exception.FileStorageException
 import org.radarbase.gateway.exception.InvalidPathDetailsException
+import org.radarbase.gateway.path.FormattedPathFactory
+import org.radarbase.gateway.path.PathFormatParameters
+import org.radarbase.gateway.path.RecordPathFactory.Companion.observationKeySchema
+import org.radarbase.gateway.path.config.PathConfig
+import org.radarbase.gateway.path.config.PathFormatterConfig
+import org.radarbase.gateway.path.config.PathFormatterConfig.Companion.DEFAULT_FORMAT
 import org.radarbase.gateway.service.storage.path.StoragePath
 import org.radarbase.gateway.utils.requiresListNonNullOrBlank
 import org.slf4j.LoggerFactory
 import java.io.InputStream
+import java.time.Instant
 
 class S3StorageService(
-    @Context private val s3StorageConfig: S3StorageConfig,
     @Context private val client: RadarMinioClient,
 ) : StorageService {
 
-    override fun store(
+    val pathConfig = PathConfig(
+        factory = FormattedPathFactory::class.java.name,
+        path = PathFormatterConfig(
+            format = DEFAULT_FORMAT,
+            plugins = "fixed time",
+        ),
+    )
+
+    var factory = FormattedPathFactory()
+
+    init {
+        factory.init(pathConfig)
+    }
+
+    override suspend fun store(
         fileInputStream: InputStream?,
         path: StoragePath,
+        time: Instant,
     ): String {
         requireNotNull(fileInputStream) { "fileStream must not be null" }
         requiresListNonNullOrBlank(
@@ -26,27 +47,35 @@ class S3StorageService(
             "File, project, subject and topic id must not be null or blank"
         }
 
+        val extension = path.getFileExtension(path.filename)
+
+        val record = GenericRecordBuilder(observationKeySchema).apply {
+            set("projectId", path.projectId)
+            set("userId", path.subjectId)
+            set("sourceId", "unknown")
+        }.build()
+
         try {
-            val filePath = StoragePath(
-                prefix = s3StorageConfig.path.prefix ?: "",
-                projectId = path.projectId,
-                subjectId = path.subjectId,
-                topicId = path.topicId,
-                collectPerDay = s3StorageConfig.path.collectPerDay,
-                filename = path.filename,
+            val filePath: String = factory.relativePath(
+                PathFormatParameters(
+                    path.topicId,
+                    key = record,
+                    time = time,
+                    extension = extension,
+                ),
             )
 
-            logger.debug("Attempt storing file at path: {}", filePath.fullPath)
+            logger.debug("Attempt storing file at path: {}", filePath)
 
             client.loadClient()
                 .putObject(
                     PutObjectArgs.builder()
                         .bucket(client.bucketName)
-                        .`object`(filePath.fullPath)
+                        .`object`(filePath)
                         .stream(fileInputStream, fileInputStream.available().toLong(), -1)
                         .build(),
                 )
-            return filePath.fullPath
+            return filePath
         } catch (e: IllegalArgumentException) {
             throw InvalidPathDetailsException("There is a problem resolving the path on the object storage ${e.message ?: ""}")
         } catch (e: Exception) {
