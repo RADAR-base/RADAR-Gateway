@@ -1,9 +1,6 @@
 package org.radarbase.gateway.service.storage.path
 
 import org.radarbase.gateway.utils.requireNotNullAndBlank
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 
 /**
@@ -58,13 +55,7 @@ data class StoragePath(
     val subjectId: String = "",
     val topicId: String = "",
     private val prefix: String = "",
-    private val collectPerDay: Boolean = false,
-    private val folderPattern: String = "yyyyMMdd",
-    private val filePattern: String = "yyyyMMddHHmmss",
-    private val directorySeparator: String = "/",
 ) {
-    val pathInTopicDirectory: String = buildPathInTopicDir()
-    val fullPath: String = buildFullPath()
 
     fun verifyPath() {
         requireNotNullAndBlank(filename) { "File name should be set" }
@@ -73,40 +64,7 @@ data class StoragePath(
         requireNotNullAndBlank(topicId) { "Topic Id should be set" }
     }
 
-    /**
-     * Storing files under their original filename is a security risk, as it can be used to
-     * overwrite existing files. We generate a random filename server-side to mitigate this risk.
-     *
-     * [OWASP Unrestricted File Upload](https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload)
-     */
-    private fun buildFullPath(): String {
-        return listOf(
-            prefix,
-            projectId,
-            subjectId,
-            topicId,
-            pathInTopicDirectory,
-        ).filter { it.isNotBlank() }
-            .joinToString(directorySeparator)
-    }
-
-    private fun buildPathInTopicDir(): String {
-        return listOfNotNull(
-            if (collectPerDay) getDayFolder() else null,
-            generateRandomFilename(filename),
-        ).filter { it.isNotBlank() }.joinToString(directorySeparator)
-    }
-
-    private fun generateRandomFilename(originalFileName: String): String {
-        val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(filePattern))
-        return "${timeStamp}_${UUID.randomUUID()}${getFileExtension(originalFileName)}"
-    }
-
-    private fun getDayFolder(): String {
-        return LocalDate.now().format(DateTimeFormatter.ofPattern(folderPattern))
-    }
-
-    private fun getFileExtension(originalFileName: String): String {
+    fun getFileExtension(originalFileName: String): String {
         val lastDot = originalFileName.lastIndexOf('.')
         return if (lastDot >= 0) {
             originalFileName.substring(lastDot).lowercase(Locale.ENGLISH)

@@ -1,5 +1,6 @@
 package org.radarbase.gateway.config
 
+import org.radarbase.gateway.path.config.PathConfig
 import org.radarbase.gateway.utils.Env.AWS_ACCESS_KEY_ID
 import org.radarbase.gateway.utils.Env.AWS_DEFAULT_REGION
 import org.radarbase.gateway.utils.Env.AWS_ENDPOINT_URL_S3
@@ -12,7 +13,7 @@ data class S3StorageConfig(
     var secretKey: String? = null,
     var bucketName: String? = null,
     var region: String? = null,
-    var path: S3StoragePathConfig = S3StoragePathConfig(),
+    var path: PathConfig = PathConfig(),
 ) {
     fun checkEnvironmentVars() {
         url ?: run {
@@ -30,6 +31,5 @@ data class S3StorageConfig(
         region ?: run {
             region = System.getenv(AWS_DEFAULT_REGION)
         }
-        path.checkEnvironmentVars()
     }
 }

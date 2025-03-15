@@ -25,12 +25,14 @@ class RadarMinioClient(
                 .credentials(s3StorageConfig.accessKey, s3StorageConfig.secretKey)
                 .region(s3StorageConfig.region)
                 .build().also { minio ->
-                    s3StorageConfig.bucketName.let {
+                    val bucket = s3StorageConfig.bucketName
+                    bucket.let {
                         BucketExistsArgs.builder().bucket(it).build().run(minio::bucketExists)
                             .also { bucketExists ->
                                 if (!bucketExists) {
-                                    throw RuntimeException("S3 bucket $bucketName does not exist")
+                                    throw RuntimeException("S3 bucket $bucket does not exist")
                                 }
+                                println("Building minio client3: $bucketExists")
                             }
                         bucketName = it
                     }
