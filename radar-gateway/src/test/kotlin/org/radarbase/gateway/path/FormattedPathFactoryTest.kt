@@ -55,7 +55,7 @@ internal class FormattedPathFactoryTest {
                 extension = ".csv.gz",
             ),
         )
-        val regex = Regex("""p/u/t/20210102_1300(_[a-f0-9\-]+)?\.csv\.gz""")
+        val regex = Regex("""p/u/t/20210102_1300/20210102_1300(_[a-f0-9\-]+)?\.csv\.gz""")
         assertTrue(regex.matches(path), "Path format is incorrect: $path")
     }
 

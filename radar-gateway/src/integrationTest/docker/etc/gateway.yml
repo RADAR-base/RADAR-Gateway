@@ -29,9 +29,9 @@ s3:
   # Path-related settings for organizing stored files.
   # specifies the region for the bucket
   # region: eu-west-2
+pathConfig:
+  factory: org.radarbase.gateway.path.FormattedPathFactory
+  # Additional properties
   path:
-    # A prefix to be added to the stored file paths (optional).
-    #    prefix:
-    # Determines whether files should be organized into daily subdirectories.
-    # If true, files will be stored in a structure like "bucketName/yyyy-MM-dd/".
-    collectPerDay: true
+    format: ${projectId}/${userId}/${topic}/${time:YYYYmmDD_HH'00'}/${filename}/${extension}
+    plugins: fixed time
