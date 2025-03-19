@@ -4,16 +4,12 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.request.basicAuth
-import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.head
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.Parameters
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +30,6 @@ import org.radarbase.data.AvroRecordData
 import org.radarbase.gateway.resource.KafkaRootTest.Companion.BASE_URI
 import org.radarbase.gateway.resource.KafkaTopics.Companion.ACCEPT_AVRO_V2_JSON
 import org.radarbase.kotlin.coroutines.forkJoin
-import org.radarbase.ktor.auth.OAuth2AccessToken
 import org.radarbase.ktor.auth.bearer
 import org.radarbase.producer.AuthenticationException
 import org.radarbase.producer.io.timeout
@@ -53,6 +48,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class KafkaTopicsTest {
     private lateinit var httpClient: HttpClient
+    private lateinit var mpHelper: MPTestSupport
 
     @BeforeEach
     fun setUpClass() {
@@ -65,16 +61,17 @@ class KafkaTopicsTest {
                     },
                 )
             }
-            defaultRequest {
-                url("$MANAGEMENTPORTAL_URL/")
-            }
+        }
+
+        mpHelper = MPTestSupport().apply {
+            init()
         }
     }
 
     @Test
     fun testListTopics() = runBlocking {
         val accessTokenJob = async(Dispatchers.IO) {
-            requestAccessToken()
+            mpHelper.requestAccessToken()
         }
 
         val retriever = schemaRetriever(SCHEMA_REGISTRY_URL) {
@@ -130,7 +127,7 @@ class KafkaTopicsTest {
 
         try {
             gatewayContext.testTopicList()
-        } catch (ex: AuthenticationException) {
+        } catch (_: AuthenticationException) {
             // try again
             gatewayContext.testTopicList()
         }
@@ -199,45 +196,6 @@ class KafkaTopicsTest {
         }.let { response ->
             assertThat(response.status, equalTo(HttpStatusCode.BadRequest))
         }
-    }
-
-    private suspend fun requestAccessToken(): String {
-        val response = httpClient.submitForm(
-            url = "oauth/token",
-            formParameters = Parameters.build {
-                append("username", ADMIN_USER)
-                append("password", ADMIN_PASSWORD)
-                append("grant_type", "password")
-            },
-        ) {
-            basicAuth(username = MP_CLIENT, password = "")
-        }
-        assertThat(response.status, equalTo(HttpStatusCode.OK))
-        val token = response.body<OAuth2AccessToken>()
-
-        val tokenUrl = httpClient.get("api/oauth-clients/pair") {
-            url {
-                parameters.append("clientId", REST_CLIENT)
-                parameters.append("login", USER)
-                parameters.append("persistent", "false")
-            }
-            bearer(requireNotNull(token.accessToken))
-        }.body<MPPairResponse>().tokenUrl
-
-        println("Requesting refresh token")
-        val refreshToken = httpClient.get(tokenUrl).body<MPMetaToken>().refreshToken
-
-        return requireNotNull(
-            httpClient.submitForm(
-                url = "oauth/token",
-                formParameters = Parameters.build {
-                    append("grant_type", "refresh_token")
-                    append("refresh_token", refreshToken)
-                },
-            ) {
-                basicAuth(REST_CLIENT, "")
-            }.body<OAuth2AccessToken>().accessToken,
-        )
     }
 
     private suspend fun RequestContext.testTopicList() = withContext(Dispatchers.IO) {
@@ -315,16 +273,11 @@ class KafkaTopicsTest {
     )
 
     companion object {
-        private const val MANAGEMENTPORTAL_URL = "http://localhost:8080/managementportal"
         private const val SCHEMA_REGISTRY_URL = "http://localhost:8081/"
         private const val REST_PROXY_URL = "http://localhost:8082"
-        const val MP_CLIENT = "ManagementPortalapp"
-        const val REST_CLIENT = "pRMT"
+        const val SOURCE = "03d28e5c-e005-46d4-a9b3-279c27fbbc83"
         const val USER = "sub-1"
         const val PROJECT = "radar"
-        const val SOURCE = "03d28e5c-e005-46d4-a9b3-279c27fbbc83"
-        const val ADMIN_USER = "admin"
-        const val ADMIN_PASSWORD = "admin"
         private val KAFKA_JSON_TYPE = ContentType.parse(ACCEPT_AVRO_V2_JSON)
         private val KAFKA_CONTENT_TYPE = ContentType("application", "vnd.kafka.avro.v2+json")
     }
