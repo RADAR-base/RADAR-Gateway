@@ -1,14 +1,18 @@
 package org.radarbase.gateway.resource
 
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitFormWithBinaryData
+import io.ktor.client.request.header
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
 import io.minio.BucketExistsArgs
 import io.minio.GetObjectArgs
 import io.minio.MakeBucketArgs
@@ -52,7 +56,8 @@ class FileUploadTest {
             url = "radar/sub-1/test-topic/upload",
             formData = formData {
                 append(
-                    "file", testFile.readBytes(),
+                    "file",
+                    testFile.readBytes(),
                     Headers.build {
                         append(
                             HttpHeaders.ContentDisposition,
@@ -88,7 +93,7 @@ class FileUploadTest {
             GetObjectArgs.builder()
                 .bucket(bucketName)
                 .`object`(objectKey)
-                .build()
+                .build(),
         )
 
         val remoteBytes = inputStream.readBytes()
@@ -101,7 +106,6 @@ class FileUploadTest {
         val remoteHash = computeHash(remoteBytes)
 
         assertEquals(localHash, remoteHash, "The local file and remote file hashes do not match.")
-
     }
 
     private fun computeHash(file: File, algorithm: String = "SHA-256"): String {
@@ -114,7 +118,6 @@ class FileUploadTest {
         return digest.joinToString("") { "%02x".format(it) }
     }
 
-
     companion object {
         const val FILE_PATH = "/etc/radar-gateway/gateway-upload-file.txt"
         const val CONFIG_PATH = "/etc/radar-gateway/gateway.yml"
@@ -126,7 +129,7 @@ class FileUploadTest {
             listOf(
                 CONFIG_PATH,
             ),
-            arrayOf()
+            arrayOf(),
         ).withDefaults()
 
         private val s3StorageConfig: S3StorageConfig = gatewayConfig.s3
