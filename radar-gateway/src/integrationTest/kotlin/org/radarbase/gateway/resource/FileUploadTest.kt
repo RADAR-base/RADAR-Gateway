@@ -44,8 +44,7 @@ class FileUploadTest {
     fun testCorrectStoredFilePath() = runBlocking {
         val accessToken = mpHelper.requestAccessToken()
 
-        val testFile =
-            File("/home/aditya/Partition/Radar/radar-gateway/radar-gateway/src/integrationTest/docker/etc/storage/gateway-upload-file.txt")
+        val testFile = File(FILE_PATH)
 
         require(testFile.exists()) { "Test file not found: ${testFile.absolutePath}" }
 
@@ -95,11 +94,8 @@ class FileUploadTest {
         val remoteBytes = inputStream.readBytes()
         inputStream.close()
 
-        val localFile = File("/home/aditya/Partition/Radar/radar-gateway/radar-gateway/src/integrationTest/docker/etc/storage/gateway-upload-file.txt")
+        val localFile = File(FILE_PATH)
         require(localFile.exists()) { "Local test file not found: ${localFile.absolutePath}" }
-
-        val localContent = localFile.readText(Charsets.UTF_8)
-        val remoteContent = String(remoteBytes, Charsets.UTF_8)
 
         val localHash = computeHash(localFile)
         val remoteHash = computeHash(remoteBytes)
@@ -121,18 +117,14 @@ class FileUploadTest {
 
     companion object {
         const val FILE_PATH = "/etc/radar-gateway/gateway-upload-file.txt"
+        const val CONFIG_PATH = "/etc/radar-gateway/gateway.yml"
         const val GATEWAY_URL = "http://localhost:8090/radar-gateway"
 
         private lateinit var httpClient: HttpClient
 
-        val baseDir: String? = System.getProperty("user.dir")
-        val configPath = "$baseDir/src/integrationTest/docker/etc/gateway.yml".also {
-            println("Config path: $it")
-        }
-
         private val gatewayConfig = ConfigLoader.loadConfig<GatewayConfig>(
             listOf(
-                configPath,
+                CONFIG_PATH,
             ),
             arrayOf()
         ).withDefaults()
