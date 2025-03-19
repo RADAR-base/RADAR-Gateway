@@ -1,0 +1,1 @@
+This file is created for testing the Radar-Gateway's file upload endpoint.
