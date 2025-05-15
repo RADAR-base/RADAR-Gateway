@@ -18,11 +18,13 @@ import org.radarbase.auth.authorization.EntityDetails
 import org.radarbase.auth.authorization.Permission
 import org.radarbase.auth.token.RadarToken
 import org.radarbase.gateway.config.GatewayConfig
+import org.radarbase.gateway.resource.KafkaTopics
 import org.radarbase.jersey.auth.AuthService
 import org.radarbase.producer.schema.ParsedSchemaMetadata
 import org.radarbase.producer.schema.SchemaRetriever
 import org.radarbase.topic.AvroTopic
 import java.io.InputStream
+import org.slf4j.LoggerFactory
 
 /** Converts binary input from a RecordSet to Kafka JSON. */
 class BinaryToAvroConverter(
@@ -79,8 +81,18 @@ class BinaryToAvroConverter(
     }
 
     private suspend fun decodeMetadata(decoder: Decoder, topic: String, token: RadarToken) = withContext(Dispatchers.IO) {
-        val keyVersion = decoder.readInt()
-        val valueVersion = decoder.readInt()
+        var keyVersion = 1
+        var valueVersion = 1
+        try {
+            keyVersion = decoder.readInt()
+            valueVersion = decoder.readInt()
+            if (keyVersion != 1 || valueVersion != 1)
+                logger.warn("unexpected key value values:" +
+                    "keyVersion is not 1 but is:$keyVersion, " +
+                    "valueVersion is not 1 but is valueVersion=$valueVersion")
+        } catch (e: Exception) {
+            logger.error("Error decoding integer value. Using 1 as schema version. {}", e.stackTraceToString())
+        }
 
         val keySchemaMetadataJob = async {
             schemaRetriever.getByVersion(topic, false, keyVersion)
@@ -127,5 +139,6 @@ class BinaryToAvroConverter(
                 schema.getField("sourceId")?.let { set(it, authId.source) }
             }.build()
         }
+        private val logger = LoggerFactory.getLogger(KafkaTopics::class.java)
     }
 }
