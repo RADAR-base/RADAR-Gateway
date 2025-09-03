@@ -1,20 +1,20 @@
 @Suppress("ConstPropertyName")
 object Versions {
-    const val project = "0.9.1"
+    const val project = "0.9.2"
 
     const val java = 17
     const val kotlin = "1.9.22"
     const val dockerCompose = "0.17.6"
 
     const val ktor = "2.3.10"
-    const val radarJersey = "0.11.1"
-    const val radarCommons = "1.2.2"
-    const val radarSchemas = "0.8.9"
-    const val jackson = "2.15.3"
+    const val radarJersey = "0.12.4"
+    const val radarCommons = "1.2.4"
+    const val radarSchemas = "0.8.14"
+    const val jackson = "2.17.2"
     const val log4j2 = "2.23.1"
     const val lzfse = "0.1.1"
-    const val radarAuth = "2.1.1"
-    const val avro = "1.11.4"
+    const val radarAuth = "2.1.12"
+    const val avro = "1.12.0"
     const val confluent = "7.6.0"
     const val kafka = "$confluent-ce"
 
