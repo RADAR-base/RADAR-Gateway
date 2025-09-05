@@ -1,0 +1,85 @@
+{
+    "allowedLicenses": [
+        {
+            "moduleLicense": "Apache 2.0"
+        },
+        {
+            "moduleLicense": "Apache License, 2.0"
+        },
+        {
+            "moduleLicense": "Apache-2.0"
+        },
+        {
+            "moduleLicense": "BSD 2-Clause License"
+        },
+        {
+            "moduleLicense": "BSD 2-Clause"
+        },
+        {
+            "moduleLicense": "BSD-3-Clause"
+        },
+        {
+            "moduleLicense": "BSD-3-Clause;link=https://asm.ow2.io/LICENSE.txt"
+        },
+        {
+            "moduleLicense": "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0"
+        },
+        {
+            "moduleLicense": "EDL 1.0"
+        },
+        {
+            "moduleLicense": "EPL 2.0"
+        },
+        {
+            "moduleLicense": "Eclipse Distribution License - v 1.0"
+        },
+        {
+            "moduleLicense": "Eclipse Public License - v 2.0"
+        },
+        {
+            "moduleLicense": "Eclipse Public License v. 2.0"
+        },
+        {
+            "moduleLicense": "GNU General Public License, version 2 with the GNU Classpath Exception"
+        },
+        {
+            "moduleLicense": "GPL2 w/ CPE"
+        },
+        {
+            "moduleLicense": "Go License"
+        },
+        {
+            "moduleLicense": "MIT license"
+        },
+        {
+            "moduleLicense": "MIT"
+        },
+        {
+            "moduleLicense": "Modified BSD"
+        },
+        {
+            "moduleLicense": "Public Domain"
+        },
+        {
+            "moduleLicense": "The Apache Software License, Version 2.0"
+        },
+        {
+            "moduleLicense": "The GNU General Public License (GPL), Version 2 With Classpath Exception"
+        },
+        {
+            "moduleLicense": "The MIT License (MIT)"
+        },
+        {
+            "moduleLicense": "The MIT License"
+        },
+        {
+            "moduleLicense": "W3C license"
+        },
+        {
+            "moduleLicense": "jQuery license"
+        },
+        {
+            "moduleLicense": null
+        }
+    ]
+}
