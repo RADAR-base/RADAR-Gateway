@@ -40,3 +40,11 @@ fun requiresListNonNullOrBlank(names: List<String?>, lazyMessage: () -> String) 
         throw InvalidFileDetailsException(lazyMessage())
     }
 }
+
+internal inline fun <reified T> String.constructClass(): T {
+    return try {
+        (Class.forName(this).getConstructor().newInstance() as T)
+    } catch (ex: ReflectiveOperationException) {
+        throw IllegalStateException("Cannot map class $this to ${T::class.java.name}")
+    }
+}
