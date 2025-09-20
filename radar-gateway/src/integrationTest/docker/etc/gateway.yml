@@ -21,14 +21,14 @@ s3:
   # This can be a local MinIO server (e.g., http://localhost:9000) or AWS S3.
   url: http://localhost:9000
   # The access key used for authentication with the S3 storage.
-  #  accessKey: access-key
+  accessKey: access-key
   # The secret key used for authentication with the S3 storage.
-  #  secretKey: secret-key
+  secretKey: secret-key
   # The name of the S3 bucket where files will be uploaded.
-  #  bucketName: radar
-  # Path-related settings for organizing stored files.
+  bucketName: radar
   # specifies the region for the bucket
-  # region: eu-west-2
+  region: eu-west-2
+  # Path-related settings for organizing stored files.
 pathConfig:
   factory: org.radarbase.gateway.path.FormattedPathFactory
   # Additional properties

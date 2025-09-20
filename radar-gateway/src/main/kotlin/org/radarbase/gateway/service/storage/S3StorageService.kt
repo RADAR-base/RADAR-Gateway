@@ -14,6 +14,7 @@ import org.radarbase.gateway.path.config.PathFormatterConfig.Companion.DEFAULT_F
 import org.radarbase.gateway.service.storage.path.StoragePath
 import org.radarbase.gateway.utils.requiresListNonNullOrBlank
 import org.slf4j.LoggerFactory
+import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.time.Instant
 
@@ -67,12 +68,18 @@ class S3StorageService(
 
             logger.debug("Attempt storing file at path: {}", filePath)
 
+            val fileBytes: ByteArray = fileInputStream.use { input ->
+                input.readBytes()
+            }
+            val actualLength = fileBytes.size.toLong()
+            val uploadStream = ByteArrayInputStream(fileBytes)
+
             client.loadClient()
                 .putObject(
                     PutObjectArgs.builder()
                         .bucket(client.bucketName)
                         .`object`(filePath)
-                        .stream(fileInputStream, fileInputStream.available().toLong(), -1)
+                        .stream(uploadStream, actualLength, -1)
                         .build(),
                 )
             return filePath
