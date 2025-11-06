@@ -8,6 +8,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.apache.avro.Schema
 import org.radarbase.gateway.config.GatewayConfig
+import org.radarbase.gateway.resource.KafkaTopics
 import org.radarbase.gateway.service.SchedulingService
 import org.radarbase.jersey.auth.AuthService
 import org.radarbase.jersey.exception.HttpApplicationException
@@ -19,6 +20,7 @@ import org.radarbase.producer.avro.AvroDataMapper
 import org.radarbase.producer.avro.AvroDataMapperFactory
 import org.radarbase.producer.rest.RestException
 import org.radarbase.producer.schema.SchemaRetriever
+import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.IOException
 import java.text.ParseException
@@ -123,7 +125,20 @@ class AvroProcessor(
                 idMapping.computeIfAbsent(Pair(subject, id.asInt())) {
                     CachedValue(cacheConfig) {
                         val parsedSchema = try {
-                            schemaRetriever.getById(topic, ofValue, id.asInt())
+
+                            if ((subject == "sensorkit_acceleration-key" || subject == "sensorkit_rotation_rate-key") && id.asInt() == 2) {
+                                logger.warn("Schema ID 2 not found in subject, ID replaced with 3")
+                                schemaRetriever.getById(topic, ofValue, 3)
+                            } else if (subject == "sensorkit_acceleration-value" && id.asInt() == 127) {
+                                logger.warn("Schema ID 127 not found in subject, ID replaced with 114")
+                                schemaRetriever.getById(topic, ofValue, 114)
+                            } else if (subject == "sensorkit_rotation_rate-value" && id.asInt() == 138) {
+                                logger.warn("Schema ID 138 not found in subject, ID replaced with 133")
+                                schemaRetriever.getById(topic, ofValue, 133)
+                            } else {
+                                schemaRetriever.getById(topic, ofValue, id.asInt())
+                            }
+
                         } catch (ex: RestException) {
                             if (ex.status == HttpStatusCode.NotFound) {
                                 throw HttpApplicationException(
@@ -183,3 +198,5 @@ class AvroProcessor(
         val mapper: AvroDataMapper,
     )
 }
+
+private val logger = LoggerFactory.getLogger(KafkaTopics::class.java)
