@@ -126,15 +126,58 @@ class AvroProcessor(
                     CachedValue(cacheConfig) {
                         val parsedSchema = try {
 
-                            if ((subject == "sensorkit_acceleration-key" || subject == "sensorkit_rotation_rate-key") && id.asInt() == 2) {
-                                logger.warn("Schema ID 2 not found in subject, ID replaced with 3")
+                            if ((   subject == "sensorkit_acceleration-key" ||
+                                    subject == "sensorkit_rotation_rate-key"||
+                                    subject == "sensorkit_visits-key" ||
+                                    subject == "sensorkit_phone_usage-key" ||
+                                    subject == "sensorkit_ambient_pressure-key" ||
+                                    subject == "sensorkit_pedometer-key" ||
+                                    subject == "sensorkit_on_wrist-key" ||
+                                    subject == "sensorkit_keyboard_metrics-key" ||
+                                    subject == "sensorkit_device_usage-key" ||
+                                    subject == "sensorkit_telephony_speech_metrics-key" ||
+                                    subject == "sensorkit_message_usage-key" ||
+                                    subject == "sensorkit_ambient_light-key"
+                                )
+                                && id.asInt() == 2) {
+                                logger.warn("Schema ID 2 not found in subject $subject, ID replaced with 3")
                                 schemaRetriever.getById(topic, ofValue, 3)
                             } else if (subject == "sensorkit_acceleration-value" && id.asInt() == 127) {
-                                logger.warn("Schema ID 127 not found in subject, ID replaced with 114")
+                                logger.warn("Schema ID 127 not found in subject $subject, ID replaced with 114")
                                 schemaRetriever.getById(topic, ofValue, 114)
                             } else if (subject == "sensorkit_rotation_rate-value" && id.asInt() == 138) {
-                                logger.warn("Schema ID 138 not found in subject, ID replaced with 133")
+                                logger.warn("Schema ID 138 not found in subject $subject, ID replaced with 133")
                                 schemaRetriever.getById(topic, ofValue, 133)
+                            } else if (subject == "sensorkit_visits-value" && id.asInt() == 136) {
+                                logger.warn("Schema ID 136 not found in subject $subject, ID replaced with 115")
+                                schemaRetriever.getById(topic, ofValue, 115)
+                            } else if (subject == "sensorkit_phone_usage-value" && id.asInt() == 134) {
+                                logger.warn("Schema ID 134 not found in subject $subject, ID replaced with 116")
+                                schemaRetriever.getById(topic, ofValue, 116)
+                            } else if (subject == "sensorkit_pedometer-value" && id.asInt() == 129) {
+                                logger.warn("Schema ID 129 not found in subject $subject, ID replaced with 118")
+                                schemaRetriever.getById(topic, ofValue, 118)
+                            } else if (subject == "sensorkit_keyboard_metrics-value" && id.asInt() == 131) {
+                                logger.warn("Schema ID 131 not found in subject $subject, ID replaced with 132")
+                                schemaRetriever.getById(topic, ofValue, 132)
+                            } else if (subject == "sensorkit_device_usage-value" && id.asInt() == 126) {
+                                logger.warn("Schema ID 126 not found in subject $subject, ID replaced with 146")
+                                schemaRetriever.getById(topic, ofValue, 146)
+                            } else if (subject == "sensorkit_telephony_speech_metrics-value" && id.asInt() == 132) {
+                                logger.warn("Schema ID 132 not found in subject $subject, ID replaced with 123")
+                                schemaRetriever.getById(topic, ofValue, 123)
+                            } else if (subject == "sensorkit_message_usage-value" && id.asInt() == 130) {
+                                logger.warn("Schema ID 130 not found in subject $subject, ID replaced with 147")
+                                schemaRetriever.getById(topic, ofValue, 147)
+                            } else if (subject == "sensorkit_on_wrist-value" && id.asInt() == 128) {
+                                logger.warn("Schema ID 128 not found in subject $subject, ID replaced with 129")
+                                schemaRetriever.getById(topic, ofValue, 129)
+                            } else if (subject == "sensorkit_ambient_light-value" && id.asInt() == 125) {
+                                logger.warn("Schema ID 125 not found in subject $subject, ID replaced with 122")
+                                schemaRetriever.getById(topic, ofValue, 122)
+                            } else if (subject == "sensorkit_ambient_pressure-value" && id.asInt() == 133) {
+                                logger.warn("Schema ID 133 not found in subject $subject, ID replaced with 117")
+                                schemaRetriever.getById(topic, ofValue, 117)
                             } else {
                                 schemaRetriever.getById(topic, ofValue, id.asInt())
                             }
