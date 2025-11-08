@@ -1,6 +1,7 @@
 package org.radarbase.gateway.config
 
 import org.radarbase.gateway.inject.ManagementPortalEnhancerFactory
+import org.radarbase.jersey.config.ConfigLoader.copyOnChange
 import org.radarbase.jersey.enhancer.EnhancerFactory
 
 data class GatewayConfig(
@@ -29,7 +30,14 @@ data class GatewayConfig(
         auth.validate()
     }
 
-    fun checkEnvironmentVars() {
-        s3.checkEnvironmentVars()
-    }
+    fun withEnv(): GatewayConfig = this.copyOnChange(
+        s3,
+        {
+            it.withEnv()
+        },
+        {
+            copy(s3 = it)
+        },
+    )
+
 }

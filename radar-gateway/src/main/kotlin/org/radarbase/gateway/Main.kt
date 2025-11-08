@@ -19,6 +19,7 @@ fun main(args: Array<String>) {
             ),
             args,
         ).withDefaults()
+            .withEnv()
     } catch (ex: IllegalArgumentException) {
         logger.error("No configuration file was found.")
         logger.error("Usage: radar-gateway <config-file>")
@@ -27,7 +28,6 @@ fun main(args: Array<String>) {
 
     try {
         config.validate()
-        config.checkEnvironmentVars()
     } catch (ex: IllegalStateException) {
         logger.error("Configuration incomplete: {}", ex.message)
         exitProcess(1)
