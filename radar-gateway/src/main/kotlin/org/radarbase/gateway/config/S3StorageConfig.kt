@@ -9,12 +9,12 @@ import org.radarbase.jersey.config.ConfigLoader.copyEnv
 import org.radarbase.jersey.config.ConfigLoader.copyOnChange
 
 data class S3StorageConfig(
-    var url: String? = null,
-    var accessKey: String? = null,
-    var secretKey: String? = null,
-    var bucketName: String? = null,
-    var region: String? = null,
-    var path: S3StoragePathConfig = S3StoragePathConfig(),
+    val url: String? = null,
+    val accessKey: String? = null,
+    val secretKey: String? = null,
+    val bucketName: String? = null,
+    val region: String? = null,
+    val path: S3StoragePathConfig = S3StoragePathConfig(),
 ) {
     fun withEnv(): S3StorageConfig = this
         .copyEnv(AWS_ENDPOINT_URL_S3) {
