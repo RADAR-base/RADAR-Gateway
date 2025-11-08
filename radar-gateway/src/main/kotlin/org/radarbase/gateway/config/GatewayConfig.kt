@@ -39,5 +39,4 @@ data class GatewayConfig(
             copy(s3 = it)
         },
     )
-
 }
