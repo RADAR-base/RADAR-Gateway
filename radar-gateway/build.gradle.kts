@@ -106,4 +106,5 @@ radarKotlin {
     javaVersion.set(Versions.java)
     log4j2Version.set(Versions.log4j2)
     sentryEnabled.set(true)
+    openTelemetryAgentEnabled.set(true)
 }
