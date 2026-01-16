@@ -25,11 +25,9 @@ class KafkaHealthMetric(
 
     companion object {
         // Dedicated thread pool for health checks which isolates health checks from regular traffic
-        private val healthCheckExecutor = Executors.newFixedThreadPool(2) { r ->
-            Thread(r, "health-check-thread").apply { isDaemon = true }
-        }
-        
-        private val healthCheckDispatcher: CoroutineDispatcher = 
-            healthCheckExecutor.asCoroutineDispatcher()
+        private val healthCheckDispatcher: CoroutineDispatcher =
+            Executors.newFixedThreadPool(2) { r ->
+                Thread(r, "health-check-thread").apply { isDaemon = true }
+            }.asCoroutineDispatcher()
     }
 }

@@ -16,4 +16,10 @@ data class GatewayServerConfig(
      * Whether JMX should be enabled. Disable if not needed, for higher performance.
      */
     val isJmxEnabled: Boolean = true,
+
+    /** Number of core worker threads in main thread pool */
+    val workerCorePoolSize: Int? = 32,
+
+    /** Max number of worker threads */
+    val workerMaxPoolSize: Int? = 128,
 )
