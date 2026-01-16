@@ -8,7 +8,7 @@ object Versions {
 
     const val ktor = "2.3.10"
     const val radarJersey = "0.12.6-SNAPSHOT"
-    const val radarCommons = "1.1.2"
+    const val radarCommons = "1.1.3"
     const val radarSchemas = "0.8.9"
     const val assertJ = "3.27.3"
     const val mockk = "1.13.16"
