@@ -74,9 +74,6 @@ dependencies {
     implementation("org.apache.kafka:kafka-clients:${Versions.kafka}")
     implementation("io.confluent:kafka-avro-serializer:${Versions.confluent}")
     implementation("io.confluent:kafka-schema-registry-client:${Versions.confluent}")
-    
-    // Force upgrade lz4-java to fix security vulnerabilities
-    implementation("org.lz4:lz4-java:1.8.1")
 
     implementation(platform("com.fasterxml.jackson:jackson-bom:${Versions.jackson}"))
     implementation("com.fasterxml.jackson.core:jackson-databind")
