@@ -66,8 +66,16 @@ class AvroRecordProcessor(
                 val entitiesChecked = HashSet<EntityDetails>()
 
                 for (entity in this) {
-                    // only check entities once
-                    if (!entitiesChecked.add(entity)) continue
+                    // Make sure to perform the permission check on entities only once.
+                    if (entitiesChecked.contains(entity)) continue
+
+                    // There is a 'feature' around the comparison of EntityDetails objects; the checkPermissions method
+                    // updates the EntityDetails object with the organization id. This means that for effective comparison
+                    // we have to make copy of entity details so that the original entity details are compared. Without
+                    // this every entity processed here would be considered as an entity different from all previous and
+                    // would trigger a new permission check. This situation is a consequence of the later addition of the
+                    // concept of organization to the entity details.
+                    entitiesChecked.add(entity.copy())
 
                     authService.checkPermission(
                         Permission.MEASUREMENT_CREATE,
@@ -160,6 +168,7 @@ class AvroRecordProcessor(
                     )
                     defaultProject
                 }
+
                 else -> jsonProject["string"]?.asText() ?: throw context.invalidContent(
                     "Project ID should be wrapped in string union type",
                 )

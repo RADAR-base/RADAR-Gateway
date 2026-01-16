@@ -1,6 +1,3 @@
-import org.radarbase.gradle.plugin.radarKotlin
-import java.time.Duration
-
 plugins {
     kotlin("plugin.serialization") version Versions.kotlin apply false
     id("org.radarbase.radar-root-project") version Versions.radarCommons
@@ -24,17 +21,6 @@ allprojects {
 
 radarRootProject {
     projectVersion.set(Versions.project)
-}
-
-subprojects {
-    apply(plugin = "org.radarbase.radar-kotlin")
-
-    radarKotlin {
-        kotlinVersion.set(Versions.kotlin)
-        javaVersion.set(Versions.java)
-        log4j2Version.set(Versions.log4j2)
-        slf4jVersion.set(Versions.slf4j)
-    }
 }
 
 

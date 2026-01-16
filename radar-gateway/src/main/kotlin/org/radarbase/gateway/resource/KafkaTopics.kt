@@ -15,6 +15,7 @@ import jakarta.ws.rs.container.Suspended
 import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.Response
 import org.radarbase.auth.authorization.Permission.MEASUREMENT_CREATE
+import org.radarbase.gateway.config.GatewayConfig
 import org.radarbase.gateway.inject.ProcessAvro
 import org.radarbase.gateway.io.AvroProcessor
 import org.radarbase.gateway.io.BinaryToAvroConverter
@@ -27,6 +28,7 @@ import org.radarbase.jersey.service.AsyncCoroutineService
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
+import kotlin.time.Duration.Companion.seconds
 
 /** Topics submission and listing. Requests need authentication. */
 @Path("/topics")
@@ -41,10 +43,17 @@ import java.io.InputStream
 class KafkaTopics(
     @Context private val kafkaAdminService: KafkaAdminService,
     @Context private val producerPool: ProducerPool,
+    @Context config: GatewayConfig,
     @Context private val asyncService: AsyncCoroutineService,
 ) {
+
+    val timeout = config.server.requestTimeout.seconds
+
     @GET
-    fun topics(@Suspended asyncResponse: AsyncResponse) = asyncService.runAsCoroutine(asyncResponse) {
+    fun topics(
+        @Context config: GatewayConfig,
+        @Suspended asyncResponse: AsyncResponse,
+    ) = asyncService.runAsCoroutine(asyncResponse, timeout) {
         kafkaAdminService.listTopics()
     }
 
@@ -54,7 +63,7 @@ class KafkaTopics(
     fun topic(
         @PathParam("topic_name") topic: String,
         @Suspended asyncResponse: AsyncResponse,
-    ) = asyncService.runAsCoroutine(asyncResponse) {
+    ) = asyncService.runAsCoroutine(asyncResponse, timeout) {
         kafkaAdminService.topicInfo(topic)
     }
 
@@ -88,7 +97,7 @@ class KafkaTopics(
             asyncResponse.resume(HttpBadRequestException("missing_body", "Missing contents in body"))
             return
         }
-        asyncService.runAsCoroutine(asyncResponse) {
+        asyncService.runAsCoroutine(asyncResponse, timeout) {
             val processingResult = avroProcessor.process(topic, tree)
             producerPool.produce(topic, processingResult.records)
             TopicPostResponse(processingResult.keySchemaId, processingResult.valueSchemaId)
@@ -111,7 +120,7 @@ class KafkaTopics(
             asyncResponse.resume(HttpBadRequestException("missing_body", "Missing contents in body"))
             return
         }
-        asyncService.runAsCoroutine(asyncResponse) {
+        asyncService.runAsCoroutine(asyncResponse, timeout) {
             val processingResult = try {
                 binaryToAvroConverter.process(topic, input)
             } catch (ex: IOException) {

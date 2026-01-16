@@ -13,6 +13,11 @@ data class GatewayServerConfig(
      */
     val maxRequestSize: Long = 24 * 1024 * 1024,
     /**
+     * Maximum time in seconds to wait for a request to complete.
+     * This timeout is applied to the co-routine context, not to the Grizzly server.
+     */
+    val requestTimeout: Int = 30,
+    /**
      * Whether JMX should be enabled. Disable if not needed, for higher performance.
      */
     val isJmxEnabled: Boolean = true,
