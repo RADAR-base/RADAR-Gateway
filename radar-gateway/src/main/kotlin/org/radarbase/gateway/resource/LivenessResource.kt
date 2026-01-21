@@ -15,4 +15,3 @@ class LivenessResource {
     @GET
     fun liveness(): Response = Response.ok().build()
 }
-
