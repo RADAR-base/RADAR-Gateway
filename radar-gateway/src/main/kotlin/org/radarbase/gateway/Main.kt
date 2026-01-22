@@ -34,6 +34,13 @@ fun main(args: Array<String>) {
     }
 
     val resources = ConfigLoader.loadResources(config.resourceConfig, config)
-    val server = GrizzlyServer(config.server.baseUri, resources, config.server.isJmxEnabled)
+    val server = GrizzlyServer(
+        config.server.baseUri,
+        resources,
+        config.server.isJmxEnabled,
+        config.server.workerCorePoolSize,
+        config.server.workerMaxPoolSize,
+    )
+
     server.listen()
 }

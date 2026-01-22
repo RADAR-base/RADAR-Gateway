@@ -7,7 +7,7 @@ object Versions {
     const val dockerCompose = "0.17.6"
 
     const val ktor = "2.3.10"
-    const val radarJersey = "0.12.4"
+    const val radarJersey = "0.12.6"
     const val radarCommons = "1.2.4"
     const val radarSchemas = "0.8.14"
     const val jackson = "2.17.2"
