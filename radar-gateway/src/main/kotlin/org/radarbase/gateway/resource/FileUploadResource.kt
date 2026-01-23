@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition
 import org.glassfish.jersey.media.multipart.FormDataParam
+import org.jvnet.hk2.annotations.Optional
 import org.radarbase.auth.authorization.Permission
 import org.radarbase.gateway.inject.ProcessFileUpload
 import org.radarbase.gateway.service.storage.StorageService
@@ -21,7 +22,7 @@ import java.net.URI
 
 @Path("")
 class FileUploadResource(
-    @Context private val storageService: StorageService? = null,
+    @param:Optional @param:Context private val storageService: StorageService? = null,
 ) {
 
     @ProcessFileUpload
