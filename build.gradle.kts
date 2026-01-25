@@ -8,6 +8,17 @@ plugins {
 
 description = "RADAR Gateway to handle secured data flow to backend."
 
+allprojects {
+    repositories {
+        mavenCentral()
+        maven(url = "https://central.sonatype.com/repository/maven-snapshots/") {
+            mavenContent {
+                snapshotsOnly()
+            }
+        }
+    }
+}
+
 radarRootProject {
     projectVersion.set(Versions.project)
 }

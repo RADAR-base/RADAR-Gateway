@@ -19,6 +19,7 @@ fun main(args: Array<String>) {
             ),
             args,
         ).withDefaults()
+            .withEnv()
     } catch (ex: IllegalArgumentException) {
         logger.error("No configuration file was found.")
         logger.error("Usage: radar-gateway <config-file>")
@@ -33,6 +34,13 @@ fun main(args: Array<String>) {
     }
 
     val resources = ConfigLoader.loadResources(config.resourceConfig, config)
-    val server = GrizzlyServer(config.server.baseUri, resources, config.server.isJmxEnabled)
+    val server = GrizzlyServer(
+        config.server.baseUri,
+        resources,
+        config.server.isJmxEnabled,
+        config.server.workerCorePoolSize,
+        config.server.workerMaxPoolSize,
+    )
+
     server.listen()
 }

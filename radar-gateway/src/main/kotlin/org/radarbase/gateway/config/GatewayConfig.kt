@@ -1,6 +1,7 @@
 package org.radarbase.gateway.config
 
 import org.radarbase.gateway.inject.ManagementPortalEnhancerFactory
+import org.radarbase.jersey.config.ConfigLoader.copyOnChange
 import org.radarbase.jersey.enhancer.EnhancerFactory
 
 data class GatewayConfig(
@@ -12,6 +13,10 @@ data class GatewayConfig(
     val kafka: KafkaConfig = KafkaConfig(),
     /** Server configurations. */
     val server: GatewayServerConfig = GatewayServerConfig(),
+    /** AWS s3 storage configuration */
+    val s3: S3StorageConfig = S3StorageConfig(),
+    /** Whether to enable or disable the configurations based on the storage conditions */
+    val storageCondition: StorageConditionConfig = StorageConditionConfig(),
 ) {
     /** Fill in some default values for the configuration. */
     fun withDefaults(): GatewayConfig = copy(kafka = kafka.withDefaults())
@@ -24,4 +29,14 @@ data class GatewayConfig(
         kafka.validate()
         auth.validate()
     }
+
+    fun withEnv(): GatewayConfig = this.copyOnChange(
+        s3,
+        {
+            it.withEnv()
+        },
+        {
+            copy(s3 = it)
+        },
+    )
 }
