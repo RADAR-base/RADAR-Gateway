@@ -146,7 +146,7 @@ class AvroProcessor(
                             val parsedSchema = Schema.Parser().parse(schema.textValue())
                             createMapping(topic, ofValue, parsedSchema)
                         } catch (ex: Exception) {
-                            throw throw HttpApplicationException(
+                            throw HttpApplicationException(
                                 422,
                                 "schema_not_found",
                                 "Schema ID not found in subject",

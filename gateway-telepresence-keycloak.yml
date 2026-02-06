@@ -1,0 +1,22 @@
+server:
+  baseUri: http://0.0.0.0:8080/kafka/
+  maxRequestSize: 2.5165824e+07
+  requestTimeout: 30
+
+kafka:
+  producer:
+    bootstrap.servers: cp-kafka-headless:9092
+    compression.type: lz4
+    sasl.mechanism: SCRAM-SHA-512
+    security.protocol: PLAINTEXT
+  admin:
+    bootstrap.servers: cp-kafka-headless:9092
+    sasl.mechanism: SCRAM-SHA-512
+    security.protocol: PLAINTEXT
+  serialization:
+    schema.registry.url: http://cp-schema-registry:8081
+auth:
+  managementPortalUrl: 
+  checkSourceId: false
+  publicKeyUrls:
+    - "http://radar-keycloak-service.default.svc.cluster.local:8080/realms/radar-base/protocol/openid-connect/certs"

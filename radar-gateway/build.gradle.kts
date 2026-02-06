@@ -9,6 +9,16 @@ plugins {
 
 description = "RADAR Gateway to handle secured data flow to backend."
 
+repositories {
+    mavenCentral()
+    maven(url = "https://central.sonatype.com/repository/maven-snapshots/") {
+        mavenContent {
+            snapshotsOnly()
+        }
+    }
+}
+
+
 application {
     mainClass.set("org.radarbase.gateway.MainKt")
 

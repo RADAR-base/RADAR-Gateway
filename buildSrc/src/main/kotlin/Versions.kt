@@ -1,6 +1,6 @@
 @Suppress("ConstPropertyName")
 object Versions {
-    const val project = "0.9.3"
+    const val project = "0.10.0-keycloak"
 
     const val java = 17
     const val kotlin = "1.9.22"
@@ -15,7 +15,7 @@ object Versions {
     const val mockk = "1.13.16"
     const val log4j2 = "2.23.1"
     const val lzfse = "0.1.1"
-    const val radarAuth = "2.1.12"
+    const val radarAuth = "3.0.0-keycloak-SNAPSHOT"
     const val avro = "1.12.0"
     const val confluent = "7.6.0"
     const val kafka = "$confluent-ce"
