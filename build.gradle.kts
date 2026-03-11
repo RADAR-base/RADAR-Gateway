@@ -19,6 +19,7 @@ allprojects {
 
 radarRootProject {
     projectVersion.set(libs.versions.project)
+    gradleVersion.set(libs.versions.gradle)
 }
 
 
