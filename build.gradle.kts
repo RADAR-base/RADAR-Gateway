@@ -1,9 +1,7 @@
 plugins {
-    kotlin("plugin.serialization") version Versions.kotlin apply false
-    id("org.radarbase.radar-root-project") version Versions.radarCommons
-    id("org.radarbase.radar-dependency-management") version Versions.radarCommons
-    id("org.radarbase.radar-kotlin") version Versions.radarCommons apply false
-    id("com.avast.gradle.docker-compose") version Versions.dockerCompose apply false
+    alias(libs.plugins.radar.root.project)
+    alias(libs.plugins.radar.dependency.management) apply false
+    alias(libs.plugins.radar.kotlin) apply false
 }
 
 description = "RADAR Gateway to handle secured data flow to backend."
@@ -20,7 +18,7 @@ allprojects {
 }
 
 radarRootProject {
-    projectVersion.set(Versions.project)
+    projectVersion.set(libs.versions.project)
 }
 
 
