@@ -6,6 +6,11 @@ plugins {
 
 description = "RADAR Gateway to handle secured data flow to backend."
 
+radarRootProject {
+    projectVersion.set(libs.versions.project)
+    gradleVersion.set(libs.versions.gradle)
+}
+
 allprojects {
     repositories {
         mavenCentral()
@@ -16,10 +21,3 @@ allprojects {
         }
     }
 }
-
-radarRootProject {
-    projectVersion.set(libs.versions.project)
-    gradleVersion.set(libs.versions.gradle)
-}
-
-
