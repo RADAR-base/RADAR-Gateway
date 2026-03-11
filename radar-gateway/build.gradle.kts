@@ -114,8 +114,7 @@ dependencies {
 }
 
 radarKotlin {
-    javaVersion.set(libs.versions.java.get().toInt())
     log4j2Version.set(libs.versions.log4j2)
     sentryEnabled.set(true)
-    openTelemetryAgentEnabled.set(true)
+    openTelemetryAgentEnabled.set(false)
 }
