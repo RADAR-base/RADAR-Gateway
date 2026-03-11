@@ -5,23 +5,24 @@ gradle = "8.14"
 kotlin = "1.9.24"
 dockerCompose = "0.17.6"
 ktor = "2.3.10"
-radarJersey = "0.12.6"
-radarCommons = "1.2.4"
-radarSchemas = "0.8.14"
-jackson = "2.17.2"
+radarJersey = "0.12.7"
+radarCommons = "1.2.6"
+radarSchemas = "0.8.15"
+jackson = "2.20.2"
 assertJ = "3.27.3"
 mockk = "1.13.16"
 log4j2 = "2.23.1"
 lzfse = "0.1.1"
-radarAuth = "3.0.0-keycloak-SNAPSHOT"
-avro = "1.12.0"
+radarAuth = "2.1.13"
+avro = "1.12.1"
 confluent = "7.6.0"
-minio = "8.5.10"
+minio = "8.5.17"
 multipart = "3.1.10"
 mockitoKotlin = "5.3.1"
 grizzly = "4.0.2"
 hamcrest = "2.2"
 okHttp = "4.12.0"
+lz4 = "1.10.1"
 
 [libraries]
 radar-commons = { group = "org.radarbase", name = "radar-commons", version.ref = "radarCommons" }
@@ -32,6 +33,7 @@ radar-auth = { group = "org.radarbase", name = "radar-auth", version.ref = "rada
 managementportal-client = { group = "org.radarbase", name = "managementportal-client", version.ref = "radarAuth" }
 radar-schemas-commons = { group = "org.radarbase", name = "radar-schemas-commons", version.ref = "radarSchemas" }
 lzfse-decode = { group = "org.radarbase", name = "lzfse-decode", version.ref = "lzfse" }
+lz4 = { module = "at.yawk.lz4:lz4-java", version.ref = "lz4" }
 
 minio = { group = "io.minio", name = "minio", version.ref = "minio" }
 jersey-media-multipart = { group = "org.glassfish.jersey.media", name = "jersey-media-multipart", version.ref = "multipart" }

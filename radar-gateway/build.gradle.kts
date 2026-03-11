@@ -57,6 +57,17 @@ dockerCompose {
 
 configurations["integrationTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
 
+// --- Vulnerability fixes start ---
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        // Substitute the old group/module with drop-in replacement
+        substitute(module("org.lz4:lz4-java"))
+            .using(module(rootProject.libs.lz4.get().toString()))
+            .because("Force safe version of LZ4 across all modules")
+    }
+}
+// --- Vulnerability fixes end ---
+
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
