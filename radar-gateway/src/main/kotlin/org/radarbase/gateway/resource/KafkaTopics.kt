@@ -51,7 +51,6 @@ class KafkaTopics(
 
     @GET
     fun topics(
-        @Context config: GatewayConfig,
         @Suspended asyncResponse: AsyncResponse,
     ) = asyncService.runAsCoroutine(asyncResponse, timeout) {
         kafkaAdminService.listTopics()
