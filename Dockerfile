@@ -10,14 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM --platform=$BUILDPLATFORM gradle:8.4-jdk17 as builder
+FROM --platform=$BUILDPLATFORM gradle:8.14-jdk17 as builder
 
 RUN mkdir /code
 WORKDIR /code
 ENV GRADLE_USER_HOME=/code/.gradlecache \
    GRADLE_OPTS="-Djdk.lang.Process.launchMechanism=vfork -Dorg.gradle.vfs.watch=false"
 
-COPY ./buildSrc /code/buildSrc
+COPY ./gradle/libs.versions.toml /code/gradle/
 COPY ./build.gradle.kts ./settings.gradle.kts ./gradle.properties /code/
 COPY radar-gateway/build.gradle.kts /code/radar-gateway/
 
