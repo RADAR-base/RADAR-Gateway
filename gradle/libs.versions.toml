@@ -1,0 +1,68 @@
+[versions]
+project = "0.9.5-SNAPSHOT"
+gradle = "8.14"
+kotlin = "1.9.24"
+dockerCompose = "0.17.6"
+ktor = "2.3.10"
+radarJersey = "0.12.7"
+radarCommons = "1.2.6"
+radarSchemas = "0.8.15"
+jackson = "2.20.2"
+assertJ = "3.27.3"
+mockk = "1.13.16"
+log4j2 = "2.23.1"
+lzfse = "0.1.1"
+radarAuth = "2.1.13"
+avro = "1.12.1"
+confluent = "7.6.0"
+minio = "8.5.17"
+multipart = "3.1.10"
+mockitoKotlin = "5.3.1"
+grizzly = "4.0.2"
+hamcrest = "2.2"
+okHttp = "4.12.0"
+lz4 = "1.10.1"
+
+[libraries]
+radar-commons = { group = "org.radarbase", name = "radar-commons", version.ref = "radarCommons" }
+radar-commons-kotlin = { group = "org.radarbase", name = "radar-commons-kotlin", version.ref = "radarCommons" }
+radar-commons-testing = { group = "org.radarbase", name = "radar-commons-testing", version.ref = "radarCommons" }
+radar-jersey = { group = "org.radarbase", name = "radar-jersey", version.ref = "radarJersey" }
+radar-auth = { group = "org.radarbase", name = "radar-auth", version.ref = "radarAuth" }
+managementportal-client = { group = "org.radarbase", name = "managementportal-client", version.ref = "radarAuth" }
+radar-schemas-commons = { group = "org.radarbase", name = "radar-schemas-commons", version.ref = "radarSchemas" }
+lzfse-decode = { group = "org.radarbase", name = "lzfse-decode", version.ref = "lzfse" }
+lz4 = { module = "at.yawk.lz4:lz4-java", version.ref = "lz4" }
+
+minio = { group = "io.minio", name = "minio", version.ref = "minio" }
+jersey-media-multipart = { group = "org.glassfish.jersey.media", name = "jersey-media-multipart", version.ref = "multipart" }
+
+kafka-clients = { group = "org.apache.kafka", name = "kafka-clients", version = "7.6.0-ce" }
+kafka-avro-serializer = { group = "io.confluent", name = "kafka-avro-serializer", version.ref = "confluent" }
+kafka-schema-registry-client = { group = "io.confluent", name = "kafka-schema-registry-client", version.ref = "confluent" }
+avro = { group = "org.apache.avro", name = "avro", version.ref = "avro" }
+
+jackson-bom = { group = "com.fasterxml.jackson", name = "jackson-bom", version.ref = "jackson" }
+jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind" }
+
+ktor-bom = { group = "io.ktor", name = "ktor-bom", version.ref = "ktor" }
+ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json" }
+
+grizzly-framework-monitoring = { group = "org.glassfish.grizzly", name = "grizzly-framework-monitoring", version.ref = "grizzly" }
+grizzly-http-monitoring = { group = "org.glassfish.grizzly", name = "grizzly-http-monitoring", version.ref = "grizzly" }
+grizzly-http-server-monitoring = { group = "org.glassfish.grizzly", name = "grizzly-http-server-monitoring", version.ref = "grizzly" }
+
+mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
+hamcrest = { group = "org.hamcrest", name = "hamcrest", version.ref = "hamcrest" }
+mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okHttp" }
+assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertJ" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+
+[plugins]
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+radar-root-project = { id = "org.radarbase.radar-root-project", version.ref = "radarCommons" }
+radar-dependency-management = { id = "org.radarbase.radar-dependency-management", version.ref = "radarCommons" }
+radar-kotlin = { id = "org.radarbase.radar-kotlin", version.ref = "radarCommons" }
+docker-compose = { id = "com.avast.gradle.docker-compose", version.ref = "dockerCompose" }

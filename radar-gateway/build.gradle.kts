@@ -2,9 +2,9 @@ import java.time.Duration
 
 plugins {
     application
-    kotlin("plugin.serialization") version Versions.kotlin
-    id("org.radarbase.radar-kotlin") version Versions.radarCommons
-    id("com.avast.gradle.docker-compose") version Versions.dockerCompose
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.radar.kotlin)
+    alias(libs.plugins.docker.compose)
 }
 
 description = "RADAR Gateway to handle secured data flow to backend."
@@ -57,54 +57,64 @@ dockerCompose {
 
 configurations["integrationTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
 
+// --- Vulnerability fixes start ---
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        // Substitute the old group/module with drop-in replacement
+        substitute(module("org.lz4:lz4-java"))
+            .using(module(rootProject.libs.lz4.get().toString()))
+            .because("Force safe version of LZ4 across all modules")
+    }
+}
+// --- Vulnerability fixes end ---
+
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
 
-    implementation("org.glassfish.jersey.media:jersey-media-multipart:${Versions.multipart}")
+    implementation(libs.jersey.media.multipart)
 
-    implementation("org.radarbase:radar-commons:${Versions.radarCommons}")
-    implementation("org.radarbase:radar-commons-kotlin:${Versions.radarCommons}")
-    implementation("org.radarbase:radar-jersey:${Versions.radarJersey}")
-    implementation("org.radarbase:managementportal-client:${Versions.radarAuth}")
-    implementation("org.radarbase:lzfse-decode:${Versions.lzfse}")
-    implementation("org.radarbase:radar-auth:${Versions.radarAuth}")
-    implementation("io.minio:minio:${Versions.minio}")
+    implementation(libs.radar.commons)
+    implementation(libs.radar.commons.kotlin)
+    implementation(libs.radar.jersey)
+    implementation(libs.managementportal.client)
+    implementation(libs.lzfse.decode)
+    implementation(libs.radar.auth)
+    implementation(libs.minio)
 
-    implementation("org.apache.kafka:kafka-clients:${Versions.kafka}")
-    implementation("io.confluent:kafka-avro-serializer:${Versions.confluent}")
-    implementation("io.confluent:kafka-schema-registry-client:${Versions.confluent}")
+    implementation(libs.kafka.clients)
+    implementation(libs.kafka.avro.serializer)
+    implementation(libs.kafka.schema.registry.client)
 
-    implementation(platform("com.fasterxml.jackson:jackson-bom:${Versions.jackson}"))
-    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation(platform(libs.jackson.bom))
+    implementation(libs.jackson.databind)
 
-    implementation(platform("io.ktor:ktor-bom:${Versions.ktor}"))
-    implementation("io.ktor:ktor-client-auth")
+    implementation(platform(libs.ktor.bom))
+    implementation(libs.ktor.client.auth)
 
-    runtimeOnly("org.apache.avro:avro:${Versions.avro}")
+    runtimeOnly(libs.avro)
 
-    runtimeOnly("org.glassfish.grizzly:grizzly-framework-monitoring:${Versions.grizzly}")
-    runtimeOnly("org.glassfish.grizzly:grizzly-http-monitoring:${Versions.grizzly}")
-    runtimeOnly("org.glassfish.grizzly:grizzly-http-server-monitoring:${Versions.grizzly}")
+    runtimeOnly(libs.grizzly.framework.monitoring)
+    runtimeOnly(libs.grizzly.http.monitoring)
+    runtimeOnly(libs.grizzly.http.server.monitoring)
 
-    testImplementation("org.mockito.kotlin:mockito-kotlin:${Versions.mockitoKotlin}")
-    testImplementation("org.hamcrest:hamcrest:${Versions.hamcrest}")
-    testImplementation("com.squareup.okhttp3:mockwebserver:${Versions.okHttp}")
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.hamcrest)
+    testImplementation(libs.mockwebserver)
 
-    integrationTestImplementation(platform("io.ktor:ktor-bom:${Versions.ktor}"))
-    integrationTestImplementation("io.ktor:ktor-client-content-negotiation")
-    integrationTestImplementation("io.ktor:ktor-serialization-kotlinx-json")
+    integrationTestImplementation(platform(libs.ktor.bom))
+    integrationTestImplementation(libs.ktor.client.content.negotiation)
+    integrationTestImplementation(libs.ktor.serialization.kotlinx.json)
 
-    testImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
-    testImplementation("org.assertj:assertj-core:${Versions.assertJ}")
-    testImplementation("io.mockk:mockk:${Versions.mockk}")
-    integrationTestImplementation("org.radarbase:radar-schemas-commons:${Versions.radarSchemas}")
-    integrationTestImplementation("org.radarbase:radar-commons-testing:${Versions.radarCommons}")
+    testImplementation(libs.radar.schemas.commons)
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.mockk)
+    integrationTestImplementation(libs.radar.schemas.commons)
+    integrationTestImplementation(libs.radar.commons.testing)
 }
 
 radarKotlin {
-    javaVersion.set(Versions.java)
-    log4j2Version.set(Versions.log4j2)
+    log4j2Version.set(libs.versions.log4j2)
     sentryEnabled.set(true)
-    openTelemetryAgentEnabled.set(true)
+    openTelemetryAgentEnabled.set(false)
 }
