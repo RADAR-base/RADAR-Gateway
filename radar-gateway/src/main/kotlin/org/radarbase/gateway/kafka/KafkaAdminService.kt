@@ -51,6 +51,22 @@ class KafkaAdminService(@Context private val config: GatewayConfig) : Closeable 
 
     suspend fun listTopics(): Collection<String> = listCache.get()
 
+    /**
+     * Checks Kafka reachability with a single direct call and no cache or retry logic.
+     * Throws if Kafka is unreachable within the admin client timeout.
+     */
+    suspend fun isReachable() {
+        try {
+            withContext(Dispatchers.IO) {
+                adminClient.listTopics().names().suspendGet(3.seconds)
+            }
+        } catch (ex: CancellationException) {
+            throw ex
+        } catch (ex: Exception) {
+            throw KafkaUnavailableException(ex)
+        }
+    }
+
     suspend fun topicInfo(topic: String): TopicInfo {
         if (!containsTopic(topic)) {
             throw HttpNotFoundException("topic_not_found", "Topic $topic does not exist")
