@@ -1,5 +1,5 @@
 [versions]
-project = "0.9.5-SNAPSHOT"
+project = "0.9.5"
 gradle = "8.14"
 kotlin = "1.9.24"
 dockerCompose = "0.17.6"
