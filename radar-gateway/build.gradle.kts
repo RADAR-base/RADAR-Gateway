@@ -1,3 +1,4 @@
+import com.github.jk1.license.filter.ExcludeTransitiveDependenciesFilter
 import java.time.Duration
 
 plugins {
@@ -28,6 +29,11 @@ val integrationTestSourceSet = sourceSets.create("integrationTest") {
 
 val integrationTestImplementation: Configuration by configurations.getting {
     extendsFrom(configurations.testImplementation.get())
+}
+
+licenseReport {
+    filters = arrayOf(ExcludeTransitiveDependenciesFilter())
+    allowedLicensesFile = File("all-licenses.json")
 }
 
 val integrationTest by tasks.registering(Test::class) {
