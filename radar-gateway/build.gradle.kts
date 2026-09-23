@@ -111,6 +111,13 @@ dependencies {
     testImplementation(libs.mockk)
     integrationTestImplementation(libs.radar.schemas.commons)
     integrationTestImplementation(libs.radar.commons.testing)
+
+    constraints {
+        // Forced transitive override: minio pulls in a vulnerable bcprov (1.78.1 in 8.5.x, 1.81 in 8.6.0).
+        implementation(libs.bouncycastle.bcprov) {
+            because("CVE-2025-14813, CVE-2026-13506, CVE-2026-8763")
+        }
+    }
 }
 
 radarKotlin {

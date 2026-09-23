@@ -8,7 +8,7 @@ radarJersey = "0.12.8"
 radarCommons = "1.2.6"
 radarSchemas = "0.8.15"
 jackson = "2.20.2"
-assertJ = "3.27.3"
+assertJ = "3.27.7"
 mockk = "1.13.16"
 log4j2 = "2.23.1"
 lzfse = "0.1.1"
@@ -16,6 +16,8 @@ radarAuth = "2.1.13"
 avro = "1.12.1"
 confluent = "7.6.0"
 minio = "8.5.17"
+# Forced transitive override for minio, see radar-gateway/build.gradle.kts.
+bouncycastle = "1.85"
 multipart = "3.1.10"
 mockitoKotlin = "5.3.1"
 grizzly = "4.0.2"
@@ -35,6 +37,7 @@ lzfse-decode = { group = "org.radarbase", name = "lzfse-decode", version.ref = "
 lz4 = { module = "at.yawk.lz4:lz4-java", version.ref = "lz4" }
 
 minio = { group = "io.minio", name = "minio", version.ref = "minio" }
+bouncycastle-bcprov = { group = "org.bouncycastle", name = "bcprov-jdk18on", version.ref = "bouncycastle" }
 jersey-media-multipart = { group = "org.glassfish.jersey.media", name = "jersey-media-multipart", version.ref = "multipart" }
 
 kafka-clients = { group = "org.apache.kafka", name = "kafka-clients", version = "7.6.0-ce" }
