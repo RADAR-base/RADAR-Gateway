@@ -1,6 +1,6 @@
 [versions]
 project = "0.9.5"
-gradle = "8.14"
+gradle = "9.6.0"
 kotlin = "2.3.20"
 dockerCompose = "0.17.6"
 ktor = "2.3.10"
