@@ -17,7 +17,10 @@ avro = "1.12.1"
 confluent = "7.6.0"
 minio = "8.5.17"
 # Forced transitive override for minio, see radar-gateway/build.gradle.kts.
-bouncycastle = "1.85"
+bouncycastle = "1.86"
+# Forced transitive overrides for kafka-clients 7.6.0-ce, see radar-gateway/build.gradle.kts.
+zstdJni = "1.5.7-22"
+snappyJava = "1.1.10.11"
 multipart = "3.1.10"
 mockitoKotlin = "5.3.1"
 grizzly = "4.0.2"
@@ -38,6 +41,8 @@ lz4 = { module = "at.yawk.lz4:lz4-java", version.ref = "lz4" }
 
 minio = { group = "io.minio", name = "minio", version.ref = "minio" }
 bouncycastle-bcprov = { group = "org.bouncycastle", name = "bcprov-jdk18on", version.ref = "bouncycastle" }
+zstd-jni = { group = "com.github.luben", name = "zstd-jni", version.ref = "zstdJni" }
+snappy-java = { group = "org.xerial.snappy", name = "snappy-java", version.ref = "snappyJava" }
 jersey-media-multipart = { group = "org.glassfish.jersey.media", name = "jersey-media-multipart", version.ref = "multipart" }
 
 kafka-clients = { group = "org.apache.kafka", name = "kafka-clients", version = "7.6.0-ce" }

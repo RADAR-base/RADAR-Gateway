@@ -115,7 +115,14 @@ dependencies {
     constraints {
         // Forced transitive override: minio pulls in a vulnerable bcprov (1.78.1 in 8.5.x, 1.81 in 8.6.0).
         implementation(libs.bouncycastle.bcprov) {
-            because("CVE-2025-14813, CVE-2026-13506, CVE-2026-8763")
+            because("CVE-2025-14813, CVE-2026-13506, CVE-2026-8763; 1.86 for SNYK-JAVA-ORGBOUNCYCASTLE-20419436/-20419452")
+        }
+        // Forced transitive overrides: kafka-clients 7.6.0-ce pulls in zstd-jni 1.5.5-1 and snappy-java 1.1.10.7.
+        implementation(libs.zstd.jni) {
+            because("SNYK-JAVA-COMGITHUBLUBEN-19653585, -19659571, -19659584, -19659603, -19659617, -19778368, fixed in 1.5.7-14")
+        }
+        implementation(libs.snappy.java) {
+            because("SNYK-JAVA-ORGXERIALSNAPPY-19964087, -19778376, fixed in 1.1.10.10")
         }
     }
 }

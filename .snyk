@@ -2,14 +2,11 @@
 version: v1.25.0
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
-  SNYK-JAVA-ORGJETBRAINSKOTLIN-2393744:
+  SNYK-JAVA-IOMINIO-13147656:
     - '*':
-        reason: Not using Kotlin Files interface
-        expires: 2023-12-13T08:35:54.696Z
-        created: 2022-03-14T08:35:54.706Z
-  SNYK-JAVA-ORGYAML-3152153:
-    - '*':
-        reason: Only using YAML for the configuration loading
-        expires: 2023-12-22T09:56:56.796Z
-        created: 2023-02-20T09:56:56.804Z
+        reason: >-
+          io.minio:minio 8.5.17, fixed in 8.6.0. Kept on 8.5.x because 8.6.0 brings OkHttp 5, which breaks the
+          OkHttp 4 users in the fleet; tracked as the fleet-wide OkHttp 5 migration (CVE-2025-59952).
+        expires: 2027-01-01T00:00:00.000Z
+        created: 2026-10-07T00:00:00.000Z
 patch: {}
