@@ -31,7 +31,7 @@ class AvroJsonReader(
     ): JsonNode {
         val parser = objectFactory.createParser(entityStream)
         return try {
-            parser.readValueAsTree()
+            parser.readValueAsTree<JsonNode>()
                 ?: throw HttpBadRequestException("malformed_json", "No content given")
         } catch (ex: JsonParseException) {
             throw HttpBadRequestException("malformed_json", ex.message ?: ex.toString())
